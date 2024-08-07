@@ -41,6 +41,7 @@ defmodule PurseCraft.MixProject do
   defp deps do
     [
       {:bandit, "1.5.7"},
+      {:credo, "1.7.7", only: [:dev, :test], runtime: false},
       {:dns_cluster, "0.1.3"},
       {:ecto_sql, "3.11.3"},
       {:esbuild, "0.8.1", runtime: Mix.env() == :dev},
@@ -88,8 +89,8 @@ defmodule PurseCraft.MixProject do
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      lint: ["format"],
-      "lint.ci": ["format --check-formatted"],
+      lint: ["format", "credo"],
+      "lint.ci": ["format --check-formatted", "credo"],
       setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
     ]
