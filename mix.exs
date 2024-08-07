@@ -47,6 +47,7 @@ defmodule PurseCraft.MixProject do
       {:esbuild, "0.8.1", runtime: Mix.env() == :dev},
       {:ex_machina, "2.8.0", only: :test},
       {:excoveralls, "0.18.2", only: :test},
+      {:faker, "0.18.0", only: :test},
       {:finch, "0.18.0"},
       {:floki, "0.36.2", only: :test},
       {:gettext, "0.25.0"},
