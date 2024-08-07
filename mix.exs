@@ -45,6 +45,7 @@ defmodule PurseCraft.MixProject do
       {:dns_cluster, "0.1.3"},
       {:ecto_sql, "3.11.3"},
       {:esbuild, "0.8.1", runtime: Mix.env() == :dev},
+      {:ex_machina, "2.8.0", only: :test},
       {:excoveralls, "0.18.2", only: :test},
       {:finch, "0.18.0"},
       {:floki, "0.36.2", only: :test},
