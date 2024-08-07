@@ -1,5 +1,7 @@
 # PurseCraft
 
+[![gh-actions](https://github.com/pursecraft/pursecraft/workflows/CI/badge.svg)](https://github.com/pursecraft/pursecraft/actions?workflow=CI)
+
 To start your Phoenix server:
 
   * Run `mix setup` to install and setup dependencies

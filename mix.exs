@@ -48,7 +48,7 @@ defmodule PurseCraft.MixProject do
        depth: 1},
       {:jason, "1.4.4"},
       {:phoenix, "1.7.14"},
-      {:phoenix_ecto, "4.1.1"},
+      {:phoenix_ecto, "4.6.2"},
       {:phoenix_html, "4.1.1"},
       {:phoenix_live_dashboard, "0.8.4"},
       {:phoenix_live_reload, "1.5.3", only: :dev},
@@ -79,6 +79,8 @@ defmodule PurseCraft.MixProject do
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+      lint: ["format"],
+      "lint.ci": ["format --check-formatted"],
       setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
     ]
