@@ -1,6 +1,7 @@
 # PurseCraft
 
 [![gh-actions](https://github.com/pursecraft/pursecraft/workflows/CI/badge.svg)](https://github.com/pursecraft/pursecraft/actions?workflow=CI)
+[![codecov](https://codecov.io/gh/pursecraft/pursecraft/graph/badge.svg?token=ZDAQR9NXYC)](https://codecov.io/gh/pursecraft/pursecraft)
 
 To start your Phoenix server:
 
