@@ -48,7 +48,7 @@ defmodule PurseCraft.MixProject do
        depth: 1},
       {:jason, "1.4.4"},
       {:phoenix, "1.7.14"},
-      {:phoenix_ecto, "4.1.1"},
+      {:phoenix_ecto, "4.6.2"},
       {:phoenix_html, "4.1.1"},
       {:phoenix_live_dashboard, "0.8.4"},
       {:phoenix_live_reload, "1.5.3", only: :dev},
