@@ -17,6 +17,13 @@ defmodule PurseCraft.MixProject do
         "coveralls.post": :test,
         "coveralls.html": :test,
         "coveralls.cobertura": :test
+      ],
+      dialyzer: [
+        plt_add_apps: [
+          :ex_unit
+        ],
+        plt_file: {:no_warn, "priv/plts/project.plt"},
+        list_unused_filter: true
       ]
     ]
   end
@@ -42,6 +49,7 @@ defmodule PurseCraft.MixProject do
     [
       {:bandit, "1.5.7"},
       {:credo, "1.7.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "1.4.3", only: [:dev, :test], runtime: false},
       {:dns_cluster, "0.1.3"},
       {:ecto_sql, "3.11.3"},
       {:esbuild, "0.8.1", runtime: Mix.env() == :dev},
