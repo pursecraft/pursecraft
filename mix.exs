@@ -79,7 +79,9 @@ defmodule PurseCraft.MixProject do
         "tailwind purse_craft --minify",
         "esbuild purse_craft --minify",
         "phx.digest"
-      ]
+      ],
+      lint: ["format"],
+      "lint.ci": ["format --check-formatted"]
     ]
   end
 end
