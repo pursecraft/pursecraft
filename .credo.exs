@@ -31,7 +31,15 @@
           "apps/*/test/",
           "apps/*/web/"
         ],
-        excluded: [~r"/_build/", ~r"/deps/", ~r"/node_modules/"]
+        excluded: [
+          ~r"/_build/",
+          ~r"/deps/",
+          ~r"/lib/purse_craft_web.ex",
+          ~r"/lib/purse_craft_web/components/core_components.ex",
+          ~r"/lib/purse_craft_web/telemetry.ex",
+          ~r"/node_modules/",
+          ~r"/test/support/"
+        ]
       },
       #
       # Load and configure plugins here:
@@ -46,7 +54,7 @@
       # If you want to enforce a style guide and need a more traditional linting
       # experience, you can change `strict` to `true` below:
       #
-      strict: false,
+      strict: true,
       #
       # To modify the timeout for parsing files, change this value:
       #
