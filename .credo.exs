@@ -130,6 +130,17 @@
           {Credo.Check.Readability.SingleFunctionToBlockPipe, []},
           {Credo.Check.Readability.SinglePipe, []},
           {Credo.Check.Readability.SpaceAfterCommas, []},
+          {
+            Credo.Check.Readability.Specs,
+            [
+              files: %{
+                excluded: [
+                  ~r"/lib/purse_craft_web/controllers/",
+                  ~r"/lib/purse_craft_web/live/"
+                ]
+              }
+            ]
+          },
           {Credo.Check.Readability.StringSigils, []},
           {Credo.Check.Readability.TrailingBlankLine, []},
           {Credo.Check.Readability.TrailingWhiteSpace, []},
@@ -189,7 +200,6 @@
           #   and be sure to use `mix credo --strict` to see low priority checks)
           #
           {Credo.Check.Design.DuplicatedCode, []},
-          {Credo.Check.Readability.Specs, []},
           {Credo.Check.Readability.StrictModuleLayout, []},
           {Credo.Check.Readability.WithCustomTaggedTuple, []},
           {Credo.Check.Refactor.ABCSize, []},
