@@ -9,7 +9,15 @@ defmodule PurseCraft.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.cobertura": :test
+      ]
     ]
   end
 
@@ -36,6 +44,7 @@ defmodule PurseCraft.MixProject do
       {:dns_cluster, "0.1.3"},
       {:ecto_sql, "3.12.1"},
       {:esbuild, "0.8.2", runtime: Mix.env() == :dev},
+      {:excoveralls, "0.18.3", only: :test},
       {:finch, "0.19.0"},
       {:floki, "0.37.0", only: :test},
       {:gettext, "0.26.2"},
