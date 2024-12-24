@@ -118,6 +118,7 @@
           {Credo.Check.Readability.MultiAlias, []},
           {Credo.Check.Readability.NestedFunctionCalls, []},
           {Credo.Check.Readability.OneArityFunctionInPipe, []},
+          {Credo.Check.Readability.OnePipePerLine, []},
           {Credo.Check.Readability.ParenthesesInCondition, []},
           {Credo.Check.Readability.ParenthesesOnZeroArityDefs, []},
           {Credo.Check.Readability.PipeIntoAnonymousFunctions, []},
@@ -185,7 +186,6 @@
           #   and be sure to use `mix credo --strict` to see low priority checks)
           #
           {Credo.Check.Design.DuplicatedCode, []},
-          {Credo.Check.Readability.OnePipePerLine, []},
           {Credo.Check.Readability.SeparateAliasRequire, []},
           {Credo.Check.Readability.SingleFunctionToBlockPipe, []},
           {Credo.Check.Readability.SinglePipe, []},
