@@ -141,6 +141,7 @@
               }
             ]
           },
+          {Credo.Check.Readability.StrictModuleLayout, []},
           {Credo.Check.Readability.StringSigils, []},
           {Credo.Check.Readability.TrailingBlankLine, []},
           {Credo.Check.Readability.TrailingWhiteSpace, []},
@@ -200,7 +201,6 @@
           #   and be sure to use `mix credo --strict` to see low priority checks)
           #
           {Credo.Check.Design.DuplicatedCode, []},
-          {Credo.Check.Readability.StrictModuleLayout, []},
           {Credo.Check.Readability.WithCustomTaggedTuple, []},
           {Credo.Check.Refactor.ABCSize, []},
           {Credo.Check.Refactor.AppendSingleItem, []},
