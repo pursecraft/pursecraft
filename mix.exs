@@ -90,8 +90,8 @@ defmodule PurseCraft.MixProject do
         "esbuild purse_craft --minify",
         "phx.digest"
       ],
-      lint: ["format"],
-      "lint.ci": ["format --check-formatted"]
+      lint: ["format", "credo"],
+      "lint.ci": ["format --check-formatted", "credo"]
     ]
   end
 end
