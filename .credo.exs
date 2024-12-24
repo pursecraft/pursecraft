@@ -147,6 +147,7 @@
           {Credo.Check.Readability.TrailingWhiteSpace, []},
           {Credo.Check.Readability.UnnecessaryAliasExpansion, []},
           {Credo.Check.Readability.VariableNames, []},
+          {Credo.Check.Readability.WithCustomTaggedTuple, []},
           {Credo.Check.Readability.WithSingleClause, []},
 
           #
@@ -201,7 +202,6 @@
           #   and be sure to use `mix credo --strict` to see low priority checks)
           #
           {Credo.Check.Design.DuplicatedCode, []},
-          {Credo.Check.Readability.WithCustomTaggedTuple, []},
           {Credo.Check.Refactor.ABCSize, []},
           {Credo.Check.Refactor.AppendSingleItem, []},
           {Credo.Check.Refactor.DoubleBooleanNegation, []},
