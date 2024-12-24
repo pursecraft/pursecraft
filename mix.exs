@@ -41,6 +41,7 @@ defmodule PurseCraft.MixProject do
   defp deps do
     [
       {:bandit, "1.6.1"},
+      {:credo, "1.7.10", only: [:dev, :test], runtime: false},
       {:dns_cluster, "0.1.3"},
       {:ecto_sql, "3.12.1"},
       {:esbuild, "0.8.2", runtime: Mix.env() == :dev},
