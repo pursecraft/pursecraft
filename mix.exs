@@ -47,7 +47,7 @@ defmodule PurseCraft.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:bcrypt_elixir, "~> 3.0"},
+      {:bcrypt_elixir, "3.2.0"},
       {:bandit, "1.6.1"},
       {:credo, "1.7.10", only: [:dev, :test], runtime: false},
       {:dialyxir, "1.4.5", only: [:dev, :test], runtime: false},
