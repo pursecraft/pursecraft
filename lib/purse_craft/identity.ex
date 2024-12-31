@@ -37,17 +37,22 @@ defmodule PurseCraft.Identity do
 
   ## Examples
 
-      iex> get_user_by_email_and_password("foo@example.com", "correct_password")
-      %User{}
+      iex> fetch_user_by_email_and_password("foo@example.com", "correct_password")
+      {:ok, %User{}}
 
-      iex> get_user_by_email_and_password("foo@example.com", "invalid_password")
-      nil
+      iex> fetch_user_by_email_and_password("foo@example.com", "invalid_password")
+      {:error, :not_found}
 
   """
-  def get_user_by_email_and_password(email, password)
+  def fetch_user_by_email_and_password(email, password)
       when is_binary(email) and is_binary(password) do
-    user = Repo.get_by(User, email: email)
-    if User.valid_password?(user, password), do: user
+    with {:ok, user} <- fetch_user_by_email(email),
+         true <- User.valid_password?(user, password) do
+      {:ok, user}
+    else
+      _any ->
+        {:error, :not_found}
+    end
   end
 
   @doc """

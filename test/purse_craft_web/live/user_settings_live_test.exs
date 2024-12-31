@@ -117,7 +117,7 @@ defmodule PurseCraftWeb.UserSettingsLiveTest do
       assert Phoenix.Flash.get(new_password_conn.assigns.flash, :info) =~
                "Password updated successfully"
 
-      assert Identity.get_user_by_email_and_password(user.email, new_password)
+      assert {:ok, _user} = Identity.fetch_user_by_email_and_password(user.email, new_password)
     end
 
     test "renders errors with invalid data (phx-change)", %{conn: conn} do

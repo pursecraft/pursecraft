@@ -19,21 +19,21 @@ defmodule PurseCraft.IdentityTest do
     end
   end
 
-  describe "get_user_by_email_and_password/2" do
+  describe "fetch_user_by_email_and_password/2" do
     test "does not return the user if the email does not exist" do
-      refute Identity.get_user_by_email_and_password("unknown@example.com", "hello world!")
+      assert {:error, :not_found} = Identity.fetch_user_by_email_and_password("unknown@example.com", "hello world!")
     end
 
     test "does not return the user if the password is not valid" do
       user = insert(:user)
-      refute Identity.get_user_by_email_and_password(user.email, "invalid")
+      assert {:error, :not_found} = Identity.fetch_user_by_email_and_password(user.email, "invalid")
     end
 
     test "returns the user if the email and password are valid" do
       %{id: id} = user = insert(:user)
 
-      assert %User{id: ^id} =
-               Identity.get_user_by_email_and_password(user.email, IdentityHelper.valid_user_password())
+      assert {:ok, %User{id: ^id}} =
+               Identity.fetch_user_by_email_and_password(user.email, IdentityHelper.valid_user_password())
     end
   end
 
@@ -298,7 +298,7 @@ defmodule PurseCraft.IdentityTest do
         })
 
       assert is_nil(user.password)
-      assert Identity.get_user_by_email_and_password(user.email, "new valid password")
+      assert {:ok, _user} = Identity.fetch_user_by_email_and_password(user.email, "new valid password")
     end
 
     test "deletes all tokens for the given user", %{user: user} do
@@ -493,7 +493,7 @@ defmodule PurseCraft.IdentityTest do
     test "updates the password", %{user: user} do
       {:ok, updated_user} = Identity.reset_user_password(user, %{password: "new valid password"})
       assert is_nil(updated_user.password)
-      assert Identity.get_user_by_email_and_password(user.email, "new valid password")
+      assert {:ok, _user} = Identity.fetch_user_by_email_and_password(user.email, "new valid password")
     end
 
     test "deletes all tokens for the given user", %{user: user} do
