@@ -48,7 +48,7 @@ defmodule PurseCraftWeb.UserSettingsLiveTest do
         |> render_submit()
 
       assert result =~ "A link to confirm your email"
-      assert Identity.get_user_by_email(user.email)
+      assert {:ok, _user} = Identity.fetch_user_by_email(user.email)
     end
 
     test "renders errors with invalid data (phx-change)", %{conn: conn} do
@@ -180,8 +180,8 @@ defmodule PurseCraftWeb.UserSettingsLiveTest do
       assert path == ~p"/users/settings"
       assert %{"info" => message} = flash
       assert message == "Email changed successfully."
-      refute Identity.get_user_by_email(user.email)
-      assert Identity.get_user_by_email(email)
+      assert {:error, :not_found} = Identity.fetch_user_by_email(user.email)
+      assert {:ok, _user} = Identity.fetch_user_by_email(email)
 
       # use confirm token again
       {:error, redirect} = live(conn, ~p"/users/settings/confirm_email/#{token}")
@@ -197,7 +197,7 @@ defmodule PurseCraftWeb.UserSettingsLiveTest do
       assert path == ~p"/users/settings"
       assert %{"error" => message} = flash
       assert message == "Email change link is invalid or it has expired."
-      assert Identity.get_user_by_email(user.email)
+      assert {:ok, _user} = Identity.fetch_user_by_email(user.email)
     end
 
     test "redirects if user is not logged in", %{token: token} do

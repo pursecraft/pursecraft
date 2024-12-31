@@ -11,19 +11,25 @@ defmodule PurseCraft.Identity do
   ## Database getters
 
   @doc """
-  Gets a user by email.
+  Fetches a user by email.
 
   ## Examples
 
-      iex> get_user_by_email("foo@example.com")
-      %User{}
+      iex> fetch_user_by_email("foo@example.com")
+      {:ok, %User{}}
 
-      iex> get_user_by_email("unknown@example.com")
-      nil
+      iex> fetch_user_by_email("unknown@example.com")
+      {:error, :not_found}
 
   """
-  def get_user_by_email(email) when is_binary(email) do
-    Repo.get_by(User, email: email)
+  def fetch_user_by_email(email) when is_binary(email) do
+    case Repo.get_by(User, email: email) do
+      nil ->
+        {:error, :not_found}
+
+      user ->
+        {:ok, user}
+    end
   end
 
   @doc """
