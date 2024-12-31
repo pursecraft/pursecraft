@@ -2,13 +2,13 @@ defmodule PurseCraftWeb.UserConfirmationInstructionsLiveTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import PurseCraft.IdentityFixtures
+  import PurseCraft.Factory
 
   alias PurseCraft.Identity
   alias PurseCraft.Repo
 
   setup do
-    %{user: user_fixture()}
+    %{user: insert(:user)}
   end
 
   describe "Resend confirmation" do

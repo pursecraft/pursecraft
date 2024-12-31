@@ -2,7 +2,7 @@ defmodule PurseCraftWeb.UserLoginLiveTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import PurseCraft.IdentityFixtures
+  import PurseCraft.Factory
 
   describe "Log in page" do
     test "renders log in page", %{conn: conn} do
@@ -16,7 +16,7 @@ defmodule PurseCraftWeb.UserLoginLiveTest do
     test "redirects if already logged in", %{conn: conn} do
       result =
         conn
-        |> log_in_user(user_fixture())
+        |> log_in_user(insert(:user))
         |> live(~p"/users/log_in")
         |> follow_redirect(conn, "/")
 
@@ -27,7 +27,7 @@ defmodule PurseCraftWeb.UserLoginLiveTest do
   describe "user login" do
     test "redirects if user login with valid credentials", %{conn: conn} do
       password = "123456789abcd"
-      user = user_fixture(%{password: password})
+      user = insert(:user, password: password)
 
       {:ok, lv, _html} = live(conn, ~p"/users/log_in")
 

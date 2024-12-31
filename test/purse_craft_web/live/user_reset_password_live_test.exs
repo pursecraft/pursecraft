@@ -2,15 +2,16 @@ defmodule PurseCraftWeb.UserResetPasswordLiveTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import PurseCraft.IdentityFixtures
+  import PurseCraft.Factory
 
   alias PurseCraft.Identity
+  alias PurseCraft.TestHelpers.IdentityHelper
 
   setup do
-    user = user_fixture()
+    user = insert(:user)
 
     token =
-      extract_user_token(fn url ->
+      IdentityHelper.extract_user_token(fn url ->
         Identity.deliver_user_reset_password_instructions(user, url)
       end)
 

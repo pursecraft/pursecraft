@@ -1,10 +1,11 @@
 defmodule PurseCraftWeb.UserAuthTest do
   use PurseCraftWeb.ConnCase, async: true
 
+  import PurseCraft.Factory
+
   alias Phoenix.LiveView
   alias PurseCraft.Identity
   alias PurseCraftWeb.UserAuth
-  import PurseCraft.IdentityFixtures
 
   @remember_me_cookie "_purse_craft_web_user_remember_me"
 
@@ -14,7 +15,7 @@ defmodule PurseCraftWeb.UserAuthTest do
       |> Map.replace!(:secret_key_base, PurseCraftWeb.Endpoint.config(:secret_key_base))
       |> init_test_session(%{})
 
-    %{user: user_fixture(), conn: conn}
+    %{user: insert(:user), conn: conn}
   end
 
   describe "log_in_user/3" do

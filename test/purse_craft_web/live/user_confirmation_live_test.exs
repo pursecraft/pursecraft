@@ -2,13 +2,14 @@ defmodule PurseCraftWeb.UserConfirmationLiveTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import PurseCraft.IdentityFixtures
+  import PurseCraft.Factory
 
   alias PurseCraft.Identity
   alias PurseCraft.Repo
+  alias PurseCraft.TestHelpers.IdentityHelper
 
   setup do
-    %{user: user_fixture()}
+    %{user: insert(:user)}
   end
 
   describe "Confirm user" do
@@ -19,7 +20,7 @@ defmodule PurseCraftWeb.UserConfirmationLiveTest do
 
     test "confirms the given token once", %{conn: conn, user: user} do
       token =
-        extract_user_token(fn url ->
+        IdentityHelper.extract_user_token(fn url ->
           Identity.deliver_user_confirmation_instructions(user, url)
         end)
 

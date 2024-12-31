@@ -1,17 +1,19 @@
 defmodule PurseCraftWeb.UserSessionControllerTest do
   use PurseCraftWeb.ConnCase, async: true
 
-  import PurseCraft.IdentityFixtures
+  import PurseCraft.Factory
+
+  alias PurseCraft.TestHelpers.IdentityHelper
 
   setup do
-    %{user: user_fixture()}
+    %{user: insert(:user)}
   end
 
   describe "POST /users/log_in" do
     test "logs the user in", %{conn: conn, user: user} do
       conn =
         post(conn, ~p"/users/log_in", %{
-          "user" => %{"email" => user.email, "password" => valid_user_password()}
+          "user" => %{"email" => user.email, "password" => IdentityHelper.valid_user_password()}
         })
 
       assert get_session(conn, :user_token)
@@ -30,7 +32,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
         post(conn, ~p"/users/log_in", %{
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password(),
+            "password" => IdentityHelper.valid_user_password(),
             "remember_me" => "true"
           }
         })
@@ -46,7 +48,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
         |> post(~p"/users/log_in", %{
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password()
+            "password" => IdentityHelper.valid_user_password()
           }
         })
 
@@ -61,7 +63,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
           "_action" => "registered",
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password()
+            "password" => IdentityHelper.valid_user_password()
           }
         })
 
@@ -76,7 +78,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
           "_action" => "password_updated",
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password()
+            "password" => IdentityHelper.valid_user_password()
           }
         })
 
