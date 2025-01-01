@@ -2,7 +2,7 @@ defmodule PurseCraftWeb.UserRegistrationLive do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Identity
-  alias PurseCraft.Identity.User
+  alias PurseCraft.Identity.Schemas.User
 
   def render(assigns) do
     ~H"""

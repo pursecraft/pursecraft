@@ -4,9 +4,11 @@ defmodule PurseCraft.Identity do
   """
 
   import Ecto.Query, warn: false
-  alias PurseCraft.Repo
 
-  alias PurseCraft.Identity.{User, UserToken, UserNotifier}
+  alias PurseCraft.Identity.Schemas.User
+  alias PurseCraft.Identity.Schemas.UserToken
+  alias PurseCraft.Identity.UserNotifier
+  alias PurseCraft.Repo
 
   ## Database getters
 

@@ -1,7 +1,10 @@
-defmodule PurseCraft.Identity.UserToken do
+defmodule PurseCraft.Identity.Schemas.UserToken do
   use Ecto.Schema
+
   import Ecto.Query
-  alias PurseCraft.Identity.UserToken
+
+  alias __MODULE__
+  alias PurseCraft.Identity.Schemas.User
 
   @hash_algorithm :sha256
   @rand_size 32
@@ -17,7 +20,7 @@ defmodule PurseCraft.Identity.UserToken do
     field :token, :binary
     field :context, :string
     field :sent_to, :string
-    belongs_to :user, PurseCraft.Identity.User
+    belongs_to :user, User
 
     timestamps(type: :utc_datetime, updated_at: false)
   end

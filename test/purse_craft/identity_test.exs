@@ -4,8 +4,8 @@ defmodule PurseCraft.IdentityTest do
   import PurseCraft.Factory
 
   alias PurseCraft.Identity
-  alias PurseCraft.Identity.User
-  alias PurseCraft.Identity.UserToken
+  alias PurseCraft.Identity.Schemas.User
+  alias PurseCraft.Identity.Schemas.UserToken
   alias PurseCraft.TestHelpers.IdentityHelper
 
   describe "fetch_user_by_email/1" do

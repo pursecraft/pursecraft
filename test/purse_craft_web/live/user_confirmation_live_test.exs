@@ -5,6 +5,7 @@ defmodule PurseCraftWeb.UserConfirmationLiveTest do
   import PurseCraft.Factory
 
   alias PurseCraft.Identity
+  alias PurseCraft.Identity.Schemas.UserToken
   alias PurseCraft.Repo
   alias PurseCraft.TestHelpers.IdentityHelper
 
@@ -39,7 +40,7 @@ defmodule PurseCraftWeb.UserConfirmationLiveTest do
 
       assert IdentityHelper.get_user!(user.id).confirmed_at
       refute get_session(conn, :user_token)
-      assert Repo.all(Identity.UserToken) == []
+      assert Repo.all(UserToken) == []
 
       # when not logged in
       {:ok, lv, _html} = live(conn, ~p"/users/confirm/#{token}")

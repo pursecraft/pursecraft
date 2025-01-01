@@ -1,6 +1,9 @@
-defmodule PurseCraft.Identity.User do
+defmodule PurseCraft.Identity.Schemas.User do
   use Ecto.Schema
+
   import Ecto.Changeset
+
+  alias __MODULE__
 
   schema "users" do
     field :email, :string
@@ -136,7 +139,7 @@ defmodule PurseCraft.Identity.User do
   If there is no user or the user doesn't have a password, we call
   `Bcrypt.no_user_verify/0` to avoid timing attacks.
   """
-  def valid_password?(%PurseCraft.Identity.User{hashed_password: hashed_password}, password)
+  def valid_password?(%User{hashed_password: hashed_password}, password)
       when is_binary(hashed_password) and byte_size(password) > 0 do
     Bcrypt.verify_pass(password, hashed_password)
   end

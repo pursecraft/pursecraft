@@ -1,5 +1,5 @@
 defmodule PurseCraft.TestHelpers.IdentityHelper do
-  alias PurseCraft.Identity.User
+  alias PurseCraft.Identity.Schemas.User
   alias PurseCraft.Repo
 
   def valid_user_password, do: "hello world!"
