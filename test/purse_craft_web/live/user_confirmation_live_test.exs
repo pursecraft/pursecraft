@@ -37,7 +37,7 @@ defmodule PurseCraftWeb.UserConfirmationLiveTest do
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
                "User confirmed successfully"
 
-      assert Identity.get_user!(user.id).confirmed_at
+      assert IdentityHelper.get_user!(user.id).confirmed_at
       refute get_session(conn, :user_token)
       assert Repo.all(Identity.UserToken) == []
 
@@ -84,7 +84,7 @@ defmodule PurseCraftWeb.UserConfirmationLiveTest do
       assert Phoenix.Flash.get(conn.assigns.flash, :error) =~
                "User confirmation link is invalid or it has expired"
 
-      refute Identity.get_user!(user.id).confirmed_at
+      refute IdentityHelper.get_user!(user.id).confirmed_at
     end
   end
 end

@@ -1,4 +1,7 @@
 defmodule PurseCraft.TestHelpers.IdentityHelper do
+  alias PurseCraft.Identity.User
+  alias PurseCraft.Repo
+
   def valid_user_password, do: "hello world!"
 
   def valid_user_attributes(attrs \\ %{}) do
@@ -13,4 +16,6 @@ defmodule PurseCraft.TestHelpers.IdentityHelper do
     [_, token | _] = String.split(captured_email.text_body, "[TOKEN]")
     token
   end
+
+  def get_user!(id), do: Repo.get!(User, id)
 end
