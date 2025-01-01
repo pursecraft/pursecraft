@@ -43,33 +43,31 @@ defmodule PurseCraftWeb.UserConfirmationLiveTest do
       assert Repo.all(UserToken) == []
 
       # when not logged in
-      {:ok, lv, _html} = live(conn, ~p"/users/confirm/#{token}")
+      {:ok, unauthenticated_lv, _html} = live(conn, ~p"/users/confirm/#{token}")
 
-      result =
-        lv
+      unauthenticated_result =
+        unauthenticated_lv
         |> form("#confirmation_form")
         |> render_submit()
         |> follow_redirect(conn, "/")
 
-      assert {:ok, conn} = result
+      assert {:ok, conn} = unauthenticated_result
 
       assert Phoenix.Flash.get(conn.assigns.flash, :error) =~
                "User confirmation link is invalid or it has expired"
 
       # when logged in
-      conn =
-        build_conn()
-        |> log_in_user(user)
+      conn = log_in_user(build_conn(), user)
 
-      {:ok, lv, _html} = live(conn, ~p"/users/confirm/#{token}")
+      {:ok, authenticated_lv, _html} = live(conn, ~p"/users/confirm/#{token}")
 
-      result =
-        lv
+      authenticated_result =
+        authenticated_lv
         |> form("#confirmation_form")
         |> render_submit()
         |> follow_redirect(conn, "/")
 
-      assert {:ok, conn} = result
+      assert {:ok, conn} = authenticated_result
       refute Phoenix.Flash.get(conn.assigns.flash, :error)
     end
 

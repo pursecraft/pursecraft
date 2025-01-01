@@ -1,4 +1,6 @@
 defmodule PurseCraftWeb.UserAuth do
+  @moduledoc false
+
   use PurseCraftWeb, :verified_routes
 
   import Plug.Conn

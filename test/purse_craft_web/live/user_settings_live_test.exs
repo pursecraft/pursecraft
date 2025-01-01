@@ -184,8 +184,8 @@ defmodule PurseCraftWeb.UserSettingsLiveTest do
       assert {:ok, _user} = Identity.fetch_user_by_email(email)
 
       # use confirm token again
-      {:error, redirect} = live(conn, ~p"/users/settings/confirm_email/#{token}")
-      assert {:live_redirect, %{to: path, flash: flash}} = redirect
+      {:error, confirmed_redirect} = live(conn, ~p"/users/settings/confirm_email/#{token}")
+      assert {:live_redirect, %{to: path, flash: flash}} = confirmed_redirect
       assert path == ~p"/users/settings"
       assert %{"error" => message} = flash
       assert message == "Email change link is invalid or it has expired."

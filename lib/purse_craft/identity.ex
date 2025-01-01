@@ -136,10 +136,13 @@ defmodule PurseCraft.Identity do
 
     with {:ok, query} <- UserToken.verify_change_email_token_query(token, context),
          %UserToken{sent_to: email} <- Repo.one(query),
-         {:ok, _} <- Repo.transaction(user_email_multi(user, email, context)) do
+         {:ok, _results} <-
+           user
+           |> user_email_multi(email, context)
+           |> Repo.transaction() do
       :ok
     else
-      _ -> :error
+      _any -> :error
     end
   end
 
@@ -202,13 +205,15 @@ defmodule PurseCraft.Identity do
       |> User.password_changeset(attrs)
       |> User.validate_current_password(password)
 
-    Ecto.Multi.new()
-    |> Ecto.Multi.update(:user, changeset)
-    |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, :all))
-    |> Repo.transaction()
-    |> case do
+    transaction =
+      Ecto.Multi.new()
+      |> Ecto.Multi.update(:user, changeset)
+      |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, :all))
+      |> Repo.transaction()
+
+    case transaction do
       {:ok, %{user: user}} -> {:ok, user}
-      {:error, :user, changeset, _} -> {:error, changeset}
+      {:error, :user, changeset, _changes} -> {:error, changeset}
     end
   end
 
@@ -235,7 +240,10 @@ defmodule PurseCraft.Identity do
   Deletes the signed token with the given context.
   """
   def delete_user_session_token(token) do
-    Repo.delete_all(UserToken.by_token_and_context_query(token, "session"))
+    token
+    |> UserToken.by_token_and_context_query("session")
+    |> Repo.delete_all()
+
     :ok
   end
 
@@ -273,10 +281,13 @@ defmodule PurseCraft.Identity do
   def confirm_user(token) do
     with {:ok, query} <- UserToken.verify_email_token_query(token, "confirm"),
          %User{} = user <- Repo.one(query),
-         {:ok, %{user: user}} <- Repo.transaction(confirm_user_multi(user)) do
+         {:ok, %{user: user}} <-
+           user
+           |> confirm_user_multi()
+           |> Repo.transaction() do
       {:ok, user}
     else
-      _ -> :error
+      _any -> :error
     end
   end
 
@@ -321,7 +332,7 @@ defmodule PurseCraft.Identity do
          %User{} = user <- Repo.one(query) do
       user
     else
-      _ -> nil
+      _any -> nil
     end
   end
 
@@ -338,13 +349,15 @@ defmodule PurseCraft.Identity do
 
   """
   def reset_user_password(user, attrs) do
-    Ecto.Multi.new()
-    |> Ecto.Multi.update(:user, User.password_changeset(user, attrs))
-    |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, :all))
-    |> Repo.transaction()
-    |> case do
+    transaction =
+      Ecto.Multi.new()
+      |> Ecto.Multi.update(:user, User.password_changeset(user, attrs))
+      |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, :all))
+      |> Repo.transaction()
+
+    case transaction do
       {:ok, %{user: user}} -> {:ok, user}
-      {:error, :user, changeset, _} -> {:error, changeset}
+      {:error, :user, changeset, _changes} -> {:error, changeset}
     end
   end
 end

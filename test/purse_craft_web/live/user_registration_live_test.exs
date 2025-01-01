@@ -43,15 +43,20 @@ defmodule PurseCraftWeb.UserRegistrationLiveTest do
       {:ok, lv, _html} = live(conn, ~p"/users/register")
 
       email = Faker.Internet.email()
-      form = form(lv, "#registration_form", user: %{email: email, password: IdentityHelper.valid_user_password()})
+
+      form =
+        form(lv, "#registration_form",
+          user: %{email: email, password: IdentityHelper.valid_user_password()}
+        )
+
       render_submit(form)
       conn = follow_trigger_action(form, conn)
 
       assert redirected_to(conn) == ~p"/"
 
       # Now do a logged in request and assert on the menu
-      conn = get(conn, "/")
-      response = html_response(conn, 200)
+      authenticated_conn = get(conn, "/")
+      response = html_response(authenticated_conn, 200)
       assert response =~ email
       assert response =~ "Settings"
       assert response =~ "Log out"

@@ -1,4 +1,6 @@
 defmodule PurseCraft.Identity.UserNotifier do
+  @moduledoc false
+
   import Swoosh.Email
 
   alias PurseCraft.Mailer

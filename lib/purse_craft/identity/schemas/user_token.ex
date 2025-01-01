@@ -1,4 +1,6 @@
 defmodule PurseCraft.Identity.Schemas.UserToken do
+  @moduledoc false
+
   use Ecto.Schema
 
   import Ecto.Query
@@ -146,7 +148,7 @@ defmodule PurseCraft.Identity.Schemas.UserToken do
   database and if it has not expired (after @change_email_validity_in_days).
   The context must always start with "change:".
   """
-  def verify_change_email_token_query(token, "change:" <> _ = context) do
+  def verify_change_email_token_query(token, "change:" <> _object = context) do
     case Base.url_decode64(token, padding: false) do
       {:ok, decoded_token} ->
         hashed_token = :crypto.hash(@hash_algorithm, decoded_token)

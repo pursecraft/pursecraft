@@ -1,4 +1,8 @@
 defmodule PurseCraft.Identity.Schemas.User do
+  @moduledoc """
+  `User` represents the user's account in the platform.
+  """
+
   use Ecto.Schema
 
   import Ecto.Changeset
@@ -97,10 +101,12 @@ defmodule PurseCraft.Identity.Schemas.User do
   It requires the email to change otherwise an error is added.
   """
   def email_changeset(user, attrs, opts \\ []) do
-    user
-    |> cast(attrs, [:email])
-    |> validate_email(opts)
-    |> case do
+    changeset =
+      user
+      |> cast(attrs, [:email])
+      |> validate_email(opts)
+
+    case changeset do
       %{changes: %{email: _}} = changeset -> changeset
       %{} = changeset -> add_error(changeset, :email, "did not change")
     end
@@ -129,7 +135,7 @@ defmodule PurseCraft.Identity.Schemas.User do
   Confirms the account by setting `confirmed_at`.
   """
   def confirm_changeset(user) do
-    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    now = DateTime.utc_now(:second)
     change(user, confirmed_at: now)
   end
 
@@ -144,7 +150,7 @@ defmodule PurseCraft.Identity.Schemas.User do
     Bcrypt.verify_pass(password, hashed_password)
   end
 
-  def valid_password?(_, _) do
+  def valid_password?(_user, _password) do
     Bcrypt.no_user_verify()
     false
   end
