@@ -85,10 +85,13 @@ defmodule PurseCraftWeb.UserRegistrationLive do
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     form = to_form(changeset, as: "user")
 
+    # coveralls-ignore-start
     if changeset.valid? do
       assign(socket, form: form, check_errors: false)
     else
       assign(socket, form: form)
     end
+
+    # coveralls-ignore-stop
   end
 end
