@@ -68,6 +68,13 @@ defmodule PurseCraftWeb.Router do
       on_mount: [{PurseCraftWeb.UserAuth, :ensure_authenticated}] do
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
+
+      live "/books", BookLive.Index, :index
+      live "/books/new", BookLive.Index, :new
+      live "/books/:id/edit", BookLive.Index, :edit
+
+      live "/books/:id", BookLive.Show, :show
+      live "/books/:id/show/edit", BookLive.Show, :edit
     end
   end
 
