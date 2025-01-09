@@ -2,7 +2,7 @@ defmodule PurseCraftWeb.BookLive.Index do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Budgeting
-  alias PurseCraft.Budgeting.Book
+  alias PurseCraft.Budgeting.Schemas.Book
 
   @impl true
   def mount(_params, _session, socket) do

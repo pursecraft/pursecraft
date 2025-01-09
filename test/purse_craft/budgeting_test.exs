@@ -4,7 +4,7 @@ defmodule PurseCraft.BudgetingTest do
   alias PurseCraft.Budgeting
 
   describe "books" do
-    alias PurseCraft.Budgeting.Book
+    alias PurseCraft.Budgeting.Schemas.Book
 
     import PurseCraft.BudgetingFixtures
 

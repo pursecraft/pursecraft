@@ -6,7 +6,7 @@ defmodule PurseCraft.Budgeting do
   import Ecto.Query, warn: false
   alias PurseCraft.Repo
 
-  alias PurseCraft.Budgeting.Book
+  alias PurseCraft.Budgeting.Schemas.Book
 
   @doc """
   Returns the list of books.
