@@ -1,12 +1,20 @@
 defmodule PurseCraftWeb.BookLiveTest do
   use PurseCraftWeb.ConnCase
 
+  import PurseCraft.Factory
+
   import Phoenix.LiveViewTest
   import PurseCraft.BudgetingFixtures
 
   @create_attrs %{name: "some name"}
   @update_attrs %{name: "some updated name"}
   @invalid_attrs %{name: nil}
+
+  setup %{conn: conn} do
+    authenticated_conn = log_in_user(conn, insert(:user))
+
+    %{conn: authenticated_conn}
+  end
 
   defp create_book(_) do
     book = book_fixture()
