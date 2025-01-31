@@ -4,7 +4,6 @@ defmodule PurseCraftWeb.BookLiveTest do
   import PurseCraft.Factory
 
   import Phoenix.LiveViewTest
-  import PurseCraft.BudgetingFixtures
 
   @create_attrs %{name: "some name"}
   @update_attrs %{name: "some updated name"}
@@ -17,7 +16,7 @@ defmodule PurseCraftWeb.BookLiveTest do
   end
 
   defp create_book(_) do
-    book = book_fixture()
+    book = insert(:book)
     %{book: book}
   end
 
