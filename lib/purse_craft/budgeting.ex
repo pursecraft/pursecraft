@@ -24,18 +24,42 @@ defmodule PurseCraft.Budgeting do
   @doc """
   Gets a single book.
 
-  Raises `Ecto.NoResultsError` if the Book does not exist.
+  Returns `nil` if the Book does not exist.
 
   ## Examples
 
-      iex> get_book!(123)
+      iex> get_book(123)
       %Book{}
 
-      iex> get_book!(456)
-      ** (Ecto.NoResultsError)
+      iex> get_book(456)
+      nil
 
   """
-  def get_book!(id), do: Repo.get!(Book, id)
+  def get_book(id), do: Repo.get(Book, id)
+
+  @doc """
+  Gets a single book.
+
+  Returns `{:error, :not_found}` if the Book does not exist.
+
+  ## Examples
+
+      iex> fetch_book(123)
+      {:ok, %Book{}}
+
+      iex> fetch_book(456)
+      {:error, :not_found}
+
+  """
+  def fetch_book(id) do
+    case get_book(id) do
+      nil ->
+        {:error, :not_found}
+
+      book ->
+        {:ok, book}
+    end
+  end
 
   @doc """
   Creates a book.

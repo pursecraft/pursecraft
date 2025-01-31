@@ -17,7 +17,7 @@ defmodule PurseCraftWeb.BookLive.Index do
   defp apply_action(socket, :edit, %{"id" => id}) do
     socket
     |> assign(:page_title, "Edit Book")
-    |> assign(:book, Budgeting.get_book!(id))
+    |> assign(:book, Budgeting.get_book(id))
   end
 
   defp apply_action(socket, :new, _params) do
@@ -39,9 +39,13 @@ defmodule PurseCraftWeb.BookLive.Index do
 
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
-    book = Budgeting.get_book!(id)
-    {:ok, _} = Budgeting.delete_book(book)
+    case Budgeting.fetch_book(id) do
+      {:ok, book} ->
+        {:ok, _} = Budgeting.delete_book(book)
+        {:noreply, stream_delete(socket, :books, book)}
 
-    {:noreply, stream_delete(socket, :books, book)}
+      _any ->
+        {:noreply, put_flash(socket, :error, "Book not found.")}
+    end
   end
 end

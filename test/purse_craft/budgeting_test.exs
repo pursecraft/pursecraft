@@ -5,6 +5,7 @@ defmodule PurseCraft.BudgetingTest do
 
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Repo
 
   describe "books" do
     @invalid_attrs %{name: nil}
@@ -14,9 +15,9 @@ defmodule PurseCraft.BudgetingTest do
       assert Budgeting.list_books() == [book]
     end
 
-    test "get_book!/1 returns the book with given id" do
+    test "get_book/1 returns the book with given id" do
       book = insert(:book)
-      assert Budgeting.get_book!(book.id) == book
+      assert Budgeting.get_book(book.id) == book
     end
 
     test "create_book/1 with valid data creates a book" do
@@ -41,13 +42,13 @@ defmodule PurseCraft.BudgetingTest do
     test "update_book/2 with invalid data returns error changeset" do
       book = insert(:book)
       assert {:error, %Ecto.Changeset{}} = Budgeting.update_book(book, @invalid_attrs)
-      assert book == Budgeting.get_book!(book.id)
+      assert book == Repo.get(Book, book.id)
     end
 
     test "delete_book/1 deletes the book" do
       book = insert(:book)
       assert {:ok, %Book{}} = Budgeting.delete_book(book)
-      assert_raise Ecto.NoResultsError, fn -> Budgeting.get_book!(book.id) end
+      refute Repo.get(Book, book.id)
     end
 
     test "change_book/1 returns a book changeset" do

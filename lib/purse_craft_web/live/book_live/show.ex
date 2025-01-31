@@ -13,7 +13,7 @@ defmodule PurseCraftWeb.BookLive.Show do
     {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
-     |> assign(:book, Budgeting.get_book!(id))}
+     |> assign(:book, Budgeting.get_book(id))}
   end
 
   defp page_title(:show), do: "Show Book"
