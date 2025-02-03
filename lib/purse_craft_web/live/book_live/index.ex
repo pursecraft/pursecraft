@@ -4,12 +4,12 @@ defmodule PurseCraftWeb.BookLive.Index do
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Book
 
-  @impl true
+  @impl Phoenix.LiveView
   def mount(_params, _session, socket) do
     {:ok, stream(socket, :books, Budgeting.list_books())}
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def handle_params(params, _url, socket) do
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
   end
@@ -32,12 +32,12 @@ defmodule PurseCraftWeb.BookLive.Index do
     |> assign(:book, nil)
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def handle_info({PurseCraftWeb.BookLive.FormComponent, {:saved, book}}, socket) do
     {:noreply, stream_insert(socket, :books, book)}
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def handle_event("delete", %{"id" => id}, socket) do
     case Budgeting.fetch_book(id) do
       {:ok, book} ->

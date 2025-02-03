@@ -3,7 +3,7 @@ defmodule PurseCraftWeb.BookLive.FormComponent do
 
   alias PurseCraft.Budgeting
 
-  @impl true
+  @impl Phoenix.LiveComponent
   def render(assigns) do
     ~H"""
     <div>
@@ -28,7 +28,7 @@ defmodule PurseCraftWeb.BookLive.FormComponent do
     """
   end
 
-  @impl true
+  @impl Phoenix.LiveComponent
   def update(%{book: book} = assigns, socket) do
     {:ok,
      socket
@@ -38,7 +38,7 @@ defmodule PurseCraftWeb.BookLive.FormComponent do
      end)}
   end
 
-  @impl true
+  @impl Phoenix.LiveComponent
   def handle_event("validate", %{"book" => book_params}, socket) do
     changeset = Budgeting.change_book(socket.assigns.book, book_params)
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}

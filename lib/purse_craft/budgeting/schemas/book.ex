@@ -1,4 +1,9 @@
 defmodule PurseCraft.Budgeting.Schemas.Book do
+  @moduledoc """
+  `Book` is the top-most level resource for Budgeting. This is where all
+  resources related to budgeting are grouped under.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

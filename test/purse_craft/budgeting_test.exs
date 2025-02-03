@@ -1,5 +1,5 @@
 defmodule PurseCraft.BudgetingTest do
-  use PurseCraft.DataCase
+  use PurseCraft.DataCase, async: true
 
   import PurseCraft.Factory
 

@@ -1,5 +1,5 @@
 defmodule PurseCraftWeb.BookLiveTest do
-  use PurseCraftWeb.ConnCase
+  use PurseCraftWeb.ConnCase, async: true
 
   import PurseCraft.Factory
 
@@ -15,7 +15,7 @@ defmodule PurseCraftWeb.BookLiveTest do
     %{conn: authenticated_conn}
   end
 
-  defp create_book(_) do
+  defp create_book(_context) do
     book = insert(:book)
     %{book: book}
   end
@@ -33,8 +33,9 @@ defmodule PurseCraftWeb.BookLiveTest do
     test "saves new book", %{conn: conn} do
       {:ok, index_live, _html} = live(conn, ~p"/books")
 
-      assert index_live |> element("a", "New Book") |> render_click() =~
-               "New Book"
+      assert index_live
+             |> element("a", "New Book")
+             |> render_click() =~ "New Book"
 
       assert_patch(index_live, ~p"/books/new")
 
@@ -56,8 +57,9 @@ defmodule PurseCraftWeb.BookLiveTest do
     test "updates book in listing", %{conn: conn, book: book} do
       {:ok, index_live, _html} = live(conn, ~p"/books")
 
-      assert index_live |> element("#books-#{book.id} a", "Edit") |> render_click() =~
-               "Edit Book"
+      assert index_live
+             |> element("#books-#{book.id} a", "Edit")
+             |> render_click() =~ "Edit Book"
 
       assert_patch(index_live, ~p"/books/#{book}/edit")
 
@@ -79,7 +81,10 @@ defmodule PurseCraftWeb.BookLiveTest do
     test "deletes book in listing", %{conn: conn, book: book} do
       {:ok, index_live, _html} = live(conn, ~p"/books")
 
-      assert index_live |> element("#books-#{book.id} a", "Delete") |> render_click()
+      assert index_live
+             |> element("#books-#{book.id} a", "Delete")
+             |> render_click()
+
       refute has_element?(index_live, "#books-#{book.id}")
     end
   end
@@ -97,8 +102,9 @@ defmodule PurseCraftWeb.BookLiveTest do
     test "updates book within modal", %{conn: conn, book: book} do
       {:ok, show_live, _html} = live(conn, ~p"/books/#{book}")
 
-      assert show_live |> element("a", "Edit") |> render_click() =~
-               "Edit Book"
+      assert show_live
+             |> element("a", "Edit")
+             |> render_click() =~ "Edit Book"
 
       assert_patch(show_live, ~p"/books/#{book}/show/edit")
 
