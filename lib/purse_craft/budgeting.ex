@@ -8,6 +8,10 @@ defmodule PurseCraft.Budgeting do
 
   alias PurseCraft.Budgeting.Schemas.Book
 
+  @type create_book_attrs :: %{name: String.t() | nil} | %{}
+  @type update_book_attrs :: %{name: String.t() | nil} | %{}
+  @type change_book_attrs :: %{name: String.t() | nil} | %{}
+
   @doc """
   Returns the list of books.
 
@@ -17,6 +21,7 @@ defmodule PurseCraft.Budgeting do
       [%Book{}, ...]
 
   """
+  @spec list_books() :: list(Book.t())
   def list_books do
     Repo.all(Book)
   end
@@ -35,6 +40,7 @@ defmodule PurseCraft.Budgeting do
       nil
 
   """
+  @spec get_book(integer()) :: Book.t() | nil
   def get_book(id), do: Repo.get(Book, id)
 
   @doc """
@@ -51,6 +57,7 @@ defmodule PurseCraft.Budgeting do
       {:error, :not_found}
 
   """
+  @spec fetch_book(integer()) :: {:ok, Book.t()} | {:error, :not_found}
   def fetch_book(id) do
     case get_book(id) do
       nil ->
@@ -73,6 +80,7 @@ defmodule PurseCraft.Budgeting do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_book(create_book_attrs()) :: {:ok, Book.t()} | {:error, Ecto.Changeset.t()}
   def create_book(attrs \\ %{}) do
     %Book{}
     |> Book.changeset(attrs)
@@ -91,6 +99,8 @@ defmodule PurseCraft.Budgeting do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_book(Book.t(), update_book_attrs()) ::
+          {:ok, Book.t()} | {:error, Ecto.Changeset.t()}
   def update_book(%Book{} = book, attrs) do
     book
     |> Book.changeset(attrs)
@@ -109,6 +119,7 @@ defmodule PurseCraft.Budgeting do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_book(Book.t()) :: {:ok, Book.t()} | {:error, Ecto.Changeset.t()}
   def delete_book(%Book{} = book) do
     Repo.delete(book)
   end
@@ -122,6 +133,7 @@ defmodule PurseCraft.Budgeting do
       %Ecto.Changeset{data: %Book{}}
 
   """
+  @spec change_book(Book.t(), change_book_attrs()) :: Ecto.Changeset.t()
   def change_book(%Book{} = book, attrs \\ %{}) do
     Book.changeset(book, attrs)
   end

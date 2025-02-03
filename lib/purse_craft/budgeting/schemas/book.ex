@@ -7,6 +7,14 @@ defmodule PurseCraft.Budgeting.Schemas.Book do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{
+          __meta__: Ecto.Schema.Metadata.t(),
+          id: integer() | nil,
+          name: String.t() | nil,
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
   schema "books" do
     field :name, :string
 
@@ -14,6 +22,7 @@ defmodule PurseCraft.Budgeting.Schemas.Book do
   end
 
   @doc false
+  @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(book, attrs) do
     book
     |> cast(attrs, [:name])
