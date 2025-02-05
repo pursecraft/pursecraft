@@ -44,6 +44,10 @@ defmodule PurseCraftWeb.BookLiveTest do
              |> render_change() =~ "can&#39;t be blank"
 
       assert index_live
+             |> form("#book-form", book: @invalid_attrs)
+             |> render_submit() =~ "can&#39;t be blank"
+
+      assert index_live
              |> form("#book-form", book: @create_attrs)
              |> render_submit()
 
@@ -66,6 +70,10 @@ defmodule PurseCraftWeb.BookLiveTest do
       assert index_live
              |> form("#book-form", book: @invalid_attrs)
              |> render_change() =~ "can&#39;t be blank"
+
+      assert index_live
+             |> form("#book-form", book: @invalid_attrs)
+             |> render_submit() =~ "can&#39;t be blank"
 
       assert index_live
              |> form("#book-form", book: @update_attrs)

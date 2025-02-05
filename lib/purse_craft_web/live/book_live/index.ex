@@ -39,13 +39,9 @@ defmodule PurseCraftWeb.BookLive.Index do
 
   @impl Phoenix.LiveView
   def handle_event("delete", %{"id" => id}, socket) do
-    case Budgeting.fetch_book(id) do
-      {:ok, book} ->
-        {:ok, _} = Budgeting.delete_book(book)
-        {:noreply, stream_delete(socket, :books, book)}
+    {:ok, book} = Budgeting.fetch_book(id)
+    {:ok, _} = Budgeting.delete_book(book)
 
-      _any ->
-        {:noreply, put_flash(socket, :error, "Book not found.")}
-    end
+    {:noreply, stream_delete(socket, :books, book)}
   end
 end
