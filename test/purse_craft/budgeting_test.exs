@@ -18,6 +18,19 @@ defmodule PurseCraft.BudgetingTest do
     end
   end
 
+  describe "fetch_book/1" do
+    test "with existing book returns a tuple with the book of the given id" do
+      book = insert(:book)
+
+      assert {:ok, result} = Budgeting.fetch_book(book.id)
+      assert book == result
+    end
+
+    test "with no existing book returns error tuple" do
+      assert {:error, :not_found} = Budgeting.fetch_book(123)
+    end
+  end
+
   describe "get_book/1" do
     test "with existing book returns the book with the given id" do
       book = insert(:book)
