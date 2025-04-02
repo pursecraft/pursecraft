@@ -4,8 +4,8 @@ defmodule PurseCraft.MixProject do
   def project do
     [
       app: :purse_craft,
-      version: "0.1.0",
-      elixir: "~> 1.15",
+      version: "0.0.0",
+      elixir: "1.18.3",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -33,17 +33,12 @@ defmodule PurseCraft.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.8.0-rc.0", override: true},
-      {:phoenix_ecto, "~> 4.5"},
-      {:ecto_sql, "~> 3.10"},
-      {:postgrex, ">= 0.0.0"},
-      {:phoenix_html, "~> 4.1"},
-      {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_view, "~> 1.0"},
-      {:floki, ">= 0.30.0", only: :test},
-      {:phoenix_live_dashboard, "~> 0.8.3"},
-      {:esbuild, "~> 0.9", runtime: Mix.env() == :dev},
-      {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
+      {:bandit, "1.6.11"},
+      {:dns_cluster, "0.1.3"},
+      {:ecto_sql, "3.12.1"},
+      {:esbuild, "0.9.0", runtime: Mix.env() == :dev},
+      {:floki, "0.37.1", only: :test},
+      {:gettext, "0.26.2"},
       {:heroicons,
        github: "tailwindlabs/heroicons",
        tag: "v2.1.1",
@@ -51,14 +46,19 @@ defmodule PurseCraft.MixProject do
        app: false,
        compile: false,
        depth: 1},
-      {:swoosh, "~> 1.16"},
-      {:req, "~> 0.5"},
-      {:telemetry_metrics, "~> 1.0"},
-      {:telemetry_poller, "~> 1.0"},
-      {:gettext, "~> 0.26"},
-      {:jason, "~> 1.2"},
-      {:dns_cluster, "~> 0.1.1"},
-      {:bandit, "~> 1.5"}
+      {:jason, "1.4.4"},
+      {:phoenix, "1.8.0-rc.0", override: true},
+      {:phoenix_ecto, "4.6.3"},
+      {:phoenix_html, "4.2.1"},
+      {:phoenix_live_dashboard, "0.8.6"},
+      {:phoenix_live_reload, "1.5.3", only: :dev},
+      {:phoenix_live_view, "1.0.9"},
+      {:postgrex, "0.20.0"},
+      {:req, "0.5.10"},
+      {:swoosh, "1.18.4"},
+      {:tailwind, "0.3.1", runtime: Mix.env() == :dev},
+      {:telemetry_metrics, "1.1.0"},
+      {:telemetry_poller, "1.2.0"}
     ]
   end
 
