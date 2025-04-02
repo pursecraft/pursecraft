@@ -10,7 +10,15 @@ defmodule PurseCraft.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.cobertura": :test
+      ]
     ]
   end
 
@@ -37,6 +45,7 @@ defmodule PurseCraft.MixProject do
       {:dns_cluster, "0.1.3"},
       {:ecto_sql, "3.12.1"},
       {:esbuild, "0.9.0", runtime: Mix.env() == :dev},
+      {:excoveralls, "0.18.5", only: :test},
       {:floki, "0.37.1", only: :test},
       {:gettext, "0.26.2"},
       {:heroicons,
