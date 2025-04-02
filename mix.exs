@@ -42,6 +42,7 @@ defmodule PurseCraft.MixProject do
   defp deps do
     [
       {:bandit, "1.6.11"},
+      {:credo, "1.7.11", only: [:dev, :test], runtime: false},
       {:dns_cluster, "0.1.3"},
       {:ecto_sql, "3.12.1"},
       {:esbuild, "0.9.0", runtime: Mix.env() == :dev},
@@ -90,8 +91,8 @@ defmodule PurseCraft.MixProject do
         "esbuild purse_craft --minify",
         "phx.digest"
       ],
-      lint: ["format"],
-      "lint.ci": ["format --check-formatted"]
+      lint: ["format", "credo"],
+      "lint.ci": ["format --check-formatted", "credo"]
     ]
   end
 end
