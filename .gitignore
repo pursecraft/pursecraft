@@ -37,3 +37,6 @@ npm-debug.log
 
 /.elixir_ls/
 /.lexical/
+
+/priv/plts/*.plt
+/priv/plts/*.plt.hash
