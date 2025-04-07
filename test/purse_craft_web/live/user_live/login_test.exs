@@ -25,7 +25,8 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       {:ok, _lv, html} =
-        form(lv, "#login_form_magic", user: %{email: user.email})
+        lv
+        |> form("#login_form_magic", user: %{email: user.email})
         |> render_submit()
         |> follow_redirect(conn, ~p"/users/log-in")
 
@@ -39,7 +40,8 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       {:ok, _lv, html} =
-        form(lv, "#login_form_magic", user: %{email: "idonotexist@example.com"})
+        lv
+        |> form("#login_form_magic", user: %{email: "idonotexist@example.com"})
         |> render_submit()
         |> follow_redirect(conn, ~p"/users/log-in")
 
@@ -49,13 +51,20 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
 
   describe "user login - password" do
     test "redirects if user logs in with valid credentials", %{conn: conn} do
-      user = IdentityFactory.insert(:user) |> IdentityHelper.set_password()
+      user =
+        :user
+        |> IdentityFactory.insert()
+        |> IdentityHelper.set_password()
 
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
         form(lv, "#login_form_password",
-          user: %{email: user.email, password: IdentityFactory.valid_password(), remember_me: true}
+          user: %{
+            email: user.email,
+            password: IdentityFactory.valid_password(),
+            remember_me: true
+          }
         )
 
       conn = submit_form(form, conn)

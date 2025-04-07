@@ -1,4 +1,6 @@
 defmodule PurseCraftWeb.UserAuth do
+  @moduledoc false
+
   use PurseCraftWeb, :verified_routes
 
   import Plug.Conn
@@ -42,13 +44,13 @@ defmodule PurseCraftWeb.UserAuth do
     |> redirect(to: user_return_to || signed_in_path(conn))
   end
 
-  defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}, _),
+  defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}, _boolean),
     do: write_remember_me_cookie(conn, token)
 
   defp maybe_write_remember_me_cookie(conn, token, _params, true),
     do: write_remember_me_cookie(conn, token)
 
-  defp maybe_write_remember_me_cookie(conn, _token, _params, _), do: conn
+  defp maybe_write_remember_me_cookie(conn, _token, _params, _boolean), do: conn
 
   defp write_remember_me_cookie(conn, token) do
     conn
@@ -246,5 +248,5 @@ defmodule PurseCraftWeb.UserAuth do
     ~p"/users/settings"
   end
 
-  def signed_in_path(_), do: ~p"/"
+  def signed_in_path(_any), do: ~p"/"
 end

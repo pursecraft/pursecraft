@@ -52,7 +52,7 @@ defmodule PurseCraftWeb.UserLive.Registration do
   def handle_event("save", %{"user" => user_params}, socket) do
     case Identity.register_user(user_params) do
       {:ok, user} ->
-        {:ok, _} =
+        {:ok, _email} =
           Identity.deliver_login_instructions(
             user,
             &url(~p"/users/log-in/#{&1}")

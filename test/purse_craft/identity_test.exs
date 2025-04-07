@@ -23,12 +23,20 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "does not return the user if the password is not valid" do
-      user = Factory.insert(:user) |> IdentityHelper.set_password()
+      user =
+        :user
+        |> Factory.insert()
+        |> IdentityHelper.set_password()
+
       refute Identity.get_user_by_email_and_password(user.email, "invalid")
     end
 
     test "returns the user if the email and password are valid" do
-      %{id: id} = user = Factory.insert(:user) |> IdentityHelper.set_password()
+      %{id: id} =
+        user =
+        :user
+        |> Factory.insert()
+        |> IdentityHelper.set_password()
 
       assert %User{id: ^id} =
                Identity.get_user_by_email_and_password(user.email, Factory.valid_password())
@@ -73,8 +81,9 @@ defmodule PurseCraft.IdentityTest do
       assert "has already been taken" in errors_on(changeset).email
 
       # Now try with the upper cased email too, to check that email case is ignored.
-      {:error, changeset} = Identity.register_user(%{email: String.upcase(email)})
-      assert "has already been taken" in errors_on(changeset).email
+      attrs = %{email: String.upcase(email)}
+      {:error, changeset2} = Identity.register_user(attrs)
+      assert "has already been taken" in errors_on(changeset2).email
     end
 
     test "registers users without password" do
@@ -124,8 +133,8 @@ defmodule PurseCraft.IdentityTest do
           Identity.deliver_user_update_email_instructions(user, "current@example.com", url)
         end)
 
-      {:ok, token} = Base.url_decode64(token, padding: false)
-      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
+      {:ok, decoded_token} = Base.url_decode64(token, padding: false)
+      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, decoded_token))
       assert user_token.user_id == user.id
       assert user_token.sent_to == user.email
       assert user_token.context == "change:current@example.com"
@@ -234,9 +243,9 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "deletes all tokens for the given user", %{user: user} do
-      _ = Identity.generate_user_session_token(user)
+      _token = Identity.generate_user_session_token(user)
 
-      {:ok, _, _} =
+      {:ok, _user, _expired_tokens} =
         Identity.update_user_password(user, %{
           password: "new valid password"
         })
@@ -362,8 +371,8 @@ defmodule PurseCraft.IdentityTest do
           Identity.deliver_login_instructions(user, url)
         end)
 
-      {:ok, token} = Base.url_decode64(token, padding: false)
-      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
+      {:ok, decoded_token} = Base.url_decode64(token, padding: false)
+      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, decoded_token))
       assert user_token.user_id == user.id
       assert user_token.sent_to == user.email
       assert user_token.context == "login"

@@ -93,6 +93,7 @@ defmodule PurseCraft.Identity do
   def sudo_mode?(user, minutes \\ -20)
 
   def sudo_mode?(%User{authenticated_at: ts}, minutes) when is_struct(ts, DateTime) do
+    # credo:disable-for-next-line Credo.Check.Readability.SinglePipe
     DateTime.after?(ts, DateTime.utc_now() |> DateTime.add(minutes, :minute))
   end
 
@@ -123,10 +124,13 @@ defmodule PurseCraft.Identity do
 
     with {:ok, query} <- UserToken.verify_change_email_token_query(token, context),
          %UserToken{sent_to: email} <- Repo.one(query),
-         {:ok, _} <- Repo.transaction(user_email_multi(user, email, context)) do
+         {:ok, _result} <-
+           user
+           |> user_email_multi(email, context)
+           |> Repo.transaction() do
       :ok
     else
-      _ -> :error
+      _any -> :error
     end
   end
 
@@ -173,7 +177,7 @@ defmodule PurseCraft.Identity do
     |> update_user_and_delete_all_tokens()
     |> case do
       {:ok, user, expired_tokens} -> {:ok, user, expired_tokens}
-      {:error, :user, changeset, _} -> {:error, changeset}
+      {:error, :user, changeset, _other_changes} -> {:error, changeset}
     end
   end
 
@@ -204,7 +208,7 @@ defmodule PurseCraft.Identity do
          {user, _token} <- Repo.one(query) do
       user
     else
-      _ -> nil
+      _any -> nil
     end
   end
 
@@ -285,7 +289,10 @@ defmodule PurseCraft.Identity do
   Deletes the signed token with the given context.
   """
   def delete_user_session_token(token) do
-    Repo.delete_all(UserToken.by_token_and_context_query(token, "session"))
+    token
+    |> UserToken.by_token_and_context_query("session")
+    |> Repo.delete_all()
+
     :ok
   end
 

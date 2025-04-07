@@ -29,17 +29,29 @@ defmodule PurseCraftWeb.UserAuthTest do
     end
 
     test "clears everything previously stored in the session", %{conn: conn, user: user} do
-      conn = conn |> put_session(:to_be_removed, "value") |> UserAuth.log_in_user(user)
+      conn =
+        conn
+        |> put_session(:to_be_removed, "value")
+        |> UserAuth.log_in_user(user)
+
       refute get_session(conn, :to_be_removed)
     end
 
     test "redirects to the configured path", %{conn: conn, user: user} do
-      conn = conn |> put_session(:user_return_to, "/hello") |> UserAuth.log_in_user(user)
+      conn =
+        conn
+        |> put_session(:user_return_to, "/hello")
+        |> UserAuth.log_in_user(user)
+
       assert redirected_to(conn) == "/hello"
     end
 
     test "writes a cookie if remember_me is configured", %{conn: conn, user: user} do
-      conn = conn |> fetch_cookies() |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
+      conn =
+        conn
+        |> fetch_cookies()
+        |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
+
       assert get_session(conn, :user_token) == conn.cookies[@remember_me_cookie]
       assert get_session(conn, :user_remember_me) == true
 
@@ -58,11 +70,15 @@ defmodule PurseCraftWeb.UserAuthTest do
     end
 
     test "writes a cookie if remember_me was set in previous session", %{conn: conn, user: user} do
-      conn = conn |> fetch_cookies() |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
+      conn =
+        conn
+        |> fetch_cookies()
+        |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
+
       assert get_session(conn, :user_token) == conn.cookies[@remember_me_cookie]
       assert get_session(conn, :user_remember_me) == true
 
-      conn =
+      conn2 =
         conn
         |> recycle()
         |> Map.replace!(:secret_key_base, PurseCraftWeb.Endpoint.config(:secret_key_base))
@@ -72,11 +88,11 @@ defmodule PurseCraftWeb.UserAuthTest do
       # the conn is already logged in and has the remeber_me cookie set,
       # now we log in again and even without explicitly setting remember_me,
       # the cookie should be set again
-      conn = conn |> UserAuth.log_in_user(user, %{})
-      assert %{value: signed_token, max_age: max_age} = conn.resp_cookies[@remember_me_cookie]
-      assert signed_token != get_session(conn, :user_token)
+      conn3 = UserAuth.log_in_user(conn2, user, %{})
+      assert %{value: signed_token, max_age: max_age} = conn3.resp_cookies[@remember_me_cookie]
+      assert signed_token != get_session(conn3, :user_token)
       assert max_age == 5_184_000
-      assert get_session(conn, :user_remember_me) == true
+      assert get_session(conn3, :user_remember_me) == true
     end
   end
 
@@ -110,7 +126,11 @@ defmodule PurseCraftWeb.UserAuthTest do
     end
 
     test "works even if user is already logged out", %{conn: conn} do
-      conn = conn |> fetch_cookies() |> UserAuth.log_out_user()
+      conn =
+        conn
+        |> fetch_cookies()
+        |> UserAuth.log_out_user()
+
       refute get_session(conn, :user_token)
       assert %{max_age: 0} = conn.resp_cookies[@remember_me_cookie]
       assert redirected_to(conn) == ~p"/"
@@ -122,14 +142,18 @@ defmodule PurseCraftWeb.UserAuthTest do
       user_token = Identity.generate_user_session_token(user)
 
       conn =
-        conn |> put_session(:user_token, user_token) |> UserAuth.fetch_current_scope_for_user([])
+        conn
+        |> put_session(:user_token, user_token)
+        |> UserAuth.fetch_current_scope_for_user([])
 
       assert conn.assigns.current_scope.user.id == user.id
     end
 
     test "authenticates user from cookies", %{conn: conn, user: user} do
       logged_in_conn =
-        conn |> fetch_cookies() |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
+        conn
+        |> fetch_cookies()
+        |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
 
       user_token = logged_in_conn.cookies[@remember_me_cookie]
       %{value: signed_token} = logged_in_conn.resp_cookies[@remember_me_cookie]
@@ -147,7 +171,7 @@ defmodule PurseCraftWeb.UserAuthTest do
     end
 
     test "does not authenticate if data is missing", %{conn: conn, user: user} do
-      _ = Identity.generate_user_session_token(user)
+      _token = Identity.generate_user_session_token(user)
       conn = UserAuth.fetch_current_scope_for_user(conn, [])
       refute get_session(conn, :user_token)
       refute conn.assigns.current_scope
@@ -161,7 +185,10 @@ defmodule PurseCraftWeb.UserAuthTest do
 
     test "assigns current_scope based on a valid user_token", %{conn: conn, user: user} do
       user_token = Identity.generate_user_session_token(user)
-      session = conn |> put_session(:user_token, user_token) |> get_session()
+      session =
+        conn
+        |> put_session(:user_token, user_token)
+        |> get_session()
 
       {:cont, updated_socket} =
         UserAuth.on_mount(:mount_current_scope, %{}, session, %LiveView.Socket{})
@@ -171,7 +198,10 @@ defmodule PurseCraftWeb.UserAuthTest do
 
     test "assigns nil to current_scope assign if there isn't a valid user_token", %{conn: conn} do
       user_token = "invalid_token"
-      session = conn |> put_session(:user_token, user_token) |> get_session()
+      session =
+        conn
+        |> put_session(:user_token, user_token)
+        |> get_session()
 
       {:cont, updated_socket} =
         UserAuth.on_mount(:mount_current_scope, %{}, session, %LiveView.Socket{})
@@ -180,7 +210,7 @@ defmodule PurseCraftWeb.UserAuthTest do
     end
 
     test "assigns nil to current_scope assign if there isn't a user_token", %{conn: conn} do
-      session = conn |> get_session()
+      session = get_session(conn)
 
       {:cont, updated_socket} =
         UserAuth.on_mount(:mount_current_scope, %{}, session, %LiveView.Socket{})
@@ -192,7 +222,10 @@ defmodule PurseCraftWeb.UserAuthTest do
   describe "on_mount :require_authenticated" do
     test "authenticates current_scope based on a valid user_token", %{conn: conn, user: user} do
       user_token = Identity.generate_user_session_token(user)
-      session = conn |> put_session(:user_token, user_token) |> get_session()
+      session =
+        conn
+        |> put_session(:user_token, user_token)
+        |> get_session()
 
       {:cont, updated_socket} =
         UserAuth.on_mount(:require_authenticated, %{}, session, %LiveView.Socket{})
@@ -202,7 +235,10 @@ defmodule PurseCraftWeb.UserAuthTest do
 
     test "redirects to login page if there isn't a valid user_token", %{conn: conn} do
       user_token = "invalid_token"
-      session = conn |> put_session(:user_token, user_token) |> get_session()
+      session =
+        conn
+        |> put_session(:user_token, user_token)
+        |> get_session()
 
       socket = %LiveView.Socket{
         endpoint: PurseCraftWeb.Endpoint,
@@ -214,7 +250,7 @@ defmodule PurseCraftWeb.UserAuthTest do
     end
 
     test "redirects to login page if there isn't a user_token", %{conn: conn} do
-      session = conn |> get_session()
+      session = get_session(conn)
 
       socket = %LiveView.Socket{
         endpoint: PurseCraftWeb.Endpoint,
@@ -229,7 +265,10 @@ defmodule PurseCraftWeb.UserAuthTest do
   describe "on_mount :require_sudo_mode" do
     test "allows users that have authenticated in the last 10 minutes", %{conn: conn, user: user} do
       user_token = Identity.generate_user_session_token(user)
-      session = conn |> put_session(:user_token, user_token) |> get_session()
+      session =
+        conn
+        |> put_session(:user_token, user_token)
+        |> get_session()
 
       socket = %LiveView.Socket{
         endpoint: PurseCraftWeb.Endpoint,
@@ -241,6 +280,7 @@ defmodule PurseCraftWeb.UserAuthTest do
     end
 
     test "redirects when authentication is too old", %{user: user} do
+      # credo:disable-for-next-line Credo.Check.Readability.SinglePipe
       eleven_minutes_ago = DateTime.utc_now() |> DateTime.add(-11, :minute)
 
       socket = %LiveView.Socket{
@@ -263,7 +303,11 @@ defmodule PurseCraftWeb.UserAuthTest do
     end
 
     test "redirects if user is not authenticated", %{conn: conn} do
-      conn = conn |> fetch_flash() |> UserAuth.require_authenticated_user([])
+      conn =
+        conn
+        |> fetch_flash()
+        |> UserAuth.require_authenticated_user([])
+
       assert conn.halted
 
       assert redirected_to(conn) == ~p"/users/log-in"
@@ -281,21 +325,21 @@ defmodule PurseCraftWeb.UserAuthTest do
       assert halted_conn.halted
       assert get_session(halted_conn, :user_return_to) == "/foo"
 
-      halted_conn =
+      halted_conn2 =
         %{conn | path_info: ["foo"], query_string: "bar=baz"}
         |> fetch_flash()
         |> UserAuth.require_authenticated_user([])
 
-      assert halted_conn.halted
-      assert get_session(halted_conn, :user_return_to) == "/foo?bar=baz"
+      assert halted_conn2.halted
+      assert get_session(halted_conn2, :user_return_to) == "/foo?bar=baz"
 
-      halted_conn =
+      halted_conn3 =
         %{conn | path_info: ["foo"], query_string: "bar", method: "POST"}
         |> fetch_flash()
         |> UserAuth.require_authenticated_user([])
 
-      assert halted_conn.halted
-      refute get_session(halted_conn, :user_return_to)
+      assert halted_conn3.halted
+      refute get_session(halted_conn3, :user_return_to)
     end
 
     test "does not redirect if user is authenticated", %{conn: conn, user: user} do

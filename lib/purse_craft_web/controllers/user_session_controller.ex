@@ -22,7 +22,7 @@ defmodule PurseCraftWeb.UserSessionController do
         |> put_flash(:info, info)
         |> UserAuth.log_in_user(user, user_params)
 
-      _ ->
+      _any ->
         conn
         |> put_flash(:error, "The link is invalid or it has expired.")
         |> redirect(to: ~p"/users/log-in")

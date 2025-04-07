@@ -44,7 +44,8 @@ defmodule PurseCraftWeb.UserLive.RegistrationTest do
       form = form(lv, "#registration_form", %{user: %{email: email}})
 
       {:ok, _lv, html} =
-        render_submit(form)
+        form
+        |> render_submit()
         |> follow_redirect(conn, ~p"/users/log-in")
 
       assert html =~
