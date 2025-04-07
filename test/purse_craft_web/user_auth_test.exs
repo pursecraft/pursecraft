@@ -3,7 +3,7 @@ defmodule PurseCraftWeb.UserAuthTest do
 
   alias Phoenix.LiveView
   alias PurseCraft.Identity
-  alias PurseCraft.Identity.Scope
+  alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraftWeb.UserAuth
 
   alias PurseCraft.IdentityFactory

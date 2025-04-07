@@ -1,8 +1,8 @@
-defmodule PurseCraft.Identity.Scope do
+defmodule PurseCraft.Identity.Schemas.Scope do
   @moduledoc """
   Defines the scope of the caller to be used throughout the app.
 
-  The `PurseCraft.Identity.UserScope` allows public interfaces to receive
+  The `PurseCraft.Identity.Schemas.UserScope` allows public interfaces to receive
   information about the caller, such as if the call is initiated from an
   end-user, and if so, which user. Additionally, such a scope can carry fields
   such as "super user" or other privileges for use as authorization, or to
@@ -16,7 +16,7 @@ defmodule PurseCraft.Identity.Scope do
   growing application requirements.
   """
 
-  alias PurseCraft.Identity.User
+  alias PurseCraft.Identity.Schemas.User
 
   defstruct user: nil
 

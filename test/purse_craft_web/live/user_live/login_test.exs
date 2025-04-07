@@ -6,6 +6,8 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
   alias PurseCraft.IdentityFactory
   alias PurseCraft.TestHelpers.IdentityHelper
 
+  alias PurseCraft.Identity.Schemas.UserToken
+
   describe "login page" do
     test "renders login page", %{conn: conn} do
       {:ok, _lv, html} = live(conn, ~p"/users/log-in")
@@ -29,7 +31,7 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
 
       assert html =~ "If your email is in our system"
 
-      assert PurseCraft.Repo.get_by!(PurseCraft.Identity.UserToken, user_id: user.id).context ==
+      assert PurseCraft.Repo.get_by!(UserToken, user_id: user.id).context ==
                "login"
     end
 

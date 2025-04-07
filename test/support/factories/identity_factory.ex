@@ -1,8 +1,8 @@
 defmodule PurseCraft.IdentityFactory do
   use PurseCraft.FactoryTemplate
 
-  alias PurseCraft.Identity.User
-  alias PurseCraft.Identity.UserToken
+  alias PurseCraft.Identity.Schemas.User
+  alias PurseCraft.Identity.Schemas.UserToken
 
   def unconfirmed_user_factory do
     %User{

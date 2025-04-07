@@ -2,7 +2,7 @@ defmodule PurseCraft.Identity.UserNotifier do
   import Swoosh.Email
 
   alias PurseCraft.Mailer
-  alias PurseCraft.Identity.User
+  alias PurseCraft.Identity.Schemas.User
 
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do

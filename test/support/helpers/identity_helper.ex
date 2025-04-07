@@ -7,7 +7,7 @@ defmodule PurseCraft.TestHelpers.IdentityHelper do
   import PurseCraft.IdentityFactory
 
   alias PurseCraft.Identity
-  alias PurseCraft.Identity.UserToken
+  alias PurseCraft.Identity.Schemas.UserToken
   alias PurseCraft.Repo
 
   def set_password(user) do

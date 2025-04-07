@@ -2,8 +2,8 @@ defmodule PurseCraft.IdentityTest do
   use PurseCraft.DataCase, async: true, context: :identity
 
   alias PurseCraft.Identity
-  alias PurseCraft.Identity.User
-  alias PurseCraft.Identity.UserToken
+  alias PurseCraft.Identity.Schemas.User
+  alias PurseCraft.Identity.Schemas.UserToken
   alias PurseCraft.TestHelpers.IdentityHelper
 
   describe "get_user_by_email/1" do

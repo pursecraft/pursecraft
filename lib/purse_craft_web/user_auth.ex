@@ -5,7 +5,8 @@ defmodule PurseCraftWeb.UserAuth do
   import Phoenix.Controller
 
   alias PurseCraft.Identity
-  alias PurseCraft.Identity.Scope
+  alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.Identity.Schemas.User
 
   # Make the remember me cookie valid for 60 days.
   # If you want bump or reduce this value, also change
@@ -241,7 +242,7 @@ defmodule PurseCraftWeb.UserAuth do
 
   @doc "Returns the path to redirect to after log in."
   # the user was already logged in, redirect to settings
-  def signed_in_path(%Plug.Conn{assigns: %{current_scope: %Scope{user: %Identity.User{}}}}) do
+  def signed_in_path(%Plug.Conn{assigns: %{current_scope: %Scope{user: %User{}}}}) do
     ~p"/users/settings"
   end
 

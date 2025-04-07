@@ -46,7 +46,7 @@ defmodule PurseCraftWeb.ConnCase do
   """
   def register_and_log_in_user(%{conn: conn} = context) do
     user = PurseCraft.IdentityFactory.insert(:user)
-    scope = PurseCraft.Identity.Scope.for_user(user)
+    scope = PurseCraft.Identity.Schemas.Scope.for_user(user)
 
     opts =
       context

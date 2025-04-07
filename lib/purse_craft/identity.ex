@@ -6,7 +6,9 @@ defmodule PurseCraft.Identity do
   import Ecto.Query, warn: false
   alias PurseCraft.Repo
 
-  alias PurseCraft.Identity.{User, UserToken, UserNotifier}
+  alias PurseCraft.Identity.Schemas.User
+  alias PurseCraft.Identity.Schemas.UserToken
+  alias PurseCraft.Identity.UserNotifier
 
   ## Database getters
 
@@ -99,7 +101,7 @@ defmodule PurseCraft.Identity do
   @doc """
   Returns an `%Ecto.Changeset{}` for changing the user email.
 
-  See `PurseCraft.Identity.User.email_changeset/3` for a list of supported options.
+  See `PurseCraft.Identity.Schemas.User.email_changeset/3` for a list of supported options.
 
   ## Examples
 
@@ -139,7 +141,7 @@ defmodule PurseCraft.Identity do
   @doc """
   Returns an `%Ecto.Changeset{}` for changing the user password.
 
-  See `PurseCraft.Identity.User.password_changeset/3` for a list of supported options.
+  See `PurseCraft.Identity.Schemas.User.password_changeset/3` for a list of supported options.
 
   ## Examples
 
