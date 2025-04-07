@@ -16,7 +16,16 @@ defmodule PurseCraft.DataCase do
 
   use ExUnit.CaseTemplate
 
-  using do
+  using(opts) do
+    factory =
+      case Keyword.get(opts, :context) do
+        nil ->
+          NoContext
+
+        context ->
+          PurseCraft.ContextToFactoryMappings.factory_for(context)
+      end
+
     quote do
       alias PurseCraft.Repo
 
@@ -24,6 +33,8 @@ defmodule PurseCraft.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import PurseCraft.DataCase
+
+      alias unquote(factory), as: Factory
     end
   end
 

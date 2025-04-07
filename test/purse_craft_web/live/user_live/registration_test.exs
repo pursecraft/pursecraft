@@ -2,7 +2,8 @@ defmodule PurseCraftWeb.UserLive.RegistrationTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import PurseCraft.IdentityFixtures
+
+  alias PurseCraft.IdentityFactory
 
   describe "Registration page" do
     test "renders registration page", %{conn: conn} do
@@ -15,7 +16,7 @@ defmodule PurseCraftWeb.UserLive.RegistrationTest do
     test "redirects if already logged in", %{conn: conn} do
       result =
         conn
-        |> log_in_user(user_fixture())
+        |> log_in_user(IdentityFactory.insert(:user))
         |> live(~p"/users/register")
         |> follow_redirect(conn, ~p"/")
 
@@ -39,8 +40,8 @@ defmodule PurseCraftWeb.UserLive.RegistrationTest do
     test "creates account but does not log in", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/users/register")
 
-      email = unique_user_email()
-      form = form(lv, "#registration_form", user: valid_user_attributes(email: email))
+      email = IdentityFactory.valid_email()
+      form = form(lv, "#registration_form", %{user: %{email: email}})
 
       {:ok, _lv, html} =
         render_submit(form)
@@ -53,7 +54,7 @@ defmodule PurseCraftWeb.UserLive.RegistrationTest do
     test "renders errors for duplicated email", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/users/register")
 
-      user = user_fixture(%{email: "test@email.com"})
+      user = IdentityFactory.insert(:user, email: "test@email.com")
 
       result =
         lv

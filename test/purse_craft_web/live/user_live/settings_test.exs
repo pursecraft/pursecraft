@@ -1,15 +1,18 @@
 defmodule PurseCraftWeb.UserLive.SettingsTest do
   use PurseCraftWeb.ConnCase, async: true
 
-  alias PurseCraft.Identity
   import Phoenix.LiveViewTest
-  import PurseCraft.IdentityFixtures
+
+  alias PurseCraft.IdentityFactory
+  alias PurseCraft.TestHelpers.IdentityHelper
+
+  alias PurseCraft.Identity
 
   describe "Settings page" do
     test "renders settings page", %{conn: conn} do
       {:ok, _lv, html} =
         conn
-        |> log_in_user(user_fixture())
+        |> log_in_user(IdentityFactory.insert(:user))
         |> live(~p"/users/settings")
 
       assert html =~ "Change Email"
@@ -27,7 +30,7 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
     test "redirects if user is not in sudo mode", %{conn: conn} do
       {:ok, conn} =
         conn
-        |> log_in_user(user_fixture(),
+        |> log_in_user(IdentityFactory.insert(:user),
           token_inserted_at: DateTime.add(DateTime.utc_now(), -11, :minute)
         )
         |> live(~p"/users/settings")
@@ -39,12 +42,12 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
 
   describe "update email form" do
     setup %{conn: conn} do
-      user = user_fixture()
+      user = IdentityFactory.insert(:user)
       %{conn: log_in_user(conn, user), user: user}
     end
 
     test "updates the user email", %{conn: conn, user: user} do
-      new_email = unique_user_email()
+      new_email = IdentityFactory.valid_email()
 
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
@@ -91,12 +94,12 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
 
   describe "update password form" do
     setup %{conn: conn} do
-      user = user_fixture()
+      user = IdentityFactory.insert(:user)
       %{conn: log_in_user(conn, user), user: user}
     end
 
     test "updates the user password", %{conn: conn, user: user} do
-      new_password = valid_user_password()
+      new_password = IdentityFactory.valid_password()
 
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
@@ -162,11 +165,11 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
 
   describe "confirm email" do
     setup %{conn: conn} do
-      user = user_fixture()
-      email = unique_user_email()
+      user = IdentityFactory.insert(:user)
+      email = IdentityFactory.valid_email()
 
       token =
-        extract_user_token(fn url ->
+        IdentityHelper.extract_user_token(fn url ->
           Identity.deliver_user_update_email_instructions(%{user | email: email}, user.email, url)
         end)
 

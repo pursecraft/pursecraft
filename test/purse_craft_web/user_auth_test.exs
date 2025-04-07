@@ -6,7 +6,7 @@ defmodule PurseCraftWeb.UserAuthTest do
   alias PurseCraft.Identity.Scope
   alias PurseCraftWeb.UserAuth
 
-  import PurseCraft.IdentityFixtures
+  alias PurseCraft.IdentityFactory
 
   @remember_me_cookie "_purse_craft_web_user_remember_me"
 
@@ -16,7 +16,7 @@ defmodule PurseCraftWeb.UserAuthTest do
       |> Map.replace!(:secret_key_base, PurseCraftWeb.Endpoint.config(:secret_key_base))
       |> init_test_session(%{})
 
-    %{user: %{user_fixture() | authenticated_at: DateTime.utc_now()}, conn: conn}
+    %{user: %{IdentityFactory.insert(:user) | authenticated_at: DateTime.utc_now()}, conn: conn}
   end
 
   describe "log_in_user/3" do

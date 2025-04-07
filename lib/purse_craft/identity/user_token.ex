@@ -21,6 +21,8 @@ defmodule PurseCraft.Identity.UserToken do
     timestamps(type: :utc_datetime, updated_at: false)
   end
 
+  def rand_size, do: @rand_size
+
   @doc """
   Generates a token that will be stored in a signed place,
   such as session or cookie. As they are signed, those
@@ -41,7 +43,7 @@ defmodule PurseCraft.Identity.UserToken do
   session they deem invalid.
   """
   def build_session_token(user) do
-    token = :crypto.strong_rand_bytes(@rand_size)
+    token = :crypto.strong_rand_bytes(rand_size())
     {token, %UserToken{token: token, context: "session", user_id: user.id}}
   end
 
@@ -82,7 +84,7 @@ defmodule PurseCraft.Identity.UserToken do
   end
 
   defp build_hashed_token(user, context, sent_to) do
-    token = :crypto.strong_rand_bytes(@rand_size)
+    token = :crypto.strong_rand_bytes(rand_size())
     hashed_token = :crypto.hash(@hash_algorithm, token)
 
     {Base.url_encode64(token, padding: false),

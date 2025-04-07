@@ -1,20 +1,22 @@
 defmodule PurseCraftWeb.UserSessionControllerTest do
   use PurseCraftWeb.ConnCase, async: true
 
-  import PurseCraft.IdentityFixtures
+  alias PurseCraft.IdentityFactory
+  alias PurseCraft.TestHelpers.IdentityHelper
+
   alias PurseCraft.Identity
 
   setup do
-    %{unconfirmed_user: unconfirmed_user_fixture(), user: user_fixture()}
+    %{unconfirmed_user: IdentityFactory.insert(:unconfirmed_user), user: IdentityFactory.insert(:user)}
   end
 
   describe "POST /users/log-in - email and password" do
     test "logs the user in", %{conn: conn, user: user} do
-      user = set_password(user)
+      user = IdentityHelper.set_password(user)
 
       conn =
         post(conn, ~p"/users/log-in", %{
-          "user" => %{"email" => user.email, "password" => valid_user_password()}
+          "user" => %{"email" => user.email, "password" => IdentityFactory.valid_password()}
         })
 
       assert get_session(conn, :user_token)
@@ -29,13 +31,13 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
     end
 
     test "logs the user in with remember me", %{conn: conn, user: user} do
-      user = set_password(user)
+      user = IdentityHelper.set_password(user)
 
       conn =
         post(conn, ~p"/users/log-in", %{
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password(),
+            "password" => IdentityFactory.valid_password(),
             "remember_me" => "true"
           }
         })
@@ -45,7 +47,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
     end
 
     test "logs the user in with return to", %{conn: conn, user: user} do
-      user = set_password(user)
+      user = IdentityHelper.set_password(user)
 
       conn =
         conn
@@ -53,7 +55,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
         |> post(~p"/users/log-in", %{
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password()
+            "password" => IdentityFactory.valid_password()
           }
         })
 
@@ -74,7 +76,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
 
   describe "POST /users/log-in - magic link" do
     test "logs the user in", %{conn: conn, user: user} do
-      {token, _hashed_token} = generate_user_magic_link_token(user)
+      {token, _hashed_token} = IdentityHelper.generate_user_magic_link_token(user)
 
       conn =
         post(conn, ~p"/users/log-in", %{
@@ -93,7 +95,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
     end
 
     test "confirms unconfirmed user", %{conn: conn, unconfirmed_user: user} do
-      {token, _hashed_token} = generate_user_magic_link_token(user)
+      {token, _hashed_token} = IdentityHelper.generate_user_magic_link_token(user)
       refute user.confirmed_at
 
       conn =

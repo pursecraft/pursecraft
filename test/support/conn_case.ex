@@ -45,7 +45,7 @@ defmodule PurseCraftWeb.ConnCase do
   test context.
   """
   def register_and_log_in_user(%{conn: conn} = context) do
-    user = PurseCraft.IdentityFixtures.user_fixture()
+    user = PurseCraft.IdentityFactory.insert(:user)
     scope = PurseCraft.Identity.Scope.for_user(user)
 
     opts =
@@ -74,6 +74,6 @@ defmodule PurseCraftWeb.ConnCase do
   defp maybe_set_token_inserted_at(_token, nil), do: nil
 
   defp maybe_set_token_inserted_at(token, inserted_at) do
-    PurseCraft.IdentityFixtures.override_token_inserted_at(token, inserted_at)
+    PurseCraft.TestHelpers.IdentityHelper.override_token_inserted_at(token, inserted_at)
   end
 end
