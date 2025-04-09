@@ -2,9 +2,9 @@ defmodule PurseCraft.BudgetingTest do
   use PurseCraft.DataCase
 
   alias PurseCraft.Budgeting
+  alias PurseCraft.Budgeting.Schemas.Book
 
   describe "books" do
-    alias PurseCraft.Budgeting.Book
 
     import PurseCraft.TestHelpers.IdentityHelper, only: [user_scope_fixture: 0]
     import PurseCraft.BudgetingFixtures

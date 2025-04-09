@@ -1,4 +1,4 @@
-defmodule PurseCraft.Budgeting.Book do
+defmodule PurseCraft.Budgeting.Schemas.Book do
   use Ecto.Schema
   import Ecto.Changeset
 

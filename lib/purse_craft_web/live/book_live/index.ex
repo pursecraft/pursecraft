@@ -2,6 +2,7 @@ defmodule PurseCraftWeb.BookLive.Index do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Budgeting
+  alias PurseCraft.Budgeting.Schemas.Book
 
   @impl true
   def render(assigns) do
@@ -60,7 +61,7 @@ defmodule PurseCraftWeb.BookLive.Index do
   end
 
   @impl true
-  def handle_info({type, %PurseCraft.Budgeting.Book{}}, socket)
+  def handle_info({type, %Book{}}, socket)
       when type in [:created, :updated, :deleted] do
     {:noreply, stream(socket, :books, Budgeting.list_books(socket.assigns.current_scope), reset: true)}
   end

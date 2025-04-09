@@ -2,6 +2,7 @@ defmodule PurseCraftWeb.BookLive.Show do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Budgeting
+  alias PurseCraft.Budgeting.Schemas.Book
 
   @impl true
   def render(assigns) do
@@ -39,14 +40,14 @@ defmodule PurseCraftWeb.BookLive.Show do
 
   @impl true
   def handle_info(
-        {:updated, %PurseCraft.Budgeting.Book{id: id} = book},
+        {:updated, %Book{id: id} = book},
         %{assigns: %{book: %{id: id}}} = socket
       ) do
     {:noreply, assign(socket, :book, book)}
   end
 
   def handle_info(
-        {:deleted, %PurseCraft.Budgeting.Book{id: id}},
+        {:deleted, %Book{id: id}},
         %{assigns: %{book: %{id: id}}} = socket
       ) do
     {:noreply,
