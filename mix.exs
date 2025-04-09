@@ -76,6 +76,7 @@ defmodule PurseCraft.MixProject do
       {:phoenix_live_view, "1.0.9"},
       {:postgrex, "0.20.0"},
       {:req, "0.5.10"},
+      {:styler, "1.4.1", only: [:dev, :test], runtime: false},
       {:swoosh, "1.18.4"},
       {:tailwind, "0.3.1", runtime: Mix.env() == :dev},
       {:telemetry_metrics, "1.1.0"},
