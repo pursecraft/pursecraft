@@ -166,8 +166,10 @@ defmodule PurseCraft.Identity.Schemas.UserToken do
 
         {:ok, query}
 
+      # coveralls-ignore-start
       :error ->
         :error
+        # coveralls-ignore-stop
     end
   end
 

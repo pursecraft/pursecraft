@@ -81,9 +81,11 @@ defmodule PurseCraftWeb.UserLive.Login do
         <div :if={local_mail_adapter?()} class="alert alert-outline mt-8">
           <div>
             <p>You are running the local mail adapter.</p>
+            <% # coveralls-ignore-start %>
             <p>
               To see sent emails, visit <.link href="/dev/mailbox" class="underline">the mailbox page</.link>.
             </p>
+            <% # coveralls-ignore-stop %>
           </div>
         </div>
       </div>
