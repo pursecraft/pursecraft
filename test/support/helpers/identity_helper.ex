@@ -37,4 +37,8 @@ defmodule PurseCraft.TestHelpers.IdentityHelper do
     Repo.insert!(user_token)
     {encoded_token, user_token.token}
   end
+
+  def user_scope_fixture do
+    insert(:user)
+  end
 end

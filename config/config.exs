@@ -16,7 +16,7 @@ config :purse_craft, :scopes,
     schema_key: :user_id,
     schema_type: :id,
     schema_table: :users,
-    test_data_fixture: PurseCraft.IdentityFixtures,
+    test_data_fixture: PurseCraft.TestHelpers.IdentityHelper,
     test_login_helper: :register_and_log_in_user
   ]
 
