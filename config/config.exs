@@ -10,7 +10,7 @@ import Config
 config :purse_craft, :scopes,
   user: [
     default: true,
-    module: PurseCraft.Identity.Scope,
+    module: PurseCraft.Identity.Schemas.Scope,
     assign_key: :current_scope,
     access_path: [:user, :id],
     schema_key: :user_id,
