@@ -10,6 +10,28 @@ defmodule PurseCraft.Identity do
   alias PurseCraft.Identity.Schemas.UserToken
   alias PurseCraft.Identity.UserNotifier
 
+  @type register_user_attrs :: %{
+          email: String.t()
+        }
+
+  @type change_user_email_attrs :: %{
+          optional(:email) => String.t()
+        }
+
+  @type change_user_email_option :: {:validate_email, boolean()}
+  @type change_user_email_options :: [change_user_email_option()]
+
+  @type change_user_password_attrs :: %{
+          optional(:password) => String.t()
+        }
+
+  @type change_user_password_option :: {:hash_password, boolean()}
+  @type change_user_password_options :: [change_user_password_option()]
+
+  @type update_user_password_attrs :: %{
+          password: String.t()
+        }
+
   ## Database getters
 
   @doc """
@@ -24,6 +46,7 @@ defmodule PurseCraft.Identity do
       nil
 
   """
+  @spec get_user_by_email(String.t()) :: User.t() | nil
   def get_user_by_email(email) when is_binary(email) do
     Repo.get_by(User, email: email)
   end
@@ -40,6 +63,7 @@ defmodule PurseCraft.Identity do
       nil
 
   """
+  @spec get_user_by_email_and_password(String.t(), String.t()) :: User.t() | nil
   def get_user_by_email_and_password(email, password)
       when is_binary(email) and is_binary(password) do
     user = Repo.get_by(User, email: email)
@@ -60,6 +84,7 @@ defmodule PurseCraft.Identity do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_user!(integer()) :: User.t()
   def get_user!(id), do: Repo.get!(User, id)
 
   ## User registration
@@ -76,6 +101,7 @@ defmodule PurseCraft.Identity do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec register_user(register_user_attrs()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def register_user(attrs) do
     %User{}
     |> User.email_changeset(attrs)
@@ -90,6 +116,7 @@ defmodule PurseCraft.Identity do
   The user is in sudo mode when the last authentication was done no further
   than 20 minutes ago. The limit can be given as second argument in minutes.
   """
+  @spec sudo_mode?(User.t(), integer()) :: boolean()
   def sudo_mode?(user, minutes \\ -20)
 
   def sudo_mode?(%User{authenticated_at: ts}, minutes) when is_struct(ts, DateTime) do
@@ -110,6 +137,8 @@ defmodule PurseCraft.Identity do
       %Ecto.Changeset{data: %User{}}
 
   """
+  @spec change_user_email(User.t(), change_user_email_attrs(), change_user_email_options()) ::
+          Ecto.Changeset.t()
   def change_user_email(user, attrs \\ %{}, opts \\ []) do
     User.email_changeset(user, attrs, opts)
   end
@@ -119,6 +148,7 @@ defmodule PurseCraft.Identity do
 
   If the token matches, the user email is updated and the token is deleted.
   """
+  @spec update_user_email(User.t(), binary()) :: :ok | :error
   def update_user_email(user, token) do
     context = "change:#{user.email}"
 
@@ -153,6 +183,11 @@ defmodule PurseCraft.Identity do
       %Ecto.Changeset{data: %User{}}
 
   """
+  @spec change_user_password(
+          User.t(),
+          change_user_password_attrs(),
+          change_user_password_options()
+        ) :: Ecto.Changeset.t()
   def change_user_password(user, attrs \\ %{}, opts \\ []) do
     User.password_changeset(user, attrs, opts)
   end
@@ -171,6 +206,8 @@ defmodule PurseCraft.Identity do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_user_password(User.t(), update_user_password_attrs()) ::
+          {:ok, User.t(), list(binary())} | {:error, Ecto.Changeset.t()}
   def update_user_password(user, attrs) do
     user
     |> User.password_changeset(attrs)
@@ -186,6 +223,7 @@ defmodule PurseCraft.Identity do
   @doc """
   Generates a session token.
   """
+  @spec generate_user_session_token(User.t()) :: binary()
   def generate_user_session_token(user) do
     {token, user_token} = UserToken.build_session_token(user)
     Repo.insert!(user_token)
@@ -195,6 +233,7 @@ defmodule PurseCraft.Identity do
   @doc """
   Gets the user with the given signed token.
   """
+  @spec get_user_by_session_token(binary()) :: User.t() | nil
   def get_user_by_session_token(token) do
     {:ok, query} = UserToken.verify_session_token_query(token)
     Repo.one(query)
@@ -203,6 +242,7 @@ defmodule PurseCraft.Identity do
   @doc """
   Gets the user with the given magic link token.
   """
+  @spec get_user_by_magic_link_token(binary()) :: User.t() | nil
   def get_user_by_magic_link_token(token) do
     with {:ok, query} <- UserToken.verify_magic_link_token_query(token),
          {user, _token} <- Repo.one(query) do
@@ -230,6 +270,8 @@ defmodule PurseCraft.Identity do
      source of security pitfalls. See the "Mixing magic link and password registration" section of
      `mix help phx.gen.auth`.
   """
+  @spec login_user_by_magic_link(binary()) ::
+          {:ok, User.t(), list(binary())} | {:error, :not_found}
   def login_user_by_magic_link(token) do
     {:ok, query} = UserToken.verify_magic_link_token_query(token)
 
@@ -267,6 +309,8 @@ defmodule PurseCraft.Identity do
       {:ok, %{to: ..., body: ...}}
 
   """
+  @spec deliver_user_update_email_instructions(User.t(), String.t(), function()) ::
+          {:ok, Swoosh.Email.t()} | {:error, atom()}
   def deliver_user_update_email_instructions(%User{} = user, current_email, update_email_url_fun)
       when is_function(update_email_url_fun, 1) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "change:#{current_email}")
@@ -278,6 +322,8 @@ defmodule PurseCraft.Identity do
   @doc ~S"""
   Delivers the magic link login instructions to the given user.
   """
+  @spec deliver_login_instructions(User.t(), function()) ::
+          {:ok, Swoosh.Email.t()} | {:error, atom()}
   def deliver_login_instructions(%User{} = user, magic_link_url_fun)
       when is_function(magic_link_url_fun, 1) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "login")
@@ -288,6 +334,7 @@ defmodule PurseCraft.Identity do
   @doc """
   Deletes the signed token with the given context.
   """
+  @spec delete_user_session_token(binary()) :: :ok
   def delete_user_session_token(token) do
     token
     |> UserToken.by_token_and_context_query("session")

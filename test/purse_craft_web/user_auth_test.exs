@@ -185,6 +185,7 @@ defmodule PurseCraftWeb.UserAuthTest do
 
     test "assigns current_scope based on a valid user_token", %{conn: conn, user: user} do
       user_token = Identity.generate_user_session_token(user)
+
       session =
         conn
         |> put_session(:user_token, user_token)
@@ -198,6 +199,7 @@ defmodule PurseCraftWeb.UserAuthTest do
 
     test "assigns nil to current_scope assign if there isn't a valid user_token", %{conn: conn} do
       user_token = "invalid_token"
+
       session =
         conn
         |> put_session(:user_token, user_token)
@@ -222,6 +224,7 @@ defmodule PurseCraftWeb.UserAuthTest do
   describe "on_mount :require_authenticated" do
     test "authenticates current_scope based on a valid user_token", %{conn: conn, user: user} do
       user_token = Identity.generate_user_session_token(user)
+
       session =
         conn
         |> put_session(:user_token, user_token)
@@ -235,6 +238,7 @@ defmodule PurseCraftWeb.UserAuthTest do
 
     test "redirects to login page if there isn't a valid user_token", %{conn: conn} do
       user_token = "invalid_token"
+
       session =
         conn
         |> put_session(:user_token, user_token)
@@ -265,6 +269,7 @@ defmodule PurseCraftWeb.UserAuthTest do
   describe "on_mount :require_sudo_mode" do
     test "allows users that have authenticated in the last 10 minutes", %{conn: conn, user: user} do
       user_token = Identity.generate_user_session_token(user)
+
       session =
         conn
         |> put_session(:user_token, user_token)

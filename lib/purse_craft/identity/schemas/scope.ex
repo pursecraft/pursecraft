@@ -18,6 +18,10 @@ defmodule PurseCraft.Identity.Schemas.Scope do
 
   alias PurseCraft.Identity.Schemas.User
 
+  @type t :: %__MODULE__{
+          user: PurseCraft.Identity.Schemas.User.t() | nil
+        }
+
   defstruct user: nil
 
   @doc """
@@ -25,6 +29,7 @@ defmodule PurseCraft.Identity.Schemas.Scope do
 
   Returns nil if no user is given.
   """
+  @spec for_user(User.t() | nil) :: t() | nil
   def for_user(%User{} = user) do
     %__MODULE__{user: user}
   end
