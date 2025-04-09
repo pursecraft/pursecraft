@@ -3,10 +3,9 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
 
   import Phoenix.LiveViewTest
 
+  alias PurseCraft.Identity.Schemas.UserToken
   alias PurseCraft.IdentityFactory
   alias PurseCraft.TestHelpers.IdentityHelper
-
-  alias PurseCraft.Identity.Schemas.UserToken
 
   describe "login page" do
     test "renders login page", %{conn: conn} do
@@ -78,9 +77,7 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form_password",
-          user: %{email: "test@email.com", password: "123456", remember_me: true}
-        )
+        form(lv, "#login_form_password", user: %{email: "test@email.com", password: "123456", remember_me: true})
 
       render_submit(form)
 

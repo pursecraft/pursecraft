@@ -3,10 +3,9 @@ defmodule PurseCraftWeb.UserLive.ConfirmationTest do
 
   import Phoenix.LiveViewTest
 
+  alias PurseCraft.Identity
   alias PurseCraft.IdentityFactory
   alias PurseCraft.TestHelpers.IdentityHelper
-
-  alias PurseCraft.Identity
 
   setup do
     %{

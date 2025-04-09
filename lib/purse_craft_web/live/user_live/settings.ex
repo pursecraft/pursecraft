@@ -1,9 +1,10 @@
 defmodule PurseCraftWeb.UserLive.Settings do
+  @moduledoc false
   use PurseCraftWeb, :live_view
 
-  on_mount {PurseCraftWeb.UserAuth, :require_sudo_mode}
-
   alias PurseCraft.Identity
+
+  on_mount {PurseCraftWeb.UserAuth, :require_sudo_mode}
 
   def render(assigns) do
     ~H"""

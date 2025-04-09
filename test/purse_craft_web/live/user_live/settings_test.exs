@@ -3,10 +3,9 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
 
   import Phoenix.LiveViewTest
 
+  alias PurseCraft.Identity
   alias PurseCraft.IdentityFactory
   alias PurseCraft.TestHelpers.IdentityHelper
-
-  alias PurseCraft.Identity
 
   describe "Settings page" do
     test "renders settings page", %{conn: conn} do

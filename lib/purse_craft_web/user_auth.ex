@@ -3,8 +3,8 @@ defmodule PurseCraftWeb.UserAuth do
 
   use PurseCraftWeb, :verified_routes
 
-  import Plug.Conn
   import Phoenix.Controller
+  import Plug.Conn
 
   alias PurseCraft.Identity
   alias PurseCraft.Identity.Schemas.Scope
@@ -47,8 +47,7 @@ defmodule PurseCraftWeb.UserAuth do
   defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}, _boolean),
     do: write_remember_me_cookie(conn, token)
 
-  defp maybe_write_remember_me_cookie(conn, token, _params, true),
-    do: write_remember_me_cookie(conn, token)
+  defp maybe_write_remember_me_cookie(conn, token, _params, true), do: write_remember_me_cookie(conn, token)
 
   defp maybe_write_remember_me_cookie(conn, _token, _params, _boolean), do: conn
 

@@ -4,11 +4,11 @@ defmodule PurseCraft.Identity do
   """
 
   import Ecto.Query, warn: false
-  alias PurseCraft.Repo
 
   alias PurseCraft.Identity.Schemas.User
   alias PurseCraft.Identity.Schemas.UserToken
   alias PurseCraft.Identity.UserNotifier
+  alias PurseCraft.Repo
 
   @type register_user_attrs :: %{
           email: String.t()
@@ -64,8 +64,7 @@ defmodule PurseCraft.Identity do
 
   """
   @spec get_user_by_email_and_password(String.t(), String.t()) :: User.t() | nil
-  def get_user_by_email_and_password(email, password)
-      when is_binary(email) and is_binary(password) do
+  def get_user_by_email_and_password(email, password) when is_binary(email) and is_binary(password) do
     user = Repo.get_by(User, email: email)
     if User.valid_password?(user, password), do: user
   end
@@ -121,7 +120,7 @@ defmodule PurseCraft.Identity do
 
   def sudo_mode?(%User{authenticated_at: ts}, minutes) when is_struct(ts, DateTime) do
     # credo:disable-for-next-line Credo.Check.Readability.SinglePipe
-    DateTime.after?(ts, DateTime.utc_now() |> DateTime.add(minutes, :minute))
+    DateTime.after?(ts, DateTime.add(DateTime.utc_now(), minutes, :minute))
   end
 
   def sudo_mode?(_user, _minutes), do: false
@@ -324,8 +323,7 @@ defmodule PurseCraft.Identity do
   """
   @spec deliver_login_instructions(User.t(), function()) ::
           {:ok, Swoosh.Email.t()} | {:error, atom()}
-  def deliver_login_instructions(%User{} = user, magic_link_url_fun)
-      when is_function(magic_link_url_fun, 1) do
+  def deliver_login_instructions(%User{} = user, magic_link_url_fun) when is_function(magic_link_url_fun, 1) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "login")
     Repo.insert!(user_token)
     UserNotifier.deliver_login_instructions(user, magic_link_url_fun.(encoded_token))

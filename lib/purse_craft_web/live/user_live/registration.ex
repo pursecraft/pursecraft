@@ -1,4 +1,5 @@
 defmodule PurseCraftWeb.UserLive.Registration do
+  @moduledoc false
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Identity
@@ -38,8 +39,7 @@ defmodule PurseCraftWeb.UserLive.Registration do
     """
   end
 
-  def mount(_params, _session, %{assigns: %{current_scope: %{user: user}}} = socket)
-      when not is_nil(user) do
+  def mount(_params, _session, %{assigns: %{current_scope: %{user: user}}} = socket) when not is_nil(user) do
     {:ok, redirect(socket, to: PurseCraftWeb.UserAuth.signed_in_path(socket))}
   end
 

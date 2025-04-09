@@ -2,11 +2,11 @@ defmodule PurseCraftWeb.UserAuthTest do
   use PurseCraftWeb.ConnCase, async: true
 
   alias Phoenix.LiveView
+  alias Phoenix.Socket.Broadcast
   alias PurseCraft.Identity
   alias PurseCraft.Identity.Schemas.Scope
-  alias PurseCraftWeb.UserAuth
-
   alias PurseCraft.IdentityFactory
+  alias PurseCraftWeb.UserAuth
 
   @remember_me_cookie "_purse_craft_web_user_remember_me"
 
@@ -122,7 +122,7 @@ defmodule PurseCraftWeb.UserAuthTest do
       |> put_session(:live_socket_id, live_socket_id)
       |> UserAuth.log_out_user()
 
-      assert_receive %Phoenix.Socket.Broadcast{event: "disconnect", topic: ^live_socket_id}
+      assert_receive %Broadcast{event: "disconnect", topic: ^live_socket_id}
     end
 
     test "works even if user is already logged out", %{conn: conn} do
@@ -286,7 +286,7 @@ defmodule PurseCraftWeb.UserAuthTest do
 
     test "redirects when authentication is too old", %{user: user} do
       # credo:disable-for-next-line Credo.Check.Readability.SinglePipe
-      eleven_minutes_ago = DateTime.utc_now() |> DateTime.add(-11, :minute)
+      eleven_minutes_ago = DateTime.add(DateTime.utc_now(), -11, :minute)
 
       socket = %LiveView.Socket{
         endpoint: AuthAppWeb.Endpoint,
@@ -368,12 +368,12 @@ defmodule PurseCraftWeb.UserAuthTest do
 
       UserAuth.disconnect_sessions(tokens)
 
-      assert_receive %Phoenix.Socket.Broadcast{
+      assert_receive %Broadcast{
         event: "disconnect",
         topic: "users_sessions:dG9rZW4x"
       }
 
-      assert_receive %Phoenix.Socket.Broadcast{
+      assert_receive %Broadcast{
         event: "disconnect",
         topic: "users_sessions:dG9rZW4y"
       }
