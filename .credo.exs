@@ -107,7 +107,6 @@
           #
           {Credo.Check.Readability.AliasAs, []},
           {Credo.Check.Readability.AliasOrder, []},
-          {Credo.Check.Readability.BlockPipe, []},
           {Credo.Check.Readability.FunctionNames, []},
           {Credo.Check.Readability.ImplTrue, []},
           {Credo.Check.Readability.LargeNumbers, []},
@@ -137,7 +136,8 @@
                 excluded: [
                   ~r"/lib/purse_craft_web/components/layouts.ex",
                   ~r"/lib/purse_craft_web/controllers/",
-                  ~r"/lib/purse_craft_web/live/"
+                  ~r"/lib/purse_craft_web/live/",
+                  ~r"/lib/purse_craft_web/user_auth.ex"
                 ]
               }
             ]
@@ -169,7 +169,6 @@
           {Credo.Check.Refactor.MatchInCondition, []},
           {Credo.Check.Refactor.NegatedConditionsInUnless, []},
           {Credo.Check.Refactor.NegatedConditionsWithElse, []},
-          {Credo.Check.Refactor.NegatedIsNil, []},
           {Credo.Check.Refactor.Nesting, []},
           {Credo.Check.Refactor.PassAsyncInTestCases, []},
           {Credo.Check.Refactor.PipeChainStart, []},
@@ -213,9 +212,11 @@
           #   and be sure to use `mix credo --strict` to see low priority checks)
           #
           {Credo.Check.Design.DuplicatedCode, []},
+          {Credo.Check.Readability.BlockPipe, []},
           {Credo.Check.Refactor.ABCSize, []},
           {Credo.Check.Refactor.AppendSingleItem, []},
           {Credo.Check.Refactor.ModuleDependencies, []},
+          {Credo.Check.Refactor.NegatedIsNil, []},
           {Credo.Check.Warning.LazyLogging, []},
           {Credo.Check.Warning.LeakyEnvironment, []},
           {Credo.Check.Warning.MixEnv, []},

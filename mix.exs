@@ -49,6 +49,7 @@ defmodule PurseCraft.MixProject do
   defp deps do
     [
       {:bandit, "1.6.11"},
+      {:bcrypt_elixir, "3.2.1"},
       {:credo, "1.7.11", only: [:dev, :test], runtime: false},
       {:dialyxir, "1.4.5", only: [:dev, :test], runtime: false},
       {:dns_cluster, "0.1.3"},
