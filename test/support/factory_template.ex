@@ -16,8 +16,9 @@ defmodule PurseCraft.FactoryTemplate do
 
   defmacro __using__(_opts) do
     quote do
-      require Ecto
       use ExMachina.Ecto, repo: PurseCraft.Repo
+
+      require Ecto
 
       def boolean, do: Enum.random([true, false])
       def integer(range \\ 0..3_000), do: Enum.random(range)

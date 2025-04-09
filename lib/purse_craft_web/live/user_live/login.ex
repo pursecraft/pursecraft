@@ -1,4 +1,5 @@
 defmodule PurseCraftWeb.UserLive.Login do
+  @moduledoc false
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Identity

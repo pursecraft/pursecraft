@@ -4,6 +4,7 @@ defmodule PurseCraft.Identity.Schemas.User do
   """
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
   alias PurseCraft.Identity.Schemas.User
@@ -69,9 +70,7 @@ defmodule PurseCraft.Identity.Schemas.User do
     changeset =
       changeset
       |> validate_required([:email])
-      |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/,
-        message: "must have the @ sign and no spaces"
-      )
+      |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/, message: "must have the @ sign and no spaces")
       |> validate_length(:email, max: 160)
 
     if Keyword.get(opts, :validate_email, true) do

@@ -2,6 +2,7 @@ defmodule PurseCraft.Identity.Schemas.UserToken do
   @moduledoc false
 
   use Ecto.Schema
+
   import Ecto.Query
 
   alias __MODULE__

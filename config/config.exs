@@ -7,6 +7,44 @@
 # General application configuration
 import Config
 
+# Configure esbuild (the version is required)
+config :esbuild,
+  version: "0.17.11",
+  purse_craft: [
+    args:
+      ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/*),
+    cd: Path.expand("../assets", __DIR__),
+    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
+  ]
+
+# Configures Elixir's Logger
+config :logger, :default_formatter,
+  format: "$time $metadata[$level] $message\n",
+  metadata: [:request_id]
+
+# Use Jason for JSON parsing in Phoenix
+config :phoenix, :json_library, Jason
+
+# Configures the mailer
+#
+# By default it uses the "Local" adapter which stores the emails
+# locally. You can see the emails in your browser, at "/dev/mailbox".
+#
+# For production it's recommended to configure a different adapter
+# at the `config/runtime.exs`.
+config :purse_craft, PurseCraft.Mailer, adapter: Swoosh.Adapters.Local
+
+# Configures the endpoint
+config :purse_craft, PurseCraftWeb.Endpoint,
+  url: [host: "localhost"],
+  adapter: Bandit.PhoenixAdapter,
+  render_errors: [
+    formats: [html: PurseCraftWeb.ErrorHTML, json: PurseCraftWeb.ErrorJSON],
+    layout: false
+  ],
+  pubsub_server: PurseCraft.PubSub,
+  live_view: [signing_salt: "VWLiUyYa"]
+
 config :purse_craft, :scopes,
   user: [
     default: true,
@@ -24,36 +62,6 @@ config :purse_craft,
   ecto_repos: [PurseCraft.Repo],
   generators: [timestamp_type: :utc_datetime]
 
-# Configures the endpoint
-config :purse_craft, PurseCraftWeb.Endpoint,
-  url: [host: "localhost"],
-  adapter: Bandit.PhoenixAdapter,
-  render_errors: [
-    formats: [html: PurseCraftWeb.ErrorHTML, json: PurseCraftWeb.ErrorJSON],
-    layout: false
-  ],
-  pubsub_server: PurseCraft.PubSub,
-  live_view: [signing_salt: "VWLiUyYa"]
-
-# Configures the mailer
-#
-# By default it uses the "Local" adapter which stores the emails
-# locally. You can see the emails in your browser, at "/dev/mailbox".
-#
-# For production it's recommended to configure a different adapter
-# at the `config/runtime.exs`.
-config :purse_craft, PurseCraft.Mailer, adapter: Swoosh.Adapters.Local
-
-# Configure esbuild (the version is required)
-config :esbuild,
-  version: "0.17.11",
-  purse_craft: [
-    args:
-      ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/*),
-    cd: Path.expand("../assets", __DIR__),
-    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
-  ]
-
 # Configure tailwind (the version is required)
 config :tailwind,
   version: "4.0.9",
@@ -64,14 +72,6 @@ config :tailwind,
     ),
     cd: Path.expand("..", __DIR__)
   ]
-
-# Configures Elixir's Logger
-config :logger, :default_formatter,
-  format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id]
-
-# Use Jason for JSON parsing in Phoenix
-config :phoenix, :json_library, Jason
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

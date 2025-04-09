@@ -1,4 +1,5 @@
 defmodule PurseCraft.IdentityFactory do
+  @moduledoc false
   use PurseCraft.FactoryTemplate
 
   alias PurseCraft.Identity.Schemas.User

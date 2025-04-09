@@ -1,10 +1,9 @@
 defmodule PurseCraftWeb.UserSessionControllerTest do
   use PurseCraftWeb.ConnCase, async: true
 
+  alias PurseCraft.Identity
   alias PurseCraft.IdentityFactory
   alias PurseCraft.TestHelpers.IdentityHelper
-
-  alias PurseCraft.Identity
 
   setup do
     %{
