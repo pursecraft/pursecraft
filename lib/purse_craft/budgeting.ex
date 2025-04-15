@@ -4,10 +4,13 @@ defmodule PurseCraft.Budgeting do
   """
 
   import Ecto.Query, warn: false
-  alias PurseCraft.Repo
 
+  alias Ecto.Multi
   alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.Policy
+  alias PurseCraft.Repo
 
   @doc """
   Subscribes to scoped notifications about any book changes.
@@ -60,6 +63,32 @@ defmodule PurseCraft.Budgeting do
   """
   def get_book!(%Scope{} = scope, id) do
     Repo.get_by!(Book, id: id, user_id: scope.user.id)
+  end
+
+  @doc """
+  Gets a single `Book` by its `external_id`.
+
+  Raises `LetMe.UnauthorizedError` if the given scope is not authorized to
+  view the book.
+
+  Raises `Ecto.NoResultsError` if the Book does not exist.
+
+  ## Examples
+
+      iex> get_book_by_external_id!(authorized_scope, abcd-1234)
+      %Book{}
+
+      iex> get_book_by_external_id!(authorized_scope, efgh-4321)
+      ** (Ecto.NoResultsError)
+
+      iex> get_book_by_external_id!(unauthorized_scope, abcd-1234)
+      ** (LetMe.UnauthorizedError)
+
+  """
+  def get_book_by_external_id!(%Scope{} = scope, external_id) do
+    :ok = Policy.authorize!(:book_read, scope)
+
+    Repo.get_by!(Book, external_id: external_id)
   end
 
   @doc """

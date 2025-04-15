@@ -56,6 +56,17 @@ config :purse_craft, :scopes,
     schema_table: :users,
     test_data_fixture: PurseCraft.TestHelpers.IdentityHelper,
     test_login_helper: :register_and_log_in_user
+  ],
+  book: [
+    module: PurseCraft.Identity.Schemas.Scope,
+    assign_key: :current_scope,
+    access_path: [:book, :id],
+    route_prefix: "/books/:id",
+    schema_key: :book_id,
+    schema_type: :id,
+    schema_table: :books,
+    test_data_fixture: PurseCraft.TestHelpers.BudgetingHelper,
+    test_login_helper: :register_and_log_in_user_with_book
   ]
 
 config :purse_craft,
