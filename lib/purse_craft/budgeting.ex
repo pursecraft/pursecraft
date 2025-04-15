@@ -6,10 +6,10 @@ defmodule PurseCraft.Budgeting do
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
+  alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Identity.Schemas.Scope
-  alias PurseCraft.Policy
   alias PurseCraft.Repo
 
   @doc """
@@ -39,12 +39,20 @@ defmodule PurseCraft.Budgeting do
 
   ## Examples
 
-      iex> list_books(scope)
+      iex> list_books(authorized_scope)
       [%Book{}, ...]
+
+      iex> list_books(unauthorized_scope)
+      {:error, :unauthorized}
 
   """
   def list_books(%Scope{} = scope) do
-    Repo.all(from book in Book, where: book.user_id == ^scope.user.id)
+    with :ok <- Policy.authorize(:book_list, scope) do
+      Book
+      |> join(:inner, [b], bu in BookUser, on: bu.book_id == b.id)
+      |> where([_b, bu], bu.user_id == ^scope.user.id)
+      |> Repo.all()
+    end
   end
 
   @doc """
@@ -86,7 +94,7 @@ defmodule PurseCraft.Budgeting do
 
   """
   def get_book_by_external_id!(%Scope{} = scope, external_id) do
-    :ok = Policy.authorize!(:book_read, scope)
+    :ok = Policy.authorize!(:book_read, scope, %{book: %Book{external_id: external_id}})
 
     Repo.get_by!(Book, external_id: external_id)
   end
@@ -96,20 +104,36 @@ defmodule PurseCraft.Budgeting do
 
   ## Examples
 
-      iex> create_book(%{field: value})
+      iex> create_book(authorized_scope, %{field: value})
       {:ok, %Book{}}
 
-      iex> create_book(%{field: bad_value})
+      iex> create_book(authorized_scope, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
+
+      iex> create_book(unauthorized_scope, %{field: value})
+      {:error, :unauthorized}
 
   """
   def create_book(%Scope{} = scope, attrs \\ %{}) do
-    with {:ok, book = %Book{}} <-
-           %Book{}
-           |> Book.changeset(attrs, scope)
-           |> Repo.insert() do
-      broadcast(scope, {:created, book})
-      {:ok, book}
+    with :ok <- Policy.authorize(:book_create, scope) do
+      Multi.new()
+      |> Multi.insert(:book, Book.changeset(%Book{}, attrs))
+      |> Multi.insert(:book_user, fn %{book: book} ->
+        BookUser.changeset(%BookUser{}, %{
+          book_id: book.id,
+          user_id: scope.user.id,
+          role: :owner
+        })
+      end)
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{book: book}} ->
+          broadcast(scope, {:created, book})
+          {:ok, book}
+
+        {:error, _operations, changeset, _changes} ->
+          {:error, changeset}
+      end
     end
   end
 
@@ -118,19 +142,21 @@ defmodule PurseCraft.Budgeting do
 
   ## Examples
 
-      iex> update_book(book, %{field: new_value})
+      iex> update_book(authorized_scope, book, %{field: new_value})
       {:ok, %Book{}}
 
-      iex> update_book(book, %{field: bad_value})
+      iex> update_book(authorized_scope, book, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
+
+      iex> update_book(unauthorized_scope, book, %{field: new_value})
+      {:error, :unauthorized}
 
   """
   def update_book(%Scope{} = scope, %Book{} = book, attrs) do
-    true = book.user_id == scope.user.id
-
-    with {:ok, book = %Book{}} <-
+    with :ok <- Policy.authorize(:book_update, scope, %{book: book}),
+         {:ok, book = %Book{}} <-
            book
-           |> Book.changeset(attrs, scope)
+           |> Book.changeset(attrs)
            |> Repo.update() do
       broadcast(scope, {:updated, book})
       {:ok, book}
@@ -142,17 +168,19 @@ defmodule PurseCraft.Budgeting do
 
   ## Examples
 
-      iex> delete_book(book)
+      iex> delete_book(authorized_scope, book)
       {:ok, %Book{}}
 
-      iex> delete_book(book)
+      iex> delete_book(authorized_scope, book)
       {:error, %Ecto.Changeset{}}
+
+      iex> delete_book(authorized_scope, book)
+      {:error, :unauthorized}
 
   """
   def delete_book(%Scope{} = scope, %Book{} = book) do
-    true = book.user_id == scope.user.id
-
-    with {:ok, book = %Book{}} <-
+    with :ok <- Policy.authorize(:book_delete, scope, %{book: book}),
+         {:ok, book = %Book{}} <-
            Repo.delete(book) do
       broadcast(scope, {:deleted, book})
       {:ok, book}
@@ -168,9 +196,7 @@ defmodule PurseCraft.Budgeting do
       %Ecto.Changeset{data: %Book{}}
 
   """
-  def change_book(%Scope{} = scope, %Book{} = book, attrs \\ %{}) do
-    true = book.user_id == scope.user.id
-
-    Book.changeset(book, attrs, scope)
+  def change_book(%Book{} = book, attrs \\ %{}) do
+    Book.changeset(book, attrs)
   end
 end

@@ -15,7 +15,7 @@ defmodule PurseCraftWeb.BookLive.Show do
           <.button navigate={~p"/books"}>
             <.icon name="hero-arrow-left" />
           </.button>
-          <.button variant="primary" navigate={~p"/books/#{@book}/edit?return_to=show"}>
+          <.button variant="primary" navigate={~p"/books/#{@book.external_id}/edit?return_to=show"}>
             <.icon name="hero-pencil-square" /> Edit book
           </.button>
         </:actions>
@@ -29,26 +29,26 @@ defmodule PurseCraftWeb.BookLive.Show do
   end
 
   @impl true
-  def mount(%{"id" => id}, _session, socket) do
+  def mount(%{"external_id" => external_id}, _session, socket) do
     Budgeting.subscribe_books(socket.assigns.current_scope)
 
     {:ok,
      socket
      |> assign(:page_title, "Show Book")
-     |> assign(:book, Budgeting.get_book!(socket.assigns.current_scope, id))}
+     |> assign(:book, Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id))}
   end
 
   @impl true
   def handle_info(
-        {:updated, %Book{id: id} = book},
-        %{assigns: %{book: %{id: id}}} = socket
+        {:updated, %Book{external_id: external_id} = book},
+        %{assigns: %{book: %{external_id: external_id}}} = socket
       ) do
     {:noreply, assign(socket, :book, book)}
   end
 
   def handle_info(
-        {:deleted, %Book{id: id}},
-        %{assigns: %{book: %{id: id}}} = socket
+        {:deleted, %Book{external_id: external_id}},
+        %{assigns: %{book: %{external_id: external_id}}} = socket
       ) do
     {:noreply,
      socket

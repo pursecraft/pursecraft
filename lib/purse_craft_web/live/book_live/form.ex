@@ -35,27 +35,27 @@ defmodule PurseCraftWeb.BookLive.Form do
   defp return_to("show"), do: "show"
   defp return_to(_), do: "index"
 
-  defp apply_action(socket, :edit, %{"id" => id}) do
-    book = Budgeting.get_book!(socket.assigns.current_scope, id)
+  defp apply_action(socket, :edit, %{"external_id" => external_id}) do
+    book = Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id)
 
     socket
     |> assign(:page_title, "Edit Book")
     |> assign(:book, book)
-    |> assign(:form, to_form(Budgeting.change_book(socket.assigns.current_scope, book)))
+    |> assign(:form, to_form(Budgeting.change_book(book)))
   end
 
   defp apply_action(socket, :new, _params) do
-    book = %Book{user_id: socket.assigns.current_scope.user.id}
+    book = %Book{}
 
     socket
     |> assign(:page_title, "New Book")
     |> assign(:book, book)
-    |> assign(:form, to_form(Budgeting.change_book(socket.assigns.current_scope, book)))
+    |> assign(:form, to_form(Budgeting.change_book(book)))
   end
 
   @impl true
   def handle_event("validate", %{"book" => book_params}, socket) do
-    changeset = Budgeting.change_book(socket.assigns.current_scope, socket.assigns.book, book_params)
+    changeset = Budgeting.change_book(socket.assigns.book, book_params)
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
 
@@ -70,7 +70,7 @@ defmodule PurseCraftWeb.BookLive.Form do
          socket
          |> put_flash(:info, "Book updated successfully")
          |> push_navigate(
-           to: return_path(socket.assigns.current_scope, socket.assigns.return_to, book)
+           to: return_path(socket.assigns.current_scope, socket.assigns.return_to, book.external_id)
          )}
 
       {:error, %Ecto.Changeset{} = changeset} ->

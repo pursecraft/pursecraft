@@ -3,10 +3,12 @@ defmodule PurseCraft.Repo.Migrations.CreateBooks do
 
   def change do
     create table(:books) do
+      add :external_id, :uuid, null: false
       add :name, :string
-      add :user_id, references(:users, type: :id, on_delete: :delete_all)
 
       timestamps(type: :utc_datetime)
     end
+
+    create unique_index(:books, [:external_id])
   end
 end

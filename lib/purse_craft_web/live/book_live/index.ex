@@ -20,18 +20,19 @@ defmodule PurseCraftWeb.BookLive.Index do
       <.table
         id="books"
         rows={@streams.books}
-        row_click={fn {_id, book} -> JS.navigate(~p"/books/#{book}") end}
+        row_id={fn {_id, book} -> "books-#{book.external_id}" end}
+        row_click={fn {_id, book} -> JS.navigate(~p"/books/#{book.external_id}") end}
       >
         <:col :let={{_id, book}} label="Name">{book.name}</:col>
         <:action :let={{_id, book}}>
           <div class="sr-only">
-            <.link navigate={~p"/books/#{book}"}>Show</.link>
+            <.link navigate={~p"/books/#{book.external_id}"}>Show</.link>
           </div>
-          <.link navigate={~p"/books/#{book}/edit"}>Edit</.link>
+          <.link navigate={~p"/books/#{book.external_id}/edit"}>Edit</.link>
         </:action>
-        <:action :let={{id, book}}>
+        <:action :let={{_id, book}}>
           <.link
-            phx-click={JS.push("delete", value: %{id: book.id}) |> hide("##{id}")}
+            phx-click={JS.push("delete", value: %{external_id: book.external_id}) |> hide("#books-#{book.external_id}")}
             data-confirm="Are you sure?"
           >
             Delete
@@ -53,8 +54,8 @@ defmodule PurseCraftWeb.BookLive.Index do
   end
 
   @impl true
-  def handle_event("delete", %{"id" => id}, socket) do
-    book = Budgeting.get_book!(socket.assigns.current_scope, id)
+  def handle_event("delete", %{"external_id" => external_id}, socket) do
+    book = Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id)
     {:ok, _} = Budgeting.delete_book(socket.assigns.current_scope, book)
 
     {:noreply, stream_delete(socket, :books, book)}

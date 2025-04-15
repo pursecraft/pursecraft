@@ -54,14 +54,25 @@ defmodule PurseCraftWeb.Router do
       on_mount: [{PurseCraftWeb.UserAuth, :require_authenticated}] do
       live "/books", BookLive.Index, :index
       live "/books/new", BookLive.Form, :new
-      live "/books/:id", BookLive.Show, :show
-      live "/books/:id/edit", BookLive.Form, :edit
 
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
     end
 
     post "/users/update-password", UserSessionController, :update_password
+  end
+
+  scope "/", PurseCraftWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live_session :require_authenticated_book_user,
+      on_mount: [
+        {PurseCraftWeb.UserAuth, :require_authenticated},
+        {PurseCraftWeb.UserAuth, :assign_book_to_scope},
+      ] do
+      live "/books/:external_id", BookLive.Show, :show
+      live "/books/:external_id/edit", BookLive.Form, :edit
+    end
   end
 
   scope "/", PurseCraftWeb do
