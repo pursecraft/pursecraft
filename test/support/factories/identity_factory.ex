@@ -2,8 +2,13 @@ defmodule PurseCraft.IdentityFactory do
   @moduledoc false
   use PurseCraft.FactoryTemplate
 
+  alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Identity.Schemas.User
   alias PurseCraft.Identity.Schemas.UserToken
+
+  def scope_factory do
+    %Scope{}
+  end
 
   def unconfirmed_user_factory do
     %User{

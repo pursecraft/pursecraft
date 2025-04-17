@@ -46,7 +46,7 @@ defmodule PurseCraftWeb.ConnCase do
   """
   def register_and_log_in_user(%{conn: conn} = context) do
     user = PurseCraft.IdentityFactory.insert(:user)
-    scope = PurseCraft.Identity.Schemas.Scope.for_user(user)
+    scope = PurseCraft.IdentityFactory.build(:scope, user: user)
 
     opts =
       context
@@ -54,6 +54,28 @@ defmodule PurseCraftWeb.ConnCase do
       |> Enum.to_list()
 
     %{conn: log_in_user(conn, user, opts), user: user, scope: scope}
+  end
+
+  @doc """
+  Setup helper that registers and logs in users under a book.
+
+      setup :register_and_log_in_user_with_book
+
+  It stores an updated connection, a registered user, and an active book in the
+  test context.
+  """
+  def register_and_log_in_user_with_book(%{conn: conn} = context) do
+    user = PurseCraft.IdentityFactory.insert(:user)
+    book = PurseCraft.BudgetingFactory.insert(:book)
+    PurseCraft.BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id)
+    scope = PurseCraft.IdentityFactory.build(:scope, user: user)
+
+    opts =
+      context
+      |> Map.take([:token_inserted_at])
+      |> Enum.to_list()
+
+    %{conn: log_in_user(conn, user, opts), user: user, scope: scope, book: book}
   end
 
   @doc """

@@ -58,7 +58,7 @@ defmodule PurseCraftWeb.BookLive.Index do
     book = Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id)
     {:ok, _} = Budgeting.delete_book(socket.assigns.current_scope, book)
 
-    {:noreply, stream_delete(socket, :books, book)}
+    {:noreply, stream_delete_by_dom_id(socket, :books, "books-#{book.external_id}")}
   end
 
   @impl true

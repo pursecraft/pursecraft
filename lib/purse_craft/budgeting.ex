@@ -86,9 +86,6 @@ defmodule PurseCraft.Budgeting do
       iex> get_book_by_external_id!(authorized_scope, abcd-1234)
       %Book{}
 
-      iex> get_book_by_external_id!(authorized_scope, efgh-4321)
-      ** (Ecto.NoResultsError)
-
       iex> get_book_by_external_id!(unauthorized_scope, abcd-1234)
       ** (LetMe.UnauthorizedError)
 

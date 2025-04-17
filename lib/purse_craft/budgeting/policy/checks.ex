@@ -12,7 +12,6 @@ defmodule PurseCraft.Budgeting.Policy.Checks do
   alias PurseCraft.Repo
 
   def own_resource(%Scope{user: %User{} = user}, %{book: %Book{} = book}) do
-    dbg(book)
     case get_book_user(book, user) do
       nil ->
         false

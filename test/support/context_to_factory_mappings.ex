@@ -1,6 +1,7 @@
 defmodule PurseCraft.ContextToFactoryMappings do
   @moduledoc false
   @context_to_factory_mappings %{
+    budgeting: PurseCraft.BudgetingFactory,
     identity: PurseCraft.IdentityFactory
   }
 
