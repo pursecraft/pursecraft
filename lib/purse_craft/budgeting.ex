@@ -12,6 +12,18 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Repo
 
+  @type create_book_attrs :: %{
+          optional(:name) => String.t()
+        }
+
+  @type update_book_attrs :: %{
+          optional(:name) => String.t()
+        }
+
+  @type change_book_attrs :: %{
+          optional(:name) => String.t()
+        }
+
   @doc """
   Subscribes to scoped notifications about any book changes.
 
@@ -22,6 +34,7 @@ defmodule PurseCraft.Budgeting do
     * {:deleted, %Book{}}
 
   """
+  @spec subscribe_books(Scope.t()) :: :ok | {:error, term()}
   def subscribe_books(%Scope{} = scope) do
     key = scope.user.id
 
@@ -46,6 +59,7 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
+  @spec list_books(Scope.t()) :: list(Book.t()) | {:error, :unauthorized}
   def list_books(%Scope{} = scope) do
     with :ok <- Policy.authorize(:book_list, scope) do
       Book
@@ -53,24 +67,6 @@ defmodule PurseCraft.Budgeting do
       |> where([_b, bu], bu.user_id == ^scope.user.id)
       |> Repo.all()
     end
-  end
-
-  @doc """
-  Gets a single book.
-
-  Raises `Ecto.NoResultsError` if the Book does not exist.
-
-  ## Examples
-
-      iex> get_book!(123)
-      %Book{}
-
-      iex> get_book!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_book!(%Scope{} = scope, id) do
-    Repo.get_by!(Book, id: id, user_id: scope.user.id)
   end
 
   @doc """
@@ -90,6 +86,7 @@ defmodule PurseCraft.Budgeting do
       ** (LetMe.UnauthorizedError)
 
   """
+  @spec get_book_by_external_id!(Scope.t(), Ecto.UUID.t()) :: Book.t()
   def get_book_by_external_id!(%Scope{} = scope, external_id) do
     :ok = Policy.authorize!(:book_read, scope, %{book: %Book{external_id: external_id}})
 
@@ -111,6 +108,8 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
+  @spec create_book(Scope.t(), create_book_attrs()) ::
+          {:ok, Book.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
   def create_book(%Scope{} = scope, attrs \\ %{}) do
     with :ok <- Policy.authorize(:book_create, scope) do
       Multi.new()
@@ -149,6 +148,8 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
+  @spec update_book(Scope.t(), Book.t(), update_book_attrs()) ::
+          {:ok, Book.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
   def update_book(%Scope{} = scope, %Book{} = book, attrs) do
     with :ok <- Policy.authorize(:book_update, scope, %{book: book}),
          {:ok, %Book{} = book} <-
@@ -169,12 +170,10 @@ defmodule PurseCraft.Budgeting do
       {:ok, %Book{}}
 
       iex> delete_book(authorized_scope, book)
-      {:error, %Ecto.Changeset{}}
-
-      iex> delete_book(authorized_scope, book)
       {:error, :unauthorized}
 
   """
+  @spec delete_book(Scope.t(), Book.t()) :: {:ok, Book.t()} | {:error, :unauthorized}
   def delete_book(%Scope{} = scope, %Book{} = book) do
     with :ok <- Policy.authorize(:book_delete, scope, %{book: book}),
          {:ok, %Book{} = book} <-
@@ -193,6 +192,7 @@ defmodule PurseCraft.Budgeting do
       %Ecto.Changeset{data: %Book{}}
 
   """
+  @spec change_book(Book.t(), change_book_attrs()) :: Ecto.Changeset.t()
   def change_book(%Book{} = book, attrs \\ %{}) do
     Book.changeset(book, attrs)
   end

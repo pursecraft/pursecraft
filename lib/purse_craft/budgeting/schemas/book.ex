@@ -12,6 +12,19 @@ defmodule PurseCraft.Budgeting.Schemas.Book do
   alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Budgeting.Schemas.User
 
+  @type t :: %__MODULE__{
+          __meta__: Ecto.Schema.Metadata.t(),
+          id: integer() | nil,
+          name: String.t() | nil,
+          external_id: Ecto.UUID.t() | nil,
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
+  @type changeset_attrs :: %{
+          optional(:name) => String.t()
+        }
+
   schema "books" do
     field :external_id, Ecto.UUID, autogenerate: true
     field :name, :string
@@ -23,6 +36,7 @@ defmodule PurseCraft.Budgeting.Schemas.Book do
   end
 
   @doc false
+  @spec changeset(t(), changeset_attrs()) :: Ecto.Changeset.t()
   def changeset(book, attrs) do
     book
     |> cast(attrs, [:name])

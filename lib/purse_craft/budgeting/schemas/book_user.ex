@@ -14,6 +14,22 @@ defmodule PurseCraft.Budgeting.Schemas.BookUser do
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.User
 
+  @type t :: %__MODULE__{
+          __meta__: Ecto.Schema.Metadata.t(),
+          id: integer() | nil,
+          role: atom() | nil,
+          book_id: integer() | nil,
+          user_id: integer() | nil,
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
+  @type changeset_attrs :: %{
+          book_id: integer(),
+          user_id: integer(),
+          role: atom()
+        }
+
   schema "books_users" do
     field :role, Ecto.Enum, values: [:owner, :editor, :commenter]
 
@@ -26,6 +42,7 @@ defmodule PurseCraft.Budgeting.Schemas.BookUser do
   @required_attrs [:book_id, :user_id, :role]
 
   @doc false
+  @spec changeset(t(), changeset_attrs()) :: Ecto.Changeset.t()
   def changeset(book_user, attrs) do
     book_user
     |> cast(attrs, @required_attrs)

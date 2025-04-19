@@ -11,6 +11,7 @@ defmodule PurseCraft.Budgeting.Policy.Checks do
   alias PurseCraft.Identity.Schemas.User
   alias PurseCraft.Repo
 
+  @spec own_resource(Scope.t(), any()) :: boolean()
   def own_resource(%Scope{user: %User{} = user}, %{book: %Book{} = book}) do
     case get_book_user(book, user) do
       nil ->
@@ -23,6 +24,7 @@ defmodule PurseCraft.Budgeting.Policy.Checks do
 
   def own_resource(_scope, _object), do: false
 
+  @spec role(Scope.t(), any(), atom()) :: boolean()
   def role(%Scope{user: %User{} = user}, %{book: %Book{} = book}, role) do
     case get_book_user(book, user) do
       nil ->
