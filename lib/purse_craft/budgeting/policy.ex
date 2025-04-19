@@ -1,4 +1,5 @@
 defmodule PurseCraft.Budgeting.Policy do
+  @moduledoc false
   use LetMe.Policy
 
   object :book do

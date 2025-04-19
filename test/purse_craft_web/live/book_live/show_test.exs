@@ -30,7 +30,7 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
 
       {:ok, show_live, _html} = live(conn, ~p"/books/#{book.external_id}")
 
-      assert {:ok, form_live, _} =
+      assert {:ok, form_live, _html} =
                show_live
                |> element("a", "Edit")
                |> render_click()
@@ -60,7 +60,7 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
 
       {:ok, show_live, _html} = live(conn, ~p"/books/#{book.external_id}")
 
-      assert {:ok, form_live, _} =
+      assert {:ok, form_live, _html} =
                show_live
                |> element("a", "Edit")
                |> render_click()

@@ -1,5 +1,12 @@
 defmodule PurseCraft.Budgeting.Schemas.Book do
+  @moduledoc """
+  A `Book` represents the user's budget. This is also the
+  umbrella table where everything about budgets are grouped
+  under.
+  """
+
   use Ecto.Schema
+
   import Ecto.Changeset
 
   alias PurseCraft.Budgeting.Schemas.BookUser

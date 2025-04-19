@@ -1,10 +1,11 @@
 defmodule PurseCraftWeb.BookLive.Form do
+  @moduledoc false
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Book
 
-  @impl true
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -24,7 +25,7 @@ defmodule PurseCraftWeb.BookLive.Form do
     """
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def mount(params, _session, socket) do
     {:ok,
      socket
@@ -33,7 +34,7 @@ defmodule PurseCraftWeb.BookLive.Form do
   end
 
   defp return_to("show"), do: "show"
-  defp return_to(_), do: "index"
+  defp return_to(_action), do: "index"
 
   defp apply_action(socket, :edit, %{"external_id" => external_id}) do
     book = Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id)
@@ -53,7 +54,7 @@ defmodule PurseCraftWeb.BookLive.Form do
     |> assign(:form, to_form(Budgeting.change_book(book)))
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def handle_event("validate", %{"book" => book_params}, socket) do
     changeset = Budgeting.change_book(socket.assigns.book, book_params)
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
@@ -69,9 +70,7 @@ defmodule PurseCraftWeb.BookLive.Form do
         {:noreply,
          socket
          |> put_flash(:info, "Book updated successfully")
-         |> push_navigate(
-           to: return_path(socket.assigns.current_scope, socket.assigns.return_to, book.external_id)
-         )}
+         |> push_navigate(to: return_path(socket.assigns.current_scope, socket.assigns.return_to, book.external_id))}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
@@ -84,9 +83,7 @@ defmodule PurseCraftWeb.BookLive.Form do
         {:noreply,
          socket
          |> put_flash(:info, "Book created successfully")
-         |> push_navigate(
-           to: return_path(socket.assigns.current_scope, socket.assigns.return_to, book)
-         )}
+         |> push_navigate(to: return_path(socket.assigns.current_scope, socket.assigns.return_to, book))}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}

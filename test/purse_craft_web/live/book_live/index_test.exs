@@ -29,7 +29,7 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
 
       {:ok, index_live, _html} = live(conn, ~p"/books")
 
-      assert {:ok, form_live, _} =
+      assert {:ok, form_live, _html} =
                index_live
                |> element("a", "New Book")
                |> render_click()
@@ -55,7 +55,7 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
 
       {:ok, index_live, _html} = live(conn, ~p"/books")
 
-      assert {:ok, form_live, _} =
+      assert {:ok, form_live, _html} =
                index_live
                |> element("a", "New Book")
                |> render_click()
@@ -137,7 +137,10 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
 
       {:ok, index_live, _html} = live(conn, ~p"/books")
 
-      assert index_live |> element("#books-#{book.external_id} a", "Delete") |> render_click()
+      assert index_live
+             |> element("#books-#{book.external_id} a", "Delete")
+             |> render_click()
+
       refute has_element?(index_live, "#books-#{book.external_id}")
     end
   end

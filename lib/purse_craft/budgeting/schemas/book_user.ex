@@ -1,5 +1,14 @@
 defmodule PurseCraft.Budgeting.Schemas.BookUser do
+  @moduledoc """
+  `BookUser` represents the relationship between a `Book` and a `User` (obviously).
+
+  Both tables have a many-to-many relationship, so it makes sense that the `role`
+  column should be located in this table because a user could be an owner in one
+  book, but could be just a commenter on another.
+  """
+
   use Ecto.Schema
+
   import Ecto.Changeset
 
   alias PurseCraft.Budgeting.Schemas.Book

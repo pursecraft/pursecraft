@@ -151,7 +151,7 @@ defmodule PurseCraft.Budgeting do
   """
   def update_book(%Scope{} = scope, %Book{} = book, attrs) do
     with :ok <- Policy.authorize(:book_update, scope, %{book: book}),
-         {:ok, book = %Book{}} <-
+         {:ok, %Book{} = book} <-
            book
            |> Book.changeset(attrs)
            |> Repo.update() do
@@ -177,7 +177,7 @@ defmodule PurseCraft.Budgeting do
   """
   def delete_book(%Scope{} = scope, %Book{} = book) do
     with :ok <- Policy.authorize(:book_delete, scope, %{book: book}),
-         {:ok, book = %Book{}} <-
+         {:ok, %Book{} = book} <-
            Repo.delete(book) do
       broadcast(scope, {:deleted, book})
       {:ok, book}

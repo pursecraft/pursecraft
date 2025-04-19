@@ -1,10 +1,11 @@
 defmodule PurseCraftWeb.BookLive.Show do
+  @moduledoc false
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Book
 
-  @impl true
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -28,7 +29,7 @@ defmodule PurseCraftWeb.BookLive.Show do
     """
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
     Budgeting.subscribe_books(socket.assigns.current_scope)
 
@@ -38,7 +39,7 @@ defmodule PurseCraftWeb.BookLive.Show do
      |> assign(:book, Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id))}
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def handle_info(
         {:updated, %Book{external_id: external_id} = book},
         %{assigns: %{book: %{external_id: external_id}}} = socket
@@ -46,10 +47,7 @@ defmodule PurseCraftWeb.BookLive.Show do
     {:noreply, assign(socket, :book, book)}
   end
 
-  def handle_info(
-        {:deleted, %Book{external_id: external_id}},
-        %{assigns: %{book: %{external_id: external_id}}} = socket
-      ) do
+  def handle_info({:deleted, %Book{external_id: external_id}}, %{assigns: %{book: %{external_id: external_id}}} = socket) do
     {:noreply,
      socket
      |> put_flash(:error, "The current book was deleted.")
