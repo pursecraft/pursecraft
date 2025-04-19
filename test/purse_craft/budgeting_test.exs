@@ -2,9 +2,9 @@ defmodule PurseCraft.BudgetingTest do
   use PurseCraft.DataCase, async: true
 
   alias PurseCraft.Budgeting
-  alias PurseCraft.BudgetingFactory
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.BudgetingFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.Repo
 
@@ -12,7 +12,7 @@ defmodule PurseCraft.BudgetingTest do
     user = IdentityFactory.insert(:user)
     book = BudgetingFactory.insert(:book)
     BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
-    scope = IdentityFactory.build(:scope, user: user, book: book)
+    scope = IdentityFactory.build(:scope, user: user)
 
     %{
       user: user,
@@ -90,14 +90,20 @@ defmodule PurseCraft.BudgetingTest do
   end
 
   describe "update_book/3" do
-    test "with associated book, owner role (authorized scope) and valid data updates the book", %{scope: scope, book: book} do
+    test "with associated book, owner role (authorized scope) and valid data updates the book", %{
+      scope: scope,
+      book: book
+    } do
       attrs = %{name: "some updated name"}
 
       assert {:ok, %Book{} = updated_book} = Budgeting.update_book(scope, book, attrs)
       assert updated_book.name == "some updated name"
     end
 
-    test "with associated book, owner role (authorized scope) and invalid data returns error changeset", %{scope: scope, book: book} do
+    test "with associated book, owner role (authorized scope) and invalid data returns error changeset", %{
+      scope: scope,
+      book: book
+    } do
       attrs = %{name: ""}
 
       assert {:error, changeset} = Budgeting.update_book(scope, book, attrs)
@@ -114,7 +120,7 @@ defmodule PurseCraft.BudgetingTest do
     test "with associated book, non-owner role (unauthorized scope) and valid data updates the book", %{book: book} do
       user = IdentityFactory.insert(:user)
       BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
-      scope = IdentityFactory.build(:scope, user: user, book: book)
+      scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "some updated name"}
 
@@ -143,7 +149,7 @@ defmodule PurseCraft.BudgetingTest do
     test "with associated book, non-owner role (unauthorized scope) and valid data updates the book", %{book: book} do
       user = IdentityFactory.insert(:user)
       BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
-      scope = IdentityFactory.build(:scope, user: user, book: book)
+      scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} = Budgeting.delete_book(scope, book)
     end

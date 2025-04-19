@@ -16,14 +16,13 @@ defmodule PurseCraft.Identity.Schemas.Scope do
   growing application requirements.
   """
 
-  alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Identity.Schemas.User
 
   @type t :: %__MODULE__{
           user: PurseCraft.Identity.Schemas.User.t() | nil
         }
 
-  defstruct user: nil, book: nil
+  defstruct user: nil
 
   @doc """
   Creates a scope for the given user.
@@ -36,8 +35,4 @@ defmodule PurseCraft.Identity.Schemas.Scope do
   end
 
   def for_user(nil), do: nil
-
-  def put_book(%__MODULE__{} = scope, %Book{} = book) do
-    %{scope | book: book}
-  end
 end

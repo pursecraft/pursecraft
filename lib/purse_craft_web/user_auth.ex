@@ -6,7 +6,6 @@ defmodule PurseCraftWeb.UserAuth do
   import Phoenix.Controller
   import Plug.Conn
 
-  alias PurseCraft.Budgeting
   alias PurseCraft.Identity
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Identity.Schemas.User
@@ -175,22 +174,6 @@ defmodule PurseCraftWeb.UserAuth do
     end
   end
 
-  def on_mount(:assign_book_to_scope, %{"external_id" => external_id}, _session, socket) do
-    socket =
-      case socket.assigns.current_scope do
-        %{book: nil} ->
-          book = Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id)
-          Phoenix.Component.assign(socket, :current_scope, Scope.put_book(socket.assigns.current_scope, book))
-
-        _any ->
-          socket
-      end
-
-    {:cont, socket}
-  end
-
-  def on_mount(:assign_book_to_scope, _params, _session, socket), do: {:cont, socket}
-
   def on_mount(:require_sudo_mode, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 
@@ -265,15 +248,4 @@ defmodule PurseCraftWeb.UserAuth do
   end
 
   def signed_in_path(_any), do: ~p"/"
-
-  def assign_book_to_scope(conn, _opts) do
-    current_scope = conn.assigns.current_scope
-
-    if external_id = conn.params["external_id"] do
-      book = Budgeting.get_book_by_external_id!(current_scope, external_id)
-      assign(conn, :current_scope, Scope.put_book(current_scope, book))
-    else
-      conn
-    end
-  end
 end
