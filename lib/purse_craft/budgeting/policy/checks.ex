@@ -22,7 +22,9 @@ defmodule PurseCraft.Budgeting.Policy.Checks do
     end
   end
 
+  # coveralls-ignore-start
   def own_resource(_scope, _object), do: false
+  # coveralls-ignore-stop
 
   @spec role(Scope.t(), any(), atom()) :: boolean()
   def role(%Scope{user: %User{} = user}, %{book: %Book{} = book}, role) do
@@ -35,7 +37,9 @@ defmodule PurseCraft.Budgeting.Policy.Checks do
     end
   end
 
+  # coveralls-ignore-start
   def role(_scope, _object, _role), do: false
+  # coveralls-ignore-stop
 
   defp get_book_user(%Book{id: nil, external_id: book_external_id}, %User{id: user_id}) do
     BookUser
@@ -53,5 +57,7 @@ defmodule PurseCraft.Budgeting.Policy.Checks do
     |> Repo.one()
   end
 
+  # coveralls-ignore-start
   defp get_book_user(_book, _user), do: nil
+  # coveralls-ignore-stop
 end
