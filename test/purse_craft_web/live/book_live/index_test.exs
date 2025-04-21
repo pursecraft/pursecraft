@@ -67,7 +67,7 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
 
       assert form_live
              |> form("#book-form", book: attrs)
-             |> render_change() =~ "can&#39;t be blank"
+             |> render_submit() =~ "can&#39;t be blank"
     end
   end
 

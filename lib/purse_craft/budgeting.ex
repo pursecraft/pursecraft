@@ -41,7 +41,8 @@ defmodule PurseCraft.Budgeting do
     Phoenix.PubSub.subscribe(PurseCraft.PubSub, "user:#{key}:books")
   end
 
-  defp broadcast(%Scope{} = scope, message) do
+  @spec broadcast_book(Scope.t(), tuple()) :: :ok | {:error, term()}
+  def broadcast_book(%Scope{} = scope, message) do
     key = scope.user.id
 
     Phoenix.PubSub.broadcast(PurseCraft.PubSub, "user:#{key}:books", message)
@@ -124,7 +125,7 @@ defmodule PurseCraft.Budgeting do
       |> Repo.transaction()
       |> case do
         {:ok, %{book: book}} ->
-          broadcast(scope, {:created, book})
+          broadcast_book(scope, {:created, book})
           {:ok, book}
 
         {:error, _operations, changeset, _changes} ->
@@ -156,7 +157,7 @@ defmodule PurseCraft.Budgeting do
            book
            |> Book.changeset(attrs)
            |> Repo.update() do
-      broadcast(scope, {:updated, book})
+      broadcast_book(scope, {:updated, book})
       {:ok, book}
     end
   end
@@ -178,7 +179,7 @@ defmodule PurseCraft.Budgeting do
     with :ok <- Policy.authorize(:book_delete, scope, %{book: book}),
          {:ok, %Book{} = book} <-
            Repo.delete(book) do
-      broadcast(scope, {:deleted, book})
+      broadcast_book(scope, {:deleted, book})
       {:ok, book}
     end
   end
