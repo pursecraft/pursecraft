@@ -25,6 +25,20 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+config :purse_craft, PurseCraft.Cache,
+  # When using :shards as backend
+  # backend: :shards,
+  # GC interval for pushing new generation: 12 hrs
+  gc_interval: to_timeout(hour: 12),
+  # Max 1 million entries in cache
+  max_size: 1_000_000,
+  # Max 2 GB of memory
+  allocated_memory: 2_000_000_000,
+  # GC min timeout: 10 sec
+  gc_cleanup_min_timeout: to_timeout(second: 10),
+  # GC max timeout: 10 min
+  gc_cleanup_max_timeout: to_timeout(minute: 10)
+
 # Configures the mailer
 #
 # By default it uses the "Local" adapter which stores the emails

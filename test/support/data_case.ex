@@ -18,16 +18,7 @@ defmodule PurseCraft.DataCase do
 
   alias Ecto.Adapters.SQL.Sandbox
 
-  using(opts) do
-    factory =
-      case Keyword.get(opts, :context) do
-        nil ->
-          NoContext
-
-        context ->
-          PurseCraft.ContextToFactoryMappings.factory_for(context)
-      end
-
+  using(_opts) do
     quote do
       import Ecto
       import Ecto.Changeset
@@ -35,7 +26,6 @@ defmodule PurseCraft.DataCase do
       import PurseCraft.DataCase
 
       alias PurseCraft.Repo
-      alias unquote(factory), as: Factory
     end
   end
 
