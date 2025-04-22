@@ -31,12 +31,13 @@ defmodule PurseCraftWeb.BookLive.Show do
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
-    Budgeting.subscribe_books(socket.assigns.current_scope)
+    book = Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id)
+    Budgeting.subscribe_book(book)
 
     {:ok,
      socket
      |> assign(:page_title, "Show Book")
-     |> assign(:book, Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id))}
+     |> assign(:book, book)}
   end
 
   @impl Phoenix.LiveView

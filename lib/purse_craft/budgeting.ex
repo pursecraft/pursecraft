@@ -25,7 +25,7 @@ defmodule PurseCraft.Budgeting do
         }
 
   @doc """
-  Subscribes to scoped notifications about any book changes.
+  Subscribes to notifications about any book changes associated with the scoped user.
 
   The broadcasted messages match the pattern:
 
@@ -34,18 +34,56 @@ defmodule PurseCraft.Budgeting do
     * {:deleted, %Book{}}
 
   """
-  @spec subscribe_books(Scope.t()) :: :ok | {:error, term()}
-  def subscribe_books(%Scope{} = scope) do
+  @spec subscribe_user_books(Scope.t()) :: :ok | {:error, term()}
+  def subscribe_user_books(%Scope{} = scope) do
     key = scope.user.id
 
     Phoenix.PubSub.subscribe(PurseCraft.PubSub, "user:#{key}:books")
   end
 
-  @spec broadcast_book(Scope.t(), tuple()) :: :ok | {:error, term()}
-  def broadcast_book(%Scope{} = scope, message) do
+  @doc """
+  Sends notifications about any book changes associated with the scoped user.
+
+  The broadcasted messages match the pattern:
+
+    * {:created, %Book{}}
+    * {:updated, %Book{}}
+    * {:deleted, %Book{}}
+
+  """
+  @spec broadcast_user_book(Scope.t(), tuple()) :: :ok | {:error, term()}
+  def broadcast_user_book(%Scope{} = scope, message) do
     key = scope.user.id
 
     Phoenix.PubSub.broadcast(PurseCraft.PubSub, "user:#{key}:books", message)
+  end
+
+  @doc """
+  Subscribes to notifications about any changes on the given book.
+
+  The broadcasted messages match the pattern:
+
+    * {:updated, %Book{}}
+    * {:deleted, %Book{}}
+
+  """
+  @spec subscribe_book(Book.t()) :: :ok | {:error, term()}
+  def subscribe_book(%Book{} = book) do
+    Phoenix.PubSub.subscribe(PurseCraft.PubSub, "book:#{book.external_id}")
+  end
+
+  @doc """
+  Sends notifications about any changes on the given book
+
+  The broadcasted messages match the pattern:
+
+    * {:updated, %Book{}}
+    * {:deleted, %Book{}}
+
+  """
+  @spec broadcast_book(Book.t(), tuple()) :: :ok | {:error, term()}
+  def broadcast_book(%Book{} = book, message) do
+    Phoenix.PubSub.broadcast(PurseCraft.PubSub, "book:#{book.external_id}", message)
   end
 
   @doc """
@@ -125,7 +163,7 @@ defmodule PurseCraft.Budgeting do
       |> Repo.transaction()
       |> case do
         {:ok, %{book: book}} ->
-          broadcast_book(scope, {:created, book})
+          broadcast_user_book(scope, {:created, book})
           {:ok, book}
 
         {:error, _operations, changeset, _changes} ->
@@ -157,7 +195,11 @@ defmodule PurseCraft.Budgeting do
            book
            |> Book.changeset(attrs)
            |> Repo.update() do
-      broadcast_book(scope, {:updated, book})
+      message = {:updated, book}
+
+      broadcast_user_book(scope, message)
+      broadcast_book(book, message)
+
       {:ok, book}
     end
   end
@@ -179,7 +221,11 @@ defmodule PurseCraft.Budgeting do
     with :ok <- Policy.authorize(:book_delete, scope, %{book: book}),
          {:ok, %Book{} = book} <-
            Repo.delete(book) do
-      broadcast_book(scope, {:deleted, book})
+      message = {:deleted, book}
+
+      broadcast_user_book(scope, message)
+      broadcast_book(book, message)
+
       {:ok, book}
     end
   end

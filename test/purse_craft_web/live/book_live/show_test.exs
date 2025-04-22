@@ -80,7 +80,7 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
   end
 
   describe "PubSub Book Update" do
-    test "updates to the latest value of the book", %{conn: conn, scope: scope, user: user} do
+    test "updates to the latest value of the book", %{conn: conn, user: user} do
       book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
       BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
@@ -90,7 +90,7 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
       assert html =~ "My Awesome Budget"
 
       updated_book = %{book | name: "Updated via PubSub"}
-      Budgeting.broadcast_book(scope, {:updated, updated_book})
+      Budgeting.broadcast_book(book, {:updated, updated_book})
 
       updated_html = render(show_live)
       assert updated_html =~ "Updated via PubSub"
@@ -99,13 +99,13 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
   end
 
   describe "PubSub Book Delete" do
-    test "deletions redirect current viewing users to /books", %{conn: conn, scope: scope, user: user} do
+    test "deletions redirect current viewing users to /books", %{conn: conn, user: user} do
       book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
       BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       {:ok, show_live, _html} = live(conn, ~p"/books/#{book.external_id}")
 
-      Budgeting.broadcast_book(scope, {:deleted, book})
+      Budgeting.broadcast_book(book, {:deleted, book})
 
       flash = assert_redirect(show_live, ~p"/books")
       assert flash["error"] == "The current book was deleted."

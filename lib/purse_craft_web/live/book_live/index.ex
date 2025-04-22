@@ -49,7 +49,7 @@ defmodule PurseCraftWeb.BookLive.Index do
 
   @impl Phoenix.LiveView
   def mount(_params, _session, socket) do
-    Budgeting.subscribe_books(socket.assigns.current_scope)
+    Budgeting.subscribe_user_books(socket.assigns.current_scope)
 
     {:ok,
      socket
@@ -66,7 +66,13 @@ defmodule PurseCraftWeb.BookLive.Index do
   end
 
   @impl Phoenix.LiveView
-  def handle_info({type, %Book{}}, socket) when type in [:created, :updated, :deleted] do
-    {:noreply, stream(socket, :books, Budgeting.list_books(socket.assigns.current_scope), reset: true)}
+  def handle_info({:deleted, %Book{} = book}, socket) do
+    {:noreply, stream_delete_by_dom_id(socket, :books, "books-#{book.external_id}")}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({type, %Book{}}, socket) when type in [:created, :updated] do
+    books = Budgeting.list_books(socket.assigns.current_scope)
+    {:noreply, stream(socket, :books, books, reset: true)}
   end
 end

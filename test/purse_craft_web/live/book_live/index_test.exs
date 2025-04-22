@@ -3,7 +3,9 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
 
   import Phoenix.LiveViewTest
 
+  alias PurseCraft.Budgeting
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.Repo
 
   setup :register_and_log_in_user
 
@@ -142,6 +144,46 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
              |> render_click()
 
       refute has_element?(index_live, "#books-#{book.external_id}")
+    end
+  end
+
+  describe "PubSub Book Update" do
+    test "updates to the latest value of the book", %{conn: conn, scope: scope, user: user} do
+      book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+
+      {:ok, index_live, html} = live(conn, ~p"/books")
+
+      assert html =~ "Listing Books"
+      assert html =~ "My Awesome Budget"
+
+      {:ok, updated_book} =
+        book
+        |> Ecto.Changeset.change(name: "Updated via PubSub")
+        |> Repo.update()
+
+      Budgeting.broadcast_user_book(scope, {:updated, updated_book})
+
+      updated_html = render(index_live)
+      assert updated_html =~ "Updated via PubSub"
+      refute updated_html =~ "My Awesome Budget"
+    end
+  end
+
+  describe "PubSub Book Delete" do
+    test "deletions remove book from listing", %{conn: conn, scope: scope, user: user} do
+      book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+
+      {:ok, index_live, html} = live(conn, ~p"/books")
+
+      assert html =~ "My Awesome Budget"
+
+      {:ok, deleted_book} = Repo.delete(book)
+      Budgeting.broadcast_user_book(scope, {:deleted, deleted_book})
+
+      updated_html = render(index_live)
+      refute updated_html =~ "My Awesome Budget"
     end
   end
 end
