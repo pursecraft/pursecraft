@@ -8,6 +8,7 @@ defmodule PurseCraft.Application do
   @impl Application
   def start(_type, _args) do
     children = [
+      PurseCraft.Cache,
       PurseCraftWeb.Telemetry,
       PurseCraft.Repo,
       {DNSCluster, query: Application.get_env(:purse_craft, :dns_cluster_query) || :ignore},

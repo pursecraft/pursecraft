@@ -64,6 +64,7 @@ defmodule PurseCraft.MixProject do
        github: "tailwindlabs/heroicons", tag: "v2.1.1", sparse: "optimized", app: false, compile: false, depth: 1},
       {:jason, "1.4.4"},
       {:let_me, "1.2.5"},
+      {:nebulex, "2.6.4"},
       {:phoenix, "1.8.0-rc.0", override: true},
       {:phoenix_ecto, "4.6.3"},
       {:phoenix_html, "4.2.1"},
