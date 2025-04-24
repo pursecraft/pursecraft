@@ -9,6 +9,8 @@ defmodule PurseCraftWeb.Layouts do
   """
   use PurseCraftWeb, :html
 
+  alias PurseCraftWeb.Components.UI.Marketing
+
   embed_templates "layouts/*"
 
   def app(assigns) do
@@ -45,6 +47,20 @@ defmodule PurseCraftWeb.Layouts do
         {render_slot(@inner_block)}
       </div>
     </main>
+
+    <.flash_group flash={@flash} />
+    """
+  end
+
+  def marketing(assigns) do
+    ~H"""
+    <Marketing.Header.header current_scope={@current_scope} />
+
+    <main class="py-16 md:py-24 px-4">
+      {render_slot(@inner_block)}
+    </main>
+
+    <Marketing.Footer.footer />
 
     <.flash_group flash={@flash} />
     """

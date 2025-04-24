@@ -7,7 +7,7 @@ defmodule PurseCraftWeb.UserLive.Registration do
 
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.marketing flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto max-w-sm">
         <.header class="text-center">
           Register for an account
@@ -35,7 +35,7 @@ defmodule PurseCraftWeb.UserLive.Registration do
           </.button>
         </.form>
       </div>
-    </Layouts.app>
+    </Layouts.marketing>
     """
   end
 

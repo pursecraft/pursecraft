@@ -6,7 +6,7 @@ defmodule PurseCraftWeb.UserLive.Login do
 
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.marketing flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto max-w-sm">
         <.header class="text-center">
           <p>Log in</p>
@@ -90,7 +90,7 @@ defmodule PurseCraftWeb.UserLive.Login do
           </div>
         </div>
       </div>
-    </Layouts.app>
+    </Layouts.marketing>
     """
   end
 

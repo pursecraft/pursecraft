@@ -20,7 +20,12 @@ defmodule PurseCraftWeb.Router do
   scope "/", PurseCraftWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    # get "/", PageController, :home
+    # live "/", MarketingLive.Home, :index
+    live_session :marketing,
+      on_mount: [{PurseCraftWeb.UserAuth, :mount_current_scope}] do
+      live "/", MarketingLive.Home, :index
+    end
   end
 
   # Other scopes may use custom stacks.
