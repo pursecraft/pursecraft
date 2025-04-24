@@ -18,7 +18,9 @@ defmodule PurseCraftWeb.MarketingLive.Home do
             <%= if @current_scope do %>
               <.link href={~p"/books"} class="btn btn-primary btn-lg">Go to App</.link>
             <% else %>
-              <.link href={~p"/users/register"} class="btn btn-primary btn-lg">Start your free trial</.link>
+              <.link href={~p"/users/register"} class="btn btn-primary btn-lg">
+                Start your free trial
+              </.link>
             <% end %>
 
             <a href="/how-it-works" class="btn btn-outline btn-lg">See how it works</a>
@@ -218,7 +220,9 @@ defmodule PurseCraftWeb.MarketingLive.Home do
                 <%= if @current_scope do %>
                   <.link href={~p"/books"} class="btn btn-primary btn-lg">Go to App</.link>
                 <% else %>
-                  <.link href={~p"/users/register"} class="btn btn-primary btn-lg">Start your free trial</.link>
+                  <.link href={~p"/users/register"} class="btn btn-primary btn-lg">
+                    Start your free trial
+                  </.link>
                 <% end %>
 
                 <p class="text-sm mt-4 text-base-content/70">

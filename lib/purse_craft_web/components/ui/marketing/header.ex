@@ -83,7 +83,10 @@ defmodule PurseCraftWeb.Components.UI.Marketing.Header do
                     Everything you need to get started with PurseCraft
                   </div>
                 </a>
-                <a href="https://github.com/pursecraft/pursecraft" class="block py-2 hover:text-primary">
+                <a
+                  href="https://github.com/pursecraft/pursecraft"
+                  class="block py-2 hover:text-primary"
+                >
                   <div class="font-semibold">GitHub</div>
                   <div class="text-sm text-base-content/70">
                     Follow our development and contribute
