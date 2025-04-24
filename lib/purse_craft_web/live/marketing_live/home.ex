@@ -8,7 +8,7 @@ defmodule PurseCraftWeb.MarketingLive.Home do
     ~H"""
     <Layouts.marketing flash={@flash} current_scope={@current_scope}>
       <!-- Hero Section -->
-      <section class="py-16 md:py-24 px-4">
+      <section class="pb-16 md:pb-24 px-4">
         <div class="container mx-auto text-center">
           <h1 class="text-4xl md:text-6xl font-bold mb-6">Easy to use budgeting that works</h1>
           <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-base-content/80">

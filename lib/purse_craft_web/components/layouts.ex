@@ -55,10 +55,14 @@ defmodule PurseCraftWeb.Layouts do
   def marketing(assigns) do
     ~H"""
     <Marketing.Header.header current_scope={@current_scope} />
-    <main>
+
+    <main class="py-16 md:py-24 px-4">
       {render_slot(@inner_block)}
     </main>
+
     <Marketing.Footer.footer />
+
+    <.flash_group flash={@flash} />
     """
   end
 

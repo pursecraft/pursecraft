@@ -8,7 +8,7 @@ defmodule PurseCraftWeb.UserLive.Settings do
 
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.marketing flash={@flash} current_scope={@current_scope}>
       <.header class="text-center">
         Account Settings
         <:subtitle>Manage your account email address and password settings</:subtitle>
@@ -60,7 +60,7 @@ defmodule PurseCraftWeb.UserLive.Settings do
           Save Password
         </.button>
       </.form>
-    </Layouts.app>
+    </Layouts.marketing>
     """
   end
 
