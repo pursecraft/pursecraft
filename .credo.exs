@@ -34,6 +34,7 @@
         excluded: [
           ~r"/_build/",
           ~r"/deps/",
+          ~r"/lib/purse_craft/release.ex",
           ~r"/lib/purse_craft_web.ex",
           ~r"/lib/purse_craft_web/components/core_components.ex",
           ~r"/lib/purse_craft_web/telemetry.ex",
