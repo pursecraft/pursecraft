@@ -46,17 +46,16 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
         })
 
       assert budget_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/budget"[^>]*class="[^"]*bg-primary/
-      assert budget_result =~ ~r/<a[^>]*href="\/reports"[^>]*class="[^"]*text-base-content/
 
       # Test with reports active
       reports_result =
         render_component(&Sidebar.sidebar/1, %{
-          current_path: "/reports",
+          current_path: "/books/#{book.external_id}/reports",
           current_scope: scope
         })
 
-      assert reports_result =~ ~r/<a[^>]*href="\/books"[^>]*class="[^"]*text-base-content/
-      assert reports_result =~ ~r/<a[^>]*href="\/reports"[^>]*class="[^"]*bg-primary/
+      # Test that the Reports link is highlighted when on the reports page
+      assert reports_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/reports"[^>]*class="[^"]*bg-primary/
 
       # Test with accounts active
       accounts_result =

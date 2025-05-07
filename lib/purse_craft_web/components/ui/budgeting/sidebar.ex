@@ -36,7 +36,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
           />
           <.sidebar_link
             current_path={@current_path}
-            path="/reports"
+            path={get_reports_path(@current_path)}
             icon="hero-chart-bar"
             label="Reports"
           />
@@ -95,7 +95,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
   defp sidebar_link(assigns) do
     active =
       String.starts_with?(assigns.current_path, assigns.path) or
-        (assigns.label == "Budget" and String.contains?(assigns.current_path, "/budget"))
+        (assigns.label == "Budget" and String.contains?(assigns.current_path, "/budget")) or
+        (assigns.label == "Reports" and String.contains?(assigns.current_path, "/reports"))
 
     assigns = assign(assigns, :active, active)
 
@@ -112,7 +113,14 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
 
   defp get_budget_path(current_path) do
     case Regex.run(~r"/books/([a-zA-Z0-9-]+)", current_path) do
-      [_match, external_id] -> "/books/#{external_id}/budget" 
+      [_match, external_id] -> "/books/#{external_id}/budget"
+      _no_match -> "/books"
+    end
+  end
+
+  defp get_reports_path(current_path) do
+    case Regex.run(~r"/books/([a-zA-Z0-9-]+)", current_path) do
+      [_match, external_id] -> "/books/#{external_id}/reports"
       _no_match -> "/books"
     end
   end
