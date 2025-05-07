@@ -25,6 +25,12 @@ defmodule PurseCraftWeb.BookLive.Show do
       <.list>
         <:item title="Name">{@book.name}</:item>
       </.list>
+
+      <div class="mt-6">
+        <.button variant="primary" navigate={~p"/books/#{@book.external_id}/budget"}>
+          <.icon name="hero-currency-dollar" /> View Budget
+        </.button>
+      </div>
     </Layouts.app>
     """
   end

@@ -63,7 +63,7 @@ defmodule PurseCraftWeb.Router do
       live "/books/:external_id/edit", BookLive.Form, :edit
 
       # Budgeting routes
-      live "/budget", BudgetLive.Index, :index
+      live "/books/:external_id/budget", BudgetLive.Index, :index
       live "/reports", ReportsLive.Index, :index
       live "/accounts", AccountsLive.Index, :index
 

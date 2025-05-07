@@ -5,14 +5,18 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
 
   alias PurseCraftWeb.Components.UI.Budgeting.Sidebar
 
-  describe "sidebar/1" do
-    test "renders the sidebar with navigation links" do
-      user = PurseCraft.IdentityFactory.build(:user, email: "test@example.com")
-      scope = PurseCraft.IdentityFactory.build(:scope, user: user)
+  setup do
+    user = PurseCraft.IdentityFactory.build(:user, email: "test@example.com")
+    scope = PurseCraft.IdentityFactory.build(:scope, user: user)
+    book = PurseCraft.BudgetingFactory.build(:book, external_id: "abcd1234-5678-90ab-cdef-1234567890ab")
+    %{user: user, scope: scope, book: book}
+  end
 
+  describe "sidebar/1" do
+    test "renders the sidebar with navigation links", %{scope: scope, book: book} do
       result =
         render_component(&Sidebar.sidebar/1, %{
-          current_path: "/budget",
+          current_path: "/books/#{book.external_id}/budget",
           current_scope: scope
         })
 
@@ -33,18 +37,15 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "May 2025"
     end
 
-    test "highlights the active route" do
-      user = PurseCraft.IdentityFactory.build(:user, email: "test@example.com")
-      scope = PurseCraft.IdentityFactory.build(:scope, user: user)
-
+    test "highlights the active route", %{scope: scope, book: book} do
       # Test with budget active
       budget_result =
         render_component(&Sidebar.sidebar/1, %{
-          current_path: "/budget",
+          current_path: "/books/#{book.external_id}/budget",
           current_scope: scope
         })
 
-      assert budget_result =~ ~r/<a[^>]*href="\/budget"[^>]*class="[^"]*bg-primary/
+      assert budget_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/budget"[^>]*class="[^"]*bg-primary/
       assert budget_result =~ ~r/<a[^>]*href="\/reports"[^>]*class="[^"]*text-base-content/
 
       # Test with reports active
@@ -54,26 +55,24 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
           current_scope: scope
         })
 
-      assert reports_result =~ ~r/<a[^>]*href="\/budget"[^>]*class="[^"]*text-base-content/
+      assert reports_result =~ ~r/<a[^>]*href="\/books"[^>]*class="[^"]*text-base-content/
       assert reports_result =~ ~r/<a[^>]*href="\/reports"[^>]*class="[^"]*bg-primary/
 
       # Test with accounts active
       accounts_result =
         render_component(&Sidebar.sidebar/1, %{
           current_path: "/accounts",
-          current_scope: scope
+          current_scope: scope,
+          book: book
         })
 
       assert accounts_result =~ ~r/<a[^>]*href="\/accounts"[^>]*class="[^"]*bg-primary/
     end
 
-    test "renders book selection dropdown" do
-      user = PurseCraft.IdentityFactory.build(:user, email: "test@example.com")
-      scope = PurseCraft.IdentityFactory.build(:scope, user: user)
-
+    test "renders book selection dropdown", %{scope: scope, book: book} do
       result =
         render_component(&Sidebar.sidebar/1, %{
-          current_path: "/budget",
+          current_path: "/books/#{book.external_id}/budget",
           current_scope: scope
         })
 
@@ -83,13 +82,10 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "+ Create New Budget"
     end
 
-    test "renders logout form" do
-      user = PurseCraft.IdentityFactory.build(:user, email: "test@example.com")
-      scope = PurseCraft.IdentityFactory.build(:scope, user: user)
-
+    test "renders logout form", %{scope: scope, book: book} do
       result =
         render_component(&Sidebar.sidebar/1, %{
-          current_path: "/budget",
+          current_path: "/books/#{book.external_id}/budget",
           current_scope: scope
         })
 
@@ -97,13 +93,10 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "Log out"
     end
 
-    test "renders user initial in avatar" do
-      user = PurseCraft.IdentityFactory.build(:user, email: "test@example.com")
-      scope = PurseCraft.IdentityFactory.build(:scope, user: user)
-
+    test "renders user initial in avatar", %{scope: scope, book: book} do
       result =
         render_component(&Sidebar.sidebar/1, %{
-          current_path: "/budget",
+          current_path: "/books/#{book.external_id}/budget",
           current_scope: scope
         })
 

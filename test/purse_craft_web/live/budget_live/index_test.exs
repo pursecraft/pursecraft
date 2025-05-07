@@ -3,13 +3,21 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
   import Phoenix.LiveViewTest
 
+  alias PurseCraft.BudgetingFactory
+
   setup :register_and_log_in_user
 
-  describe "Budget page" do
-    test "renders budget page elements", %{conn: conn} do
-      {:ok, _view, html} = live(conn, ~p"/budget")
+  setup %{user: user} do
+    book = BudgetingFactory.insert(:book, name: "Test Budget Book")
+    BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+    %{book: book}
+  end
 
-      assert html =~ "Budget"
+  describe "Budget page" do
+    test "renders budget page elements", %{conn: conn, book: book} do
+      {:ok, _view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      assert html =~ "Budget - #{book.name}"
       assert html =~ "Ready to Assign"
       assert html =~ "Assigned this Month"
       assert html =~ "Activity this Month"
@@ -18,8 +26,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert html =~ "Quality of Life"
     end
 
-    test "has functioning sidebar links", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/budget")
+    test "has functioning sidebar links", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       # Check sidebar links are present
       assert has_element?(view, "a", "Budget")
@@ -31,14 +39,14 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert render(budget_link) =~ "bg-primary"
     end
 
-    test "renders user email in sidebar", %{conn: conn, user: user} do
-      {:ok, _view, html} = live(conn, ~p"/budget")
+    test "renders user email in sidebar", %{conn: conn, book: book, user: user} do
+      {:ok, _view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       assert html =~ user.email
     end
 
-    test "shows budget categories", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/budget")
+    test "shows budget categories", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       assert has_element?(view, "div", "Rent/Mortgage")
       assert has_element?(view, "div", "Electric")
@@ -57,15 +65,15 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
                ~s(Internet</span><div class="flex gap-8 text-sm"><span class="w-24 text-right">$75.00</span><span class="w-24 text-right">$-75.00</span><span class="w-24 text-right font-medium ">$0.00</span>)
     end
 
-    test "shows action buttons", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/budget")
+    test "shows action buttons", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       assert has_element?(view, "button", "Add Category")
       assert has_element?(view, "button", "Auto-Assign")
     end
 
-    test "shows all balance styling variants", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/budget")
+    test "shows all balance styling variants", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       html = render(view)
 

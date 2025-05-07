@@ -30,7 +30,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
         <nav class="space-y-1">
           <.sidebar_link
             current_path={@current_path}
-            path="/budget"
+            path={get_budget_path(@current_path)}
             icon="hero-banknotes"
             label="Budget"
           />
@@ -93,7 +93,10 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
   attr :label, :string, required: true
 
   defp sidebar_link(assigns) do
-    active = String.starts_with?(assigns.current_path, assigns.path)
+    active =
+      String.starts_with?(assigns.current_path, assigns.path) or
+        (assigns.label == "Budget" and String.contains?(assigns.current_path, "/budget"))
+
     assigns = assign(assigns, :active, active)
 
     ~H"""
@@ -105,5 +108,12 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
       {@label}
     </.link>
     """
+  end
+
+  defp get_budget_path(current_path) do
+    case Regex.run(~r"/books/([a-zA-Z0-9-]+)", current_path) do
+      [_match, external_id] -> "/books/#{external_id}/budget" 
+      _no_match -> "/books"
+    end
   end
 end
