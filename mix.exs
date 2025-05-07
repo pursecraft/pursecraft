@@ -91,7 +91,9 @@ defmodule PurseCraft.MixProject do
     [
       setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+      "ecto.setup.dev": ["ecto.setup", "run priv/repo/dummy_data.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
+      "ecto.reset.dev": ["ecto.drop", "ecto.setup.dev"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["tailwind purse_craft", "esbuild purse_craft"],
