@@ -35,6 +35,9 @@ defmodule PurseCraftWeb.BookLive.Index do
           <.link navigate={~p"/books/#{book.external_id}/reports"} class="mr-2">
             <.icon name="hero-chart-bar" /> Reports
           </.link>
+          <.link navigate={~p"/books/#{book.external_id}/accounts"} class="mr-2">
+            <.icon name="hero-credit-card" /> Accounts
+          </.link>
           <.link navigate={~p"/books/#{book.external_id}/edit"}>Edit</.link>
         </:action>
         <:action :let={{_id, book}}>

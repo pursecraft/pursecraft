@@ -26,12 +26,15 @@ defmodule PurseCraftWeb.BookLive.Show do
         <:item title="Name">{@book.name}</:item>
       </.list>
 
-      <div class="mt-6 flex gap-2">
+      <div class="mt-6 flex flex-wrap gap-2">
         <.button variant="primary" navigate={~p"/books/#{@book.external_id}/budget"}>
           <.icon name="hero-currency-dollar" /> View Budget
         </.button>
         <.button navigate={~p"/books/#{@book.external_id}/reports"}>
           <.icon name="hero-chart-bar" /> View Reports
+        </.button>
+        <.button navigate={~p"/books/#{@book.external_id}/accounts"}>
+          <.icon name="hero-credit-card" /> View Accounts
         </.button>
       </div>
     </Layouts.app>

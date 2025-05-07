@@ -3,21 +3,29 @@ defmodule PurseCraftWeb.AccountsLive.IndexTest do
 
   import Phoenix.LiveViewTest
 
+  alias PurseCraft.BudgetingFactory
+
   setup :register_and_log_in_user
 
-  describe "Accounts page" do
-    test "renders transactions page elements", %{conn: conn} do
-      {:ok, _view, html} = live(conn, ~p"/accounts")
+  setup %{user: user} do
+    book = BudgetingFactory.insert(:book, name: "Test Accounts Book")
+    BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+    %{book: book}
+  end
 
-      assert html =~ "All Accounts"
+  describe "Accounts page" do
+    test "renders transactions page elements", %{conn: conn, book: book} do
+      {:ok, _view, html} = live(conn, ~p"/books/#{book.external_id}/accounts")
+
+      assert html =~ "All Accounts - #{book.name}"
       assert html =~ "Budget Accounts"
       assert html =~ "Tracking Accounts"
       assert html =~ "Net Worth"
       assert html =~ "Recent Transactions"
     end
 
-    test "has functioning sidebar links", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/accounts")
+    test "has functioning sidebar links", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/accounts")
 
       # Check sidebar links are present
       assert has_element?(view, "a", "Budget")
@@ -29,21 +37,21 @@ defmodule PurseCraftWeb.AccountsLive.IndexTest do
       assert render(accounts_link) =~ "bg-primary"
     end
 
-    test "renders user email in sidebar", %{conn: conn, user: user} do
-      {:ok, _view, html} = live(conn, ~p"/accounts")
+    test "renders user email in sidebar", %{conn: conn, user: user, book: book} do
+      {:ok, _view, html} = live(conn, ~p"/books/#{book.external_id}/accounts")
 
       assert html =~ user.email
     end
 
-    test "shows add account and reconcile buttons", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/accounts")
+    test "shows add account and reconcile buttons", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/accounts")
 
       assert has_element?(view, "button", "Add Account")
       assert has_element?(view, "button", "Reconcile")
     end
 
-    test "displays account cards", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/accounts")
+    test "displays account cards", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/accounts")
 
       assert has_element?(view, "h4", "Checking")
       assert has_element?(view, "h4", "Savings")
@@ -51,8 +59,8 @@ defmodule PurseCraftWeb.AccountsLive.IndexTest do
       assert has_element?(view, "h4", "401(k)")
     end
 
-    test "shows transaction table", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/accounts")
+    test "shows transaction table", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/accounts")
 
       assert has_element?(view, "table")
       assert has_element?(view, "th", "Date")

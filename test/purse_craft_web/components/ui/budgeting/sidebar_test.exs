@@ -60,12 +60,11 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       # Test with accounts active
       accounts_result =
         render_component(&Sidebar.sidebar/1, %{
-          current_path: "/accounts",
-          current_scope: scope,
-          book: book
+          current_path: "/books/#{book.external_id}/accounts",
+          current_scope: scope
         })
 
-      assert accounts_result =~ ~r/<a[^>]*href="\/accounts"[^>]*class="[^"]*bg-primary/
+      assert accounts_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/accounts"[^>]*class="[^"]*bg-primary/
     end
 
     test "renders book selection dropdown", %{scope: scope, book: book} do
