@@ -9,6 +9,7 @@ defmodule PurseCraftWeb.Layouts do
   """
   use PurseCraftWeb, :html
 
+  alias PurseCraftWeb.Components.UI.Budgeting
   alias PurseCraftWeb.Components.UI.Marketing
 
   embed_templates "layouts/*"
@@ -63,6 +64,22 @@ defmodule PurseCraftWeb.Layouts do
     <Marketing.Footer.footer />
 
     <.flash_group flash={@flash} />
+    """
+  end
+
+  def budgeting(assigns) do
+    ~H"""
+    <div class="flex h-screen overflow-hidden bg-base-100">
+      <Budgeting.Sidebar.sidebar current_path={@current_path} current_scope={@current_scope} />
+
+      <main class="flex-1 overflow-y-auto">
+        <div class="px-6 py-6">
+          {render_slot(@inner_block)}
+        </div>
+      </main>
+
+      <.flash_group flash={@flash} />
+    </div>
     """
   end
 

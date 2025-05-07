@@ -62,6 +62,11 @@ defmodule PurseCraftWeb.Router do
       live "/books/:external_id", BookLive.Show, :show
       live "/books/:external_id/edit", BookLive.Form, :edit
 
+      # Budgeting routes
+      live "/budget", BudgetLive.Index, :index
+      live "/reports", ReportsLive.Index, :index
+      live "/accounts", AccountsLive.Index, :index
+
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
     end
