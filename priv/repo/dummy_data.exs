@@ -13,6 +13,8 @@
 alias PurseCraft.Repo
 alias PurseCraft.Budgeting.Schemas.Book
 alias PurseCraft.Budgeting.Schemas.BookUser
+alias PurseCraft.Budgeting.Schemas.Category
+alias PurseCraft.Budgeting.Schemas.Envelope
 alias PurseCraft.Identity.Schemas.User
 
 IO.puts("--------------------------------")
@@ -65,6 +67,91 @@ Repo.insert!(%BookUser{
   user_id: dummy_book_commenter.id,
   role: :commenter
 })
+
+category_names = [
+  "Housing",
+  "Transportation",
+  "Food",
+  "Personal",
+  "Lifestyle"
+]
+
+envelope_names = %{
+  "Housing" => [
+    "Mortgage/Rent",
+    "Property Tax",
+    "Home Insurance",
+    "Utilities",
+    "Internet",
+    "Phone",
+    "Maintenance",
+    "Furniture",
+    "Decorations",
+    "Improvements"
+  ],
+  "Transportation" => [
+    "Car Payment", 
+    "Gas",
+    "Car Insurance",
+    "Maintenance",
+    "Public Transit",
+    "Uber/Lyft",
+    "Parking",
+    "Tolls",
+    "Registration",
+    "Car Wash"
+  ],
+  "Food" => [
+    "Groceries",
+    "Dining Out",
+    "Coffee Shops",
+    "Fast Food",
+    "Work Lunches",
+    "Alcohol",
+    "Snacks",
+    "Specialty Foods",
+    "Meal Kits",
+    "Food Delivery"
+  ],
+  "Personal" => [
+    "Clothing",
+    "Shoes",
+    "Haircuts",
+    "Cosmetics",
+    "Gym Membership",
+    "Medicine",
+    "Doctor Visits",
+    "Dentist",
+    "Vision",
+    "Self-care"
+  ],
+  "Lifestyle" => [
+    "Entertainment",
+    "Streaming Services",
+    "Hobbies",
+    "Books",
+    "Music",
+    "Gifts",
+    "Pets",
+    "Travel",
+    "Education",
+    "Subscriptions"
+  ]
+}
+
+Enum.each(category_names, fn category_name ->
+  category = Repo.insert!(%Category{
+    name: category_name,
+    book_id: dummy_book.id
+  })
+
+  Enum.each(envelope_names[category_name], fn envelope_name ->
+    Repo.insert!(%Envelope{
+      name: envelope_name,
+      category_id: category.id
+    })
+  end)
+end)
 
 Process.sleep(1)
 
