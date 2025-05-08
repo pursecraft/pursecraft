@@ -29,14 +29,8 @@ defmodule PurseCraftWeb.BookLive.Index do
           <div class="sr-only">
             <.link navigate={~p"/books/#{book.external_id}"}>Show</.link>
           </div>
-          <.link navigate={~p"/books/#{book.external_id}/budget"} class="mr-2">
-            <.icon name="hero-currency-dollar" /> Budget
-          </.link>
-          <.link navigate={~p"/books/#{book.external_id}/reports"} class="mr-2">
-            <.icon name="hero-chart-bar" /> Reports
-          </.link>
-          <.link navigate={~p"/books/#{book.external_id}/accounts"} class="mr-2">
-            <.icon name="hero-credit-card" /> Accounts
+          <.link navigate={~p"/books/#{book.external_id}/budget"}>
+            Go to Budget View
           </.link>
           <.link navigate={~p"/books/#{book.external_id}/edit"}>Edit</.link>
         </:action>

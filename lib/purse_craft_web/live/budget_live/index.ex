@@ -117,7 +117,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
                   />
                 </div>
               </div>
-              
+
               <div class="mb-4">
                 <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1">
                   <div class="flex items-center gap-2 w-1/2">
@@ -155,7 +155,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
                   />
                 </div>
               </div>
-              
+
               <div class="mb-4">
                 <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1">
                   <div class="flex items-center gap-2 w-1/2">
