@@ -9,14 +9,13 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
 
   def sidebar(assigns) do
     ~H"""
-    <aside class="w-64 flex-shrink-0 border-r border-base-300 bg-base-200 overflow-y-auto">
-      <div class="p-4">
+    <aside class="w-64 flex-shrink-0 border-r border-base-300 bg-base-200 overflow-y-auto flex flex-col">
+      <div class="p-4 flex-grow">
         <div class="flex items-center justify-between mb-6">
           <a href="/" class="flex items-center gap-2">
             <img src={~p"/images/logo.svg"} width="30" alt="PurseCraft Logo" />
             <span class="font-bold text-lg">PurseCraft</span>
           </a>
-          <PurseCraftWeb.Layouts.theme_toggle />
         </div>
 
         <div class="mb-6">
@@ -49,8 +48,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
         </nav>
       </div>
 
-      <div class="mt-auto border-t border-base-300 p-4">
-        <div class="flex items-center gap-3">
+      <div class="border-t border-base-300 p-4 sticky bottom-0 bg-base-200">
+        <div class="flex items-center gap-3 mb-3">
           <div class="avatar placeholder">
             <div class="bg-primary text-base-100 rounded-full w-10">
               <span>{String.at(@current_scope.user.email, 0) |> String.upcase()}</span>
@@ -71,6 +70,10 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
               <.icon name="hero-arrow-right-on-rectangle" class="h-5 w-5" />
             </button>
           </form>
+        </div>
+
+        <div class="flex justify-center">
+          <PurseCraftWeb.Layouts.theme_toggle />
         </div>
       </div>
     </aside>
