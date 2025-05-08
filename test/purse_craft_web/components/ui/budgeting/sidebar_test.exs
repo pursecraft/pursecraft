@@ -70,6 +70,32 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "+ Create New Budget"
     end
 
+    test "renders accounts lists in sidebar", %{scope: scope, book: book} do
+      result =
+        render_component(&Sidebar.sidebar/1, %{
+          current_path: "/books/#{book.external_id}/budget",
+          current_scope: scope
+        })
+
+      assert result =~ "BUDGET ACCOUNTS"
+      assert result =~ "TRACKING ACCOUNTS"
+
+      assert result =~ "$5,240.82"
+      assert result =~ "$32,150.00"
+
+      assert result =~ "Checking"
+      assert result =~ "$3,240.82"
+      assert result =~ "Savings"
+      assert result =~ "$2,000.00"
+      assert result =~ "Investment"
+      assert result =~ "$25,150.00"
+      assert result =~ "401(k)"
+      assert result =~ "$7,000.00"
+
+      assert result =~ "Add Account"
+      assert result =~ "hero-plus-small"
+    end
+
     test "renders logout form", %{scope: scope, book: book} do
       result =
         render_component(&Sidebar.sidebar/1, %{
