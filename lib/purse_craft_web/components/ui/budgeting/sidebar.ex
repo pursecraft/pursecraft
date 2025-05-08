@@ -30,19 +30,19 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
         <nav class="space-y-1">
           <.sidebar_link
             current_path={@current_path}
-            path={get_budget_path(@current_path)}
+            path={get_book_path(@current_path, "budget")}
             icon="hero-banknotes"
             label="Budget"
           />
           <.sidebar_link
             current_path={@current_path}
-            path={get_reports_path(@current_path)}
+            path={get_book_path(@current_path, "reports")}
             icon="hero-chart-bar"
             label="Reports"
           />
           <.sidebar_link
             current_path={@current_path}
-            path={get_accounts_path(@current_path)}
+            path={get_book_path(@current_path, "accounts")}
             icon="hero-credit-card"
             label="All Accounts"
           />
@@ -112,24 +112,15 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
     """
   end
 
-  defp get_budget_path(current_path) do
+  defp get_book_path(current_path, page_name) do
     case Regex.run(~r"/books/([a-zA-Z0-9-]+)", current_path) do
-      [_match, external_id] -> "/books/#{external_id}/budget"
-      _no_match -> "/books"
-    end
-  end
+      [_match, external_id] ->
+        "/books/#{external_id}/#{page_name}"
 
-  defp get_reports_path(current_path) do
-    case Regex.run(~r"/books/([a-zA-Z0-9-]+)", current_path) do
-      [_match, external_id] -> "/books/#{external_id}/reports"
-      _no_match -> "/books"
-    end
-  end
-
-  defp get_accounts_path(current_path) do
-    case Regex.run(~r"/books/([a-zA-Z0-9-]+)", current_path) do
-      [_match, external_id] -> "/books/#{external_id}/accounts"
-      _no_match -> "/books"
+      # coveralls-ignore-start
+      _no_match ->
+        "/books"
+        # coveralls-ignore-stop
     end
   end
 end
