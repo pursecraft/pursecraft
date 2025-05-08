@@ -29,6 +29,9 @@ defmodule PurseCraftWeb.BookLive.Index do
           <div class="sr-only">
             <.link navigate={~p"/books/#{book.external_id}"}>Show</.link>
           </div>
+          <.link navigate={~p"/books/#{book.external_id}/budget"}>
+            Go to Budget View
+          </.link>
           <.link navigate={~p"/books/#{book.external_id}/edit"}>Edit</.link>
         </:action>
         <:action :let={{_id, book}}>
