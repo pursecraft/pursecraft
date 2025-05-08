@@ -24,17 +24,16 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert html =~ "Immediate Obligations"
       assert html =~ "True Expenses"
       assert html =~ "Quality of Life"
+      assert html =~ "May 2025"
     end
 
     test "has functioning sidebar links", %{conn: conn, book: book} do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
-      # Check sidebar links are present
       assert has_element?(view, "a", "Budget")
       assert has_element?(view, "a", "Reports")
       assert has_element?(view, "a", "All Accounts")
 
-      # The Budget link should be highlighted as active
       budget_link = element(view, "a", "Budget")
       assert render(budget_link) =~ "bg-primary"
     end
@@ -54,13 +53,9 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, "div", "Internet")
       assert has_element?(view, "div", "Groceries")
 
-      # Test the category row's available class assignment
-      # Verify the HTML contains the Internet category with zero available balance
-      # This tests the case when available_float == 0
       html = render(view)
       assert html =~ "Internet"
       assert html =~ "$0.00"
-      # Confirm the zero balance styling (should have no specific class)
       assert html =~
                ~s(Internet</span><div class="flex gap-8 text-sm"><span class="w-24 text-right">$75.00</span><span class="w-24 text-right">$-75.00</span><span class="w-24 text-right font-medium ">$0.00</span>)
     end
@@ -77,16 +72,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
       html = render(view)
 
-      # Test for positive balance (text-success class)
       assert html =~ "Rent/Mortgage"
       assert html =~ "w-24 text-right font-medium text-success"
 
-      # Test for zero balance (no additional class)
       assert html =~ "Internet"
       assert html =~ "$0.00"
       assert html =~ "w-24 text-right font-medium \">$0.00"
 
-      # Test for negative balance (text-error class)
       assert html =~ "Overspent"
       assert html =~ "$-25.00"
       assert html =~ "w-24 text-right font-medium text-error"

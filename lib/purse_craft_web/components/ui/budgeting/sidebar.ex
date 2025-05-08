@@ -47,16 +47,6 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
             label="All Accounts"
           />
         </nav>
-
-        <div class="mt-8 flex items-center justify-between">
-          <button class="btn btn-ghost btn-sm">
-            <.icon name="hero-chevron-left" class="h-4 w-4" />
-          </button>
-          <span class="font-medium">May 2025</span>
-          <button class="btn btn-ghost btn-sm">
-            <.icon name="hero-chevron-right" class="h-4 w-4" />
-          </button>
-        </div>
       </div>
 
       <div class="mt-auto border-t border-base-300 p-4">

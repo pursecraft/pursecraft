@@ -20,25 +20,18 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
           current_scope: scope
         })
 
-      # Check for PurseCraft logo and name
       assert result =~ "PurseCraft Logo"
       assert result =~ "PurseCraft"
 
-      # Check for navigation links
       assert result =~ "Budget"
       assert result =~ "Reports"
       assert result =~ "All Accounts"
 
-      # Check for user info
       assert result =~ "test@example.com"
       assert result =~ "Settings"
-
-      # Check for month selector
-      assert result =~ "May 2025"
     end
 
     test "highlights the active route", %{scope: scope, book: book} do
-      # Test with budget active
       budget_result =
         render_component(&Sidebar.sidebar/1, %{
           current_path: "/books/#{book.external_id}/budget",
@@ -47,17 +40,14 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
 
       assert budget_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/budget"[^>]*class="[^"]*bg-primary/
 
-      # Test with reports active
       reports_result =
         render_component(&Sidebar.sidebar/1, %{
           current_path: "/books/#{book.external_id}/reports",
           current_scope: scope
         })
 
-      # Test that the Reports link is highlighted when on the reports page
       assert reports_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/reports"[^>]*class="[^"]*bg-primary/
 
-      # Test with accounts active
       accounts_result =
         render_component(&Sidebar.sidebar/1, %{
           current_path: "/books/#{book.external_id}/accounts",
@@ -98,7 +88,6 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
           current_scope: scope
         })
 
-      # The avatar should contain the uppercase first letter of the email
       assert result =~ "<span>T</span>"
     end
   end

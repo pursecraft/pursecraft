@@ -26,14 +26,24 @@ defmodule PurseCraftWeb.BudgetLive.Index do
       <div class="space-y-6">
         <!-- Budget Header -->
         <div class="flex justify-between items-center">
-          <h1 class="text-2xl font-bold">Budget - {@book.name}</h1>
+          <div class="flex items-center gap-4">
+            <h1 class="text-2xl font-bold">Budget - {@book.name}</h1>
+            <div class="flex items-center">
+              <button class="btn btn-ghost btn-sm">
+                <.icon name="hero-chevron-left" class="h-4 w-4" />
+              </button>
+              <span class="font-medium mx-2">May 2025</span>
+              <button class="btn btn-ghost btn-sm">
+                <.icon name="hero-chevron-right" class="h-4 w-4" />
+              </button>
+            </div>
+          </div>
           <div class="flex gap-2">
             <button class="btn btn-primary">Add Category</button>
             <button class="btn btn-outline">Auto-Assign</button>
           </div>
         </div>
         
-    <!-- Budget Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="card bg-success/10 border border-success/20">
             <div class="card-body p-4">
@@ -55,9 +65,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
           </div>
         </div>
         
-    <!-- Budget Table -->
         <div class="space-y-4">
-          <!-- Category Group: Immediate Obligations -->
           <div class="space-y-2">
             <div class="flex items-center justify-between py-2 border-b border-base-300">
               <div class="flex items-center gap-2">
@@ -73,7 +81,6 @@ defmodule PurseCraftWeb.BudgetLive.Index do
               </div>
             </div>
             
-    <!-- Category Items -->
             <.category_row
               name="Rent/Mortgage"
               assigned="1,500.00"
@@ -87,7 +94,6 @@ defmodule PurseCraftWeb.BudgetLive.Index do
             <.category_row name="Overspent" assigned="50.00" activity="-75.00" available="-25.00" />
           </div>
           
-    <!-- Category Group: True Expenses -->
           <div class="space-y-2">
             <div class="flex items-center justify-between py-2 border-b border-base-300">
               <div class="flex items-center gap-2">
@@ -103,7 +109,6 @@ defmodule PurseCraftWeb.BudgetLive.Index do
               </div>
             </div>
             
-    <!-- Category Items -->
             <.category_row
               name="Auto Maintenance"
               assigned="100.00"
@@ -120,7 +125,6 @@ defmodule PurseCraftWeb.BudgetLive.Index do
             <.category_row name="Medical/Health" assigned="200.00" activity="0.00" available="200.00" />
           </div>
           
-    <!-- Category Group: Quality of Life -->
           <div class="space-y-2">
             <div class="flex items-center justify-between py-2 border-b border-base-300">
               <div class="flex items-center gap-2">
@@ -136,7 +140,6 @@ defmodule PurseCraftWeb.BudgetLive.Index do
               </div>
             </div>
             
-    <!-- Category Items -->
             <.category_row name="Dining Out" assigned="300.00" activity="-245.30" available="54.70" />
             <.category_row name="Entertainment" assigned="150.00" activity="-86.35" available="63.65" />
             <.category_row name="Vacation" assigned="200.00" activity="0.00" available="200.00" />
