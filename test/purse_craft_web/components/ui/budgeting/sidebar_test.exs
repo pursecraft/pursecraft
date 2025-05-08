@@ -88,7 +88,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
           current_scope: scope
         })
 
-      assert result =~ "<span>T</span>"
+      assert result =~ "T"
+      assert result =~ "avatar"
     end
   end
 end

@@ -43,7 +43,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
             <button class="btn btn-outline">Auto-Assign</button>
           </div>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="card bg-success/10 border border-success/20">
             <div class="card-body p-4">
@@ -64,7 +64,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
             </div>
           </div>
         </div>
-        
+
         <div class="space-y-4">
           <div class="space-y-2">
             <div class="flex items-center justify-between py-2 border-b border-base-300">
@@ -80,7 +80,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
                 <span class="w-24 text-right">Available</span>
               </div>
             </div>
-            
+
             <.category_row
               name="Rent/Mortgage"
               assigned="1,500.00"
@@ -93,7 +93,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
             <.category_row name="Groceries" assigned="600.00" activity="-423.65" available="176.35" />
             <.category_row name="Overspent" assigned="50.00" activity="-75.00" available="-25.00" />
           </div>
-          
+
           <div class="space-y-2">
             <div class="flex items-center justify-between py-2 border-b border-base-300">
               <div class="flex items-center gap-2">
@@ -108,7 +108,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
                 <span class="w-24 text-right">Available</span>
               </div>
             </div>
-            
+
             <.category_row
               name="Auto Maintenance"
               assigned="100.00"
@@ -124,7 +124,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
             <.category_row name="Clothing" assigned="50.00" activity="-23.75" available="26.25" />
             <.category_row name="Medical/Health" assigned="200.00" activity="0.00" available="200.00" />
           </div>
-          
+
           <div class="space-y-2">
             <div class="flex items-center justify-between py-2 border-b border-base-300">
               <div class="flex items-center gap-2">
@@ -139,7 +139,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
                 <span class="w-24 text-right">Available</span>
               </div>
             </div>
-            
+
             <.category_row name="Dining Out" assigned="300.00" activity="-245.30" available="54.70" />
             <.category_row name="Entertainment" assigned="150.00" activity="-86.35" available="63.65" />
             <.category_row name="Vacation" assigned="200.00" activity="0.00" available="200.00" />

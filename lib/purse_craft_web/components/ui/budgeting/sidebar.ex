@@ -50,9 +50,11 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
 
       <div class="border-t border-base-300 p-4 sticky bottom-0 bg-base-200">
         <div class="flex items-center gap-3 mb-3">
-          <div class="avatar placeholder">
-            <div class="bg-primary text-base-100 rounded-full w-10">
-              <span>{String.at(@current_scope.user.email, 0) |> String.upcase()}</span>
+          <div class="avatar avatar-placeholder">
+            <div class="bg-primary text-primary-content w-10 rounded-full">
+              <span class="text-xl">
+                {String.at(@current_scope.user.email, 0) |> String.upcase()}
+              </span>
             </div>
           </div>
           <div class="flex-1 min-w-0">

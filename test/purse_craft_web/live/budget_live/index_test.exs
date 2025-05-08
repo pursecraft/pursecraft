@@ -56,6 +56,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       html = render(view)
       assert html =~ "Internet"
       assert html =~ "$0.00"
+
       assert html =~
                ~s(Internet</span><div class="flex gap-8 text-sm"><span class="w-24 text-right">$75.00</span><span class="w-24 text-right">$-75.00</span><span class="w-24 text-right font-medium ">$0.00</span>)
     end
