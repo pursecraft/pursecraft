@@ -70,10 +70,15 @@ defmodule PurseCraftWeb.Layouts do
   def budgeting(assigns) do
     ~H"""
     <div class="flex h-screen overflow-hidden bg-base-100">
-      <Budgeting.Sidebar.sidebar current_path={@current_path} current_scope={@current_scope} />
+      <.live_component
+        module={Budgeting.Sidebar}
+        id="sidebar"
+        current_path={@current_path}
+        current_scope={@current_scope}
+      />
 
       <main class="flex-1 overflow-y-auto">
-        <div class="px-6 py-6">
+        <div class="px-4 py-4 lg:px-6 lg:py-6">
           {render_slot(@inner_block)}
         </div>
       </main>

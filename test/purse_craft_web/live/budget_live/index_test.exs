@@ -54,11 +54,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, "div", "Groceries")
 
       html = render(view)
-      assert html =~ "Internet"
-      assert html =~ "$0.00"
 
-      assert html =~
-               ~s(Internet</span><div class="flex gap-8 text-sm"><span class="w-24 text-right">$75.00</span><span class="w-24 text-right">$-75.00</span><span class="w-24 text-right font-medium ">$0.00</span>)
+      assert html =~ "Internet"
+      assert html =~ "$75.00"
+      assert html =~ "$-75.00"
+      assert html =~ "$0.00"
     end
 
     test "shows action buttons", %{conn: conn, book: book} do
@@ -74,15 +74,14 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       html = render(view)
 
       assert html =~ "Rent/Mortgage"
-      assert html =~ "w-24 text-right font-medium text-success"
+      assert html =~ "text-right font-medium text-success"
 
       assert html =~ "Internet"
       assert html =~ "$0.00"
-      assert html =~ "w-24 text-right font-medium \">$0.00"
 
       assert html =~ "Overspent"
       assert html =~ "$-25.00"
-      assert html =~ "w-24 text-right font-medium text-error"
+      assert html =~ "text-right font-medium text-error"
     end
   end
 end

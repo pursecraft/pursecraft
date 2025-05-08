@@ -23,10 +23,9 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   def render(assigns) do
     ~H"""
     <Layouts.budgeting flash={@flash} current_path={@current_path} current_scope={@current_scope}>
-      <div class="space-y-6">
-        <!-- Budget Header -->
-        <div class="flex justify-between items-center">
-          <div class="flex items-center gap-4">
+      <div class="space-y-6 w-full max-w-7xl mx-auto">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
             <h1 class="text-2xl font-bold">Budget - {@book.name}</h1>
             <div class="flex items-center">
               <button class="btn btn-ghost btn-sm">
@@ -39,111 +38,157 @@ defmodule PurseCraftWeb.BudgetLive.Index do
             </div>
           </div>
           <div class="flex gap-2">
-            <button class="btn btn-primary">Add Category</button>
-            <button class="btn btn-outline">Auto-Assign</button>
+            <button class="btn btn-primary btn-sm sm:btn-md">Add Category</button>
+            <button class="btn btn-outline btn-sm sm:btn-md">Auto-Assign</button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div class="card bg-success/10 border border-success/20">
             <div class="card-body p-4">
-              <h2 class="card-title text-sm text-success">Ready to Assign</h2>
-              <p class="text-2xl font-bold">$1,250.00</p>
+              <div class="flex flex-row md:flex-col items-center md:items-start justify-between md:justify-start">
+                <h2 class="card-title text-sm text-success">Ready to Assign</h2>
+                <p class="text-xl md:text-2xl font-bold md:mt-1">$1,250.00</p>
+              </div>
             </div>
           </div>
           <div class="card bg-base-200">
             <div class="card-body p-4">
-              <h2 class="card-title text-sm">Assigned this Month</h2>
-              <p class="text-2xl font-bold">$3,750.00</p>
+              <div class="flex flex-row md:flex-col items-center md:items-start justify-between md:justify-start">
+                <h2 class="card-title text-sm">Assigned this Month</h2>
+                <p class="text-xl md:text-2xl font-bold md:mt-1">$3,750.00</p>
+              </div>
             </div>
           </div>
           <div class="card bg-base-200">
             <div class="card-body p-4">
-              <h2 class="card-title text-sm">Activity this Month</h2>
-              <p class="text-2xl font-bold">-$2,130.45</p>
+              <div class="flex flex-row md:flex-col items-center md:items-start justify-between md:justify-start">
+                <h2 class="card-title text-sm">Activity this Month</h2>
+                <p class="text-xl md:text-2xl font-bold md:mt-1">-$2,130.45</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="space-y-4">
-          <div class="space-y-2">
-            <div class="flex items-center justify-between py-2 border-b border-base-300">
-              <div class="flex items-center gap-2">
-                <button class="btn btn-ghost btn-xs">
-                  <.icon name="hero-chevron-down" class="h-4 w-4" />
-                </button>
-                <h3 class="font-bold">Immediate Obligations</h3>
+        <div class="space-y-2">
+          <div class="overflow-x-auto">
+            <div class="min-w-[600px]">
+              <div class="mb-4">
+                <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1">
+                  <div class="flex items-center gap-2 w-1/2">
+                    <button class="btn btn-ghost btn-xs">
+                      <.icon name="hero-chevron-down" class="h-4 w-4" />
+                    </button>
+                    <h3 class="font-bold">Immediate Obligations</h3>
+                  </div>
+                  <div class="flex justify-end w-1/2 text-xs sm:text-sm font-medium">
+                    <span class="w-[80px] sm:w-[100px] text-right">Assigned</span>
+                    <span class="w-[80px] sm:w-[100px] text-right">Activity</span>
+                    <span class="w-[80px] sm:w-[100px] text-right">Available</span>
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <.category_row
+                    name="Rent/Mortgage"
+                    assigned="1,500.00"
+                    activity="0.00"
+                    available="1,500.00"
+                  />
+                  <.category_row
+                    name="Electric"
+                    assigned="120.00"
+                    activity="-95.40"
+                    available="24.60"
+                  />
+                  <.category_row name="Water" assigned="45.00" activity="0.00" available="45.00" />
+                  <.category_row name="Internet" assigned="75.00" activity="-75.00" available="0.00" />
+                  <.category_row
+                    name="Groceries"
+                    assigned="600.00"
+                    activity="-423.65"
+                    available="176.35"
+                  />
+                  <.category_row
+                    name="Overspent"
+                    assigned="50.00"
+                    activity="-75.00"
+                    available="-25.00"
+                  />
+                </div>
               </div>
-              <div class="flex gap-8 text-sm font-medium">
-                <span class="w-24 text-right">Assigned</span>
-                <span class="w-24 text-right">Activity</span>
-                <span class="w-24 text-right">Available</span>
+              
+              <div class="mb-4">
+                <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1">
+                  <div class="flex items-center gap-2 w-1/2">
+                    <button class="btn btn-ghost btn-xs">
+                      <.icon name="hero-chevron-down" class="h-4 w-4" />
+                    </button>
+                    <h3 class="font-bold">True Expenses</h3>
+                  </div>
+                  <div class="flex justify-end w-1/2 text-xs sm:text-sm font-medium">
+                    <span class="w-[80px] sm:w-[100px] text-right">Assigned</span>
+                    <span class="w-[80px] sm:w-[100px] text-right">Activity</span>
+                    <span class="w-[80px] sm:w-[100px] text-right">Available</span>
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <.category_row
+                    name="Auto Maintenance"
+                    assigned="100.00"
+                    activity="0.00"
+                    available="100.00"
+                  />
+                  <.category_row
+                    name="Home Maintenance"
+                    assigned="150.00"
+                    activity="-42.50"
+                    available="107.50"
+                  />
+                  <.category_row name="Clothing" assigned="50.00" activity="-23.75" available="26.25" />
+                  <.category_row
+                    name="Medical/Health"
+                    assigned="200.00"
+                    activity="0.00"
+                    available="200.00"
+                  />
+                </div>
+              </div>
+              
+              <div class="mb-4">
+                <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1">
+                  <div class="flex items-center gap-2 w-1/2">
+                    <button class="btn btn-ghost btn-xs">
+                      <.icon name="hero-chevron-down" class="h-4 w-4" />
+                    </button>
+                    <h3 class="font-bold">Quality of Life</h3>
+                  </div>
+                  <div class="flex justify-end w-1/2 text-xs sm:text-sm font-medium">
+                    <span class="w-[80px] sm:w-[100px] text-right">Assigned</span>
+                    <span class="w-[80px] sm:w-[100px] text-right">Activity</span>
+                    <span class="w-[80px] sm:w-[100px] text-right">Available</span>
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <.category_row
+                    name="Dining Out"
+                    assigned="300.00"
+                    activity="-245.30"
+                    available="54.70"
+                  />
+                  <.category_row
+                    name="Entertainment"
+                    assigned="150.00"
+                    activity="-86.35"
+                    available="63.65"
+                  />
+                  <.category_row name="Vacation" assigned="200.00" activity="0.00" available="200.00" />
+                  <.category_row name="Gifts" assigned="100.00" activity="-50.00" available="50.00" />
+                </div>
               </div>
             </div>
-
-            <.category_row
-              name="Rent/Mortgage"
-              assigned="1,500.00"
-              activity="0.00"
-              available="1,500.00"
-            />
-            <.category_row name="Electric" assigned="120.00" activity="-95.40" available="24.60" />
-            <.category_row name="Water" assigned="45.00" activity="0.00" available="45.00" />
-            <.category_row name="Internet" assigned="75.00" activity="-75.00" available="0.00" />
-            <.category_row name="Groceries" assigned="600.00" activity="-423.65" available="176.35" />
-            <.category_row name="Overspent" assigned="50.00" activity="-75.00" available="-25.00" />
-          </div>
-
-          <div class="space-y-2">
-            <div class="flex items-center justify-between py-2 border-b border-base-300">
-              <div class="flex items-center gap-2">
-                <button class="btn btn-ghost btn-xs">
-                  <.icon name="hero-chevron-down" class="h-4 w-4" />
-                </button>
-                <h3 class="font-bold">True Expenses</h3>
-              </div>
-              <div class="flex gap-8 text-sm font-medium">
-                <span class="w-24 text-right">Assigned</span>
-                <span class="w-24 text-right">Activity</span>
-                <span class="w-24 text-right">Available</span>
-              </div>
-            </div>
-
-            <.category_row
-              name="Auto Maintenance"
-              assigned="100.00"
-              activity="0.00"
-              available="100.00"
-            />
-            <.category_row
-              name="Home Maintenance"
-              assigned="150.00"
-              activity="-42.50"
-              available="107.50"
-            />
-            <.category_row name="Clothing" assigned="50.00" activity="-23.75" available="26.25" />
-            <.category_row name="Medical/Health" assigned="200.00" activity="0.00" available="200.00" />
-          </div>
-
-          <div class="space-y-2">
-            <div class="flex items-center justify-between py-2 border-b border-base-300">
-              <div class="flex items-center gap-2">
-                <button class="btn btn-ghost btn-xs">
-                  <.icon name="hero-chevron-down" class="h-4 w-4" />
-                </button>
-                <h3 class="font-bold">Quality of Life</h3>
-              </div>
-              <div class="flex gap-8 text-sm font-medium">
-                <span class="w-24 text-right">Assigned</span>
-                <span class="w-24 text-right">Activity</span>
-                <span class="w-24 text-right">Available</span>
-              </div>
-            </div>
-
-            <.category_row name="Dining Out" assigned="300.00" activity="-245.30" available="54.70" />
-            <.category_row name="Entertainment" assigned="150.00" activity="-86.35" available="63.65" />
-            <.category_row name="Vacation" assigned="200.00" activity="0.00" available="200.00" />
-            <.category_row name="Gifts" assigned="100.00" activity="-50.00" available="50.00" />
           </div>
         </div>
       </div>
@@ -173,12 +218,14 @@ defmodule PurseCraftWeb.BudgetLive.Index do
     assigns = assign(assigns, :available_class, available_class)
 
     ~H"""
-    <div class="flex items-center justify-between py-2 pl-8 pr-2 hover:bg-base-200 rounded-lg cursor-pointer">
-      <span class="font-medium">{@name}</span>
-      <div class="flex gap-8 text-sm">
-        <span class="w-24 text-right">${@assigned}</span>
-        <span class="w-24 text-right">${@activity}</span>
-        <span class={"w-24 text-right font-medium #{@available_class}"}>${@available}</span>
+    <div class="flex items-center justify-between py-1 hover:bg-base-200 rounded-lg cursor-pointer">
+      <span class="font-medium truncate w-1/2 pl-6 sm:pl-8">{@name}</span>
+      <div class="flex justify-end w-1/2 text-xs sm:text-sm">
+        <span class="w-[80px] sm:w-[100px] text-right">${@assigned}</span>
+        <span class="w-[80px] sm:w-[100px] text-right">${@activity}</span>
+        <span class={"w-[80px] sm:w-[100px] text-right font-medium #{@available_class}"}>
+          ${@available}
+        </span>
       </div>
     </div>
     """

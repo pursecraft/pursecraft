@@ -12,10 +12,11 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
     %{user: user, scope: scope, book: book}
   end
 
-  describe "sidebar/1" do
+  describe "LiveComponent" do
     test "renders the sidebar with navigation links", %{scope: scope, book: book} do
       result =
-        render_component(&Sidebar.sidebar/1, %{
+        render_component(Sidebar, %{
+          id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
           current_scope: scope
         })
@@ -33,7 +34,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
 
     test "highlights the active route", %{scope: scope, book: book} do
       budget_result =
-        render_component(&Sidebar.sidebar/1, %{
+        render_component(Sidebar, %{
+          id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
           current_scope: scope
         })
@@ -41,7 +43,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert budget_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/budget"[^>]*class="[^"]*bg-primary/
 
       reports_result =
-        render_component(&Sidebar.sidebar/1, %{
+        render_component(Sidebar, %{
+          id: "sidebar-test",
           current_path: "/books/#{book.external_id}/reports",
           current_scope: scope
         })
@@ -49,7 +52,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert reports_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/reports"[^>]*class="[^"]*bg-primary/
 
       accounts_result =
-        render_component(&Sidebar.sidebar/1, %{
+        render_component(Sidebar, %{
+          id: "sidebar-test",
           current_path: "/books/#{book.external_id}/accounts",
           current_scope: scope
         })
@@ -59,7 +63,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
 
     test "renders book selection dropdown", %{scope: scope, book: book} do
       result =
-        render_component(&Sidebar.sidebar/1, %{
+        render_component(Sidebar, %{
+          id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
           current_scope: scope
         })
@@ -72,7 +77,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
 
     test "renders accounts lists in sidebar", %{scope: scope, book: book} do
       result =
-        render_component(&Sidebar.sidebar/1, %{
+        render_component(Sidebar, %{
+          id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
           current_scope: scope
         })
@@ -96,26 +102,46 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "hero-plus-small"
     end
 
-    test "renders logout form", %{scope: scope, book: book} do
+    test "handles logout link", %{scope: scope, book: book} do
       result =
-        render_component(&Sidebar.sidebar/1, %{
+        render_component(Sidebar, %{
+          id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
           current_scope: scope
         })
 
-      assert result =~ ~r/<form[^>]*action="\/users\/log-out"/
-      assert result =~ "Log out"
+      assert result =~ ~r/<a[^>]*href="\/users\/log-out"/
+      assert result =~ "hero-arrow-right-on-rectangle"
     end
 
     test "renders user initial in avatar", %{scope: scope, book: book} do
       result =
-        render_component(&Sidebar.sidebar/1, %{
+        render_component(Sidebar, %{
+          id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
           current_scope: scope
         })
 
       assert result =~ "T"
       assert result =~ "avatar"
+    end
+
+    test "renders sidebar with hidden mobile class by default", %{scope: scope, book: book} do
+      result =
+        render_component(Sidebar, %{
+          id: "sidebar-test",
+          current_path: "/books/#{book.external_id}/budget",
+          current_scope: scope
+        })
+
+      # Verify the sidebar has the hidden class initially
+      assert result =~ "id=\"sidebar-container\""
+      assert result =~ "-translate-x-full lg:translate-x-0"
+
+      # Verify burger button exists
+      assert result =~ "phx-click="
+      assert result =~ "<button"
+      assert result =~ "hero-bars-3"
     end
   end
 end
