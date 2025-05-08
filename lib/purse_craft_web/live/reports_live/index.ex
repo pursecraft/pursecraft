@@ -1,7 +1,6 @@
 defmodule PurseCraftWeb.ReportsLive.Index do
-  @moduledoc """
-  LiveView for the Report page, which shows spending trends and reports.
-  """
+  @moduledoc false
+
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Budgeting

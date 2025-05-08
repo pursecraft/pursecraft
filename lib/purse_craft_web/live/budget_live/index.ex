@@ -1,7 +1,6 @@
 defmodule PurseCraftWeb.BudgetLive.Index do
-  @moduledoc """
-  LiveView for the budgeting page, inspired by YNAB's budgeting interface.
-  """
+  @moduledoc false
+
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Budgeting

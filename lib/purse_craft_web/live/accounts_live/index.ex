@@ -51,10 +51,8 @@ defmodule PurseCraftWeb.AccountsLive.Index do
             </div>
           </div>
         </div>
-        
-    <!-- Account Groups -->
+
         <div class="space-y-6">
-          <!-- Budget Accounts -->
           <div class="space-y-2">
             <h3 class="font-bold text-xl">Budget Accounts</h3>
 
@@ -62,8 +60,7 @@ defmodule PurseCraftWeb.AccountsLive.Index do
 
             <.account_card name="Savings" balance="2,000.00" type="Savings" />
           </div>
-          
-    <!-- Tracking Accounts -->
+
           <div class="space-y-2">
             <h3 class="font-bold text-xl">Tracking Accounts</h3>
 
@@ -72,8 +69,7 @@ defmodule PurseCraftWeb.AccountsLive.Index do
             <.account_card name="401(k)" balance="7,000.00" type="Retirement" />
           </div>
         </div>
-        
-    <!-- Recent Transactions -->
+
         <div class="space-y-4">
           <h3 class="font-bold text-xl">Recent Transactions</h3>
 
