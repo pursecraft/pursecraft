@@ -62,10 +62,25 @@ defmodule PurseCraftWeb.BookLive.Index do
 
   @impl Phoenix.LiveView
   def handle_event("delete", %{"external_id" => external_id}, socket) do
-    book = Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id)
-    {:ok, _book} = Budgeting.delete_book(socket.assigns.current_scope, book)
+    case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
+      {:ok, book} ->
+        case Budgeting.delete_book(socket.assigns.current_scope, book) do
+          {:ok, _book} ->
+            {:noreply, stream_delete_by_dom_id(socket, :books, "books-#{book.external_id}")}
 
-    {:noreply, stream_delete_by_dom_id(socket, :books, "books-#{book.external_id}")}
+          {:error, _reason} ->
+            {:noreply, put_flash(socket, :error, "Failed to delete book")}
+        end
+
+      # coveralls-ignore-start
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Book not found")}
+
+      # coveralls-ignore-stop
+
+      {:error, :unauthorized} ->
+        {:noreply, put_flash(socket, :error, "You don't have access to this book")}
+    end
   end
 
   @impl Phoenix.LiveView

@@ -7,15 +7,28 @@ defmodule PurseCraftWeb.AccountsLive.Index do
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
-    book = Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id)
+    case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
+      {:ok, book} ->
+        socket =
+          socket
+          |> assign(:page_title, "All Accounts - #{book.name}")
+          |> assign(:current_path, "/books/#{book.external_id}/accounts")
+          |> assign(:book, book)
 
-    socket =
-      socket
-      |> assign(:page_title, "All Accounts - #{book.name}")
-      |> assign(:current_path, "/books/#{book.external_id}/accounts")
-      |> assign(:book, book)
+        {:ok, socket}
 
-    {:ok, socket}
+      {:error, :not_found} ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Book not found")
+         |> push_navigate(to: ~p"/books")}
+
+      {:error, :unauthorized} ->
+        {:ok,
+         socket
+         |> put_flash(:error, "You don't have access to this book")
+         |> push_navigate(to: ~p"/books")}
+    end
   end
 
   @impl Phoenix.LiveView

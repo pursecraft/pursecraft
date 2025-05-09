@@ -37,12 +37,23 @@ defmodule PurseCraftWeb.BookLive.Form do
   defp return_to(_action), do: "index"
 
   defp apply_action(socket, :edit, %{"external_id" => external_id}) do
-    book = Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id)
+    case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
+      {:ok, book} ->
+        socket
+        |> assign(:page_title, "Edit Book")
+        |> assign(:book, book)
+        |> assign(:form, to_form(Budgeting.change_book(book)))
 
-    socket
-    |> assign(:page_title, "Edit Book")
-    |> assign(:book, book)
-    |> assign(:form, to_form(Budgeting.change_book(book)))
+      {:error, :not_found} ->
+        socket
+        |> put_flash(:error, "Book not found")
+        |> push_navigate(to: ~p"/books")
+
+      {:error, :unauthorized} ->
+        socket
+        |> put_flash(:error, "You don't have access to this book")
+        |> push_navigate(to: ~p"/books")
+    end
   end
 
   defp apply_action(socket, :new, _params) do
