@@ -7,8 +7,6 @@ defmodule PurseCraft.Budgeting.Schemas.Envelope do
 
   use Ecto.Schema
 
-  import Ecto.Changeset
-
   alias PurseCraft.Budgeting.Schemas.Category
 
   @type t :: %__MODULE__{
@@ -34,14 +32,5 @@ defmodule PurseCraft.Budgeting.Schemas.Envelope do
     belongs_to :category, Category
 
     timestamps(type: :utc_datetime)
-  end
-
-  @doc false
-  @spec changeset(t(), changeset_attrs()) :: Ecto.Changeset.t()
-  def changeset(envelope, attrs) do
-    envelope
-    |> cast(attrs, [:name, :category_id])
-    |> validate_required([:name, :category_id])
-    |> foreign_key_constraint(:category_id)
   end
 end

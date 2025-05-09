@@ -60,6 +60,7 @@ defmodule PurseCraft.MixProject do
       {:faker, "0.18.0", only: :test},
       {:floki, "0.37.1", only: :test},
       {:gettext, "0.26.2"},
+      {:mimic, "1.11.2", only: :test},
       {:heroicons,
        github: "tailwindlabs/heroicons", tag: "v2.1.1", sparse: "optimized", app: false, compile: false, depth: 1},
       {:jason, "1.4.4"},

@@ -24,6 +24,9 @@ defmodule PurseCraft.Budgeting do
           optional(:name) => String.t()
         }
 
+  @type fetch_book_by_external_id_option :: {:preload, list(Keyword.t())}
+  @type fetch_book_by_external_id_options :: [fetch_book_by_external_id_option()]
+
   @doc """
   Subscribes to notifications about any book changes associated with the scoped user.
 
@@ -130,6 +133,46 @@ defmodule PurseCraft.Budgeting do
     :ok = Policy.authorize!(:book_read, scope, %{book: %Book{external_id: external_id}})
 
     Repo.get_by!(Book, external_id: external_id)
+  end
+
+  @doc """
+  Fetches a single `Book` by its `external_id` with optional preloading of associations.
+
+  Returns a tuple of `{:ok, book}` if the book exists, or `{:error, :not_found}` if not found.
+  Returns `{:error, :unauthorized}` if the given scope is not authorized to view the book.
+
+  ## Preloading options
+
+  The `:preload` option accepts a list of associations to preload. For example:
+
+  - `[:categories]` - preloads only categories
+  - `[categories: :envelopes]` - preloads categories and their envelopes
+
+  ## Examples
+
+      iex> fetch_book_by_external_id(authorized_scope, "abcd-1234", preload: [categories: :envelopes])
+      {:ok, %Book{categories: [%Category{envelopes: [%Envelope{}, ...]}]}}
+
+      iex> fetch_book_by_external_id(authorized_scope, "invalid-id")
+      {:error, :not_found}
+
+      iex> fetch_book_by_external_id(unauthorized_scope, "abcd-1234")
+      {:error, :unauthorized}
+
+  """
+  @spec fetch_book_by_external_id(Scope.t(), Ecto.UUID.t(), fetch_book_by_external_id_options()) ::
+          {:ok, Book.t()} | {:error, :not_found | :unauthorized}
+  def fetch_book_by_external_id(%Scope{} = scope, external_id, opts \\ []) do
+    with :ok <- Policy.authorize(:book_read, scope, %{book: %Book{external_id: external_id}}) do
+      case Repo.get_by(Book, external_id: external_id) do
+        nil ->
+          {:error, :not_found}
+
+        book ->
+          preloads = Keyword.get(opts, :preload, [])
+          {:ok, Repo.preload(book, preloads)}
+      end
+    end
   end
 
   @doc """

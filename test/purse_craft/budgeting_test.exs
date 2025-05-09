@@ -21,6 +21,58 @@ defmodule PurseCraft.BudgetingTest do
     }
   end
 
+  describe "fetch_book_by_external_id/3" do
+    test "with associated book (authorized scope) returns book", %{scope: scope, book: book} do
+      assert {:ok, fetched_book} = Budgeting.fetch_book_by_external_id(scope, book.external_id)
+      assert fetched_book.id == book.id
+      assert fetched_book.name == book.name
+      assert fetched_book.external_id == book.external_id
+    end
+
+    test "with associated book and preload options returns preloaded book", %{scope: scope, book: book} do
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      assert {:ok, fetched_book} =
+               Budgeting.fetch_book_by_external_id(scope, book.external_id, preload: [categories: :envelopes])
+
+      assert [loaded_category] = fetched_book.categories
+      assert loaded_category.id == category.id
+      assert loaded_category.name == category.name
+
+      assert [loaded_envelope] = loaded_category.envelopes
+      assert loaded_envelope.id == envelope.id
+      assert loaded_envelope.name == envelope.name
+    end
+
+    test "with non-existent book returns unauthorized error" do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+      non_existent_id = Ecto.UUID.generate()
+
+      assert {:error, :unauthorized} = Budgeting.fetch_book_by_external_id(scope, non_existent_id)
+    end
+
+    test "with authorized scope but non-existent book returns not_found error" do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+      non_existent_id = Ecto.UUID.generate()
+
+      Mimic.expect(PurseCraft.Budgeting.Policy, :authorize, fn :book_read, _scope, _object ->
+        :ok
+      end)
+
+      assert {:error, :not_found} = Budgeting.fetch_book_by_external_id(scope, non_existent_id)
+    end
+
+    test "with no associated book (unauthorized scope) returns unauthorized error", %{book: book} do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:error, :unauthorized} = Budgeting.fetch_book_by_external_id(scope, book.external_id)
+    end
+  end
+
   describe "list_books/1" do
     test "with associated books returns all scoped books", %{scope: scope, book: book} do
       other_user = IdentityFactory.insert(:user)
