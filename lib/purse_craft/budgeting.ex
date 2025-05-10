@@ -24,7 +24,7 @@ defmodule PurseCraft.Budgeting do
           optional(:name) => String.t()
         }
 
-  @type fetch_book_by_external_id_option :: {:preload, list(Keyword.t())}
+  @type fetch_book_by_external_id_option :: {:preload, Keyword.t()}
   @type fetch_book_by_external_id_options :: [fetch_book_by_external_id_option()]
 
   @doc """
