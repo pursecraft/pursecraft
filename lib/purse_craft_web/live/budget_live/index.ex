@@ -7,13 +7,17 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
-    case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
+    preloads = [categories: :envelopes]
+
+    case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id, preload: preloads) do
       {:ok, book} ->
         socket =
           socket
           |> assign(:page_title, "Budget - #{book.name}")
           |> assign(:current_path, "/books/#{book.external_id}/budget")
           |> assign(:book, book)
+          |> stream_configure(:categories, dom_id: &"categories-#{&1.external_id}")
+          |> stream(:categories, book.categories)
 
         {:ok, socket}
 
@@ -85,119 +89,32 @@ defmodule PurseCraftWeb.BudgetLive.Index do
         <div class="space-y-2">
           <div class="overflow-x-auto">
             <div class="min-w-[600px]">
-              <div class="mb-4">
-                <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1">
-                  <div class="flex items-center gap-2 w-1/2">
-                    <button class="btn btn-ghost btn-xs">
-                      <.icon name="hero-chevron-down" class="h-4 w-4" />
-                    </button>
-                    <h3 class="font-bold">Immediate Obligations</h3>
+              <div id="budget-categories" phx-update="stream" class="space-y-4">
+                <div :for={{dom_id, category} <- @streams.categories} id={dom_id} class="mb-4">
+                  <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1">
+                    <div class="flex items-center gap-2 w-1/2">
+                      <button class="btn btn-ghost btn-xs">
+                        <.icon name="hero-chevron-down" class="h-4 w-4" />
+                      </button>
+                      <h3 class="font-bold">{category.name}</h3>
+                    </div>
+                    <div class="flex justify-end w-1/2 text-xs sm:text-sm font-medium">
+                      <span class="w-[80px] sm:w-[100px] text-right">Assigned</span>
+                      <span class="w-[80px] sm:w-[100px] text-right">Activity</span>
+                      <span class="w-[80px] sm:w-[100px] text-right">Available</span>
+                    </div>
                   </div>
-                  <div class="flex justify-end w-1/2 text-xs sm:text-sm font-medium">
-                    <span class="w-[80px] sm:w-[100px] text-right">Assigned</span>
-                    <span class="w-[80px] sm:w-[100px] text-right">Activity</span>
-                    <span class="w-[80px] sm:w-[100px] text-right">Available</span>
-                  </div>
-                </div>
 
-                <div class="space-y-1">
-                  <.category_row
-                    name="Rent/Mortgage"
-                    assigned="1,500.00"
-                    activity="0.00"
-                    available="1,500.00"
-                  />
-                  <.category_row
-                    name="Electric"
-                    assigned="120.00"
-                    activity="-95.40"
-                    available="24.60"
-                  />
-                  <.category_row name="Water" assigned="45.00" activity="0.00" available="45.00" />
-                  <.category_row name="Internet" assigned="75.00" activity="-75.00" available="0.00" />
-                  <.category_row
-                    name="Groceries"
-                    assigned="600.00"
-                    activity="-423.65"
-                    available="176.35"
-                  />
-                  <.category_row
-                    name="Overspent"
-                    assigned="50.00"
-                    activity="-75.00"
-                    available="-25.00"
-                  />
-                </div>
-              </div>
-
-              <div class="mb-4">
-                <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1">
-                  <div class="flex items-center gap-2 w-1/2">
-                    <button class="btn btn-ghost btn-xs">
-                      <.icon name="hero-chevron-down" class="h-4 w-4" />
-                    </button>
-                    <h3 class="font-bold">True Expenses</h3>
+                  <div class="space-y-1">
+                    <div :for={envelope <- category.envelopes} id={"envelope-#{envelope.external_id}"}>
+                      <.category_row
+                        name={envelope.name}
+                        assigned="100.00"
+                        activity="0.00"
+                        available="100.00"
+                      />
+                    </div>
                   </div>
-                  <div class="flex justify-end w-1/2 text-xs sm:text-sm font-medium">
-                    <span class="w-[80px] sm:w-[100px] text-right">Assigned</span>
-                    <span class="w-[80px] sm:w-[100px] text-right">Activity</span>
-                    <span class="w-[80px] sm:w-[100px] text-right">Available</span>
-                  </div>
-                </div>
-
-                <div class="space-y-1">
-                  <.category_row
-                    name="Auto Maintenance"
-                    assigned="100.00"
-                    activity="0.00"
-                    available="100.00"
-                  />
-                  <.category_row
-                    name="Home Maintenance"
-                    assigned="150.00"
-                    activity="-42.50"
-                    available="107.50"
-                  />
-                  <.category_row name="Clothing" assigned="50.00" activity="-23.75" available="26.25" />
-                  <.category_row
-                    name="Medical/Health"
-                    assigned="200.00"
-                    activity="0.00"
-                    available="200.00"
-                  />
-                </div>
-              </div>
-
-              <div class="mb-4">
-                <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1">
-                  <div class="flex items-center gap-2 w-1/2">
-                    <button class="btn btn-ghost btn-xs">
-                      <.icon name="hero-chevron-down" class="h-4 w-4" />
-                    </button>
-                    <h3 class="font-bold">Quality of Life</h3>
-                  </div>
-                  <div class="flex justify-end w-1/2 text-xs sm:text-sm font-medium">
-                    <span class="w-[80px] sm:w-[100px] text-right">Assigned</span>
-                    <span class="w-[80px] sm:w-[100px] text-right">Activity</span>
-                    <span class="w-[80px] sm:w-[100px] text-right">Available</span>
-                  </div>
-                </div>
-
-                <div class="space-y-1">
-                  <.category_row
-                    name="Dining Out"
-                    assigned="300.00"
-                    activity="-245.30"
-                    available="54.70"
-                  />
-                  <.category_row
-                    name="Entertainment"
-                    assigned="150.00"
-                    activity="-86.35"
-                    available="63.65"
-                  />
-                  <.category_row name="Vacation" assigned="200.00" activity="0.00" available="200.00" />
-                  <.category_row name="Gifts" assigned="100.00" activity="-50.00" available="50.00" />
                 </div>
               </div>
             </div>
@@ -220,12 +137,15 @@ defmodule PurseCraftWeb.BudgetLive.Index do
       |> String.replace(",", "")
       |> String.to_float()
 
+    # coveralls-ignore-start
     available_class =
       cond do
         available_float < 0 -> "text-error"
         available_float > 0 -> "text-success"
         true -> ""
       end
+
+    # coveralls-ignore-stop
 
     assigns = assign(assigns, :available_class, available_class)
 

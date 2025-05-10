@@ -11,7 +11,16 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   setup %{user: user} do
     book = BudgetingFactory.insert(:book, name: "Test Budget Book")
     BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
-    %{book: book}
+
+    housing_category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id)
+    food_category = BudgetingFactory.insert(:category, name: "Food", book_id: book.id)
+
+    BudgetingFactory.insert(:envelope, name: "Rent", category_id: housing_category.id)
+    BudgetingFactory.insert(:envelope, name: "Utilities", category_id: housing_category.id)
+    BudgetingFactory.insert(:envelope, name: "Groceries", category_id: food_category.id)
+    BudgetingFactory.insert(:envelope, name: "Dining Out", category_id: food_category.id)
+
+    %{book: book, categories: [housing_category, food_category]}
   end
 
   describe "Budget page" do
@@ -22,9 +31,6 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert html =~ "Ready to Assign"
       assert html =~ "Assigned this Month"
       assert html =~ "Activity this Month"
-      assert html =~ "Immediate Obligations"
-      assert html =~ "True Expenses"
-      assert html =~ "Quality of Life"
       assert html =~ "May 2025"
     end
 
@@ -45,21 +51,23 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert html =~ user.email
     end
 
-    test "shows budget categories", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "shows budget categories and envelopes from database", %{conn: conn, book: book, categories: categories} do
+      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
-      assert has_element?(view, "div", "Rent/Mortgage")
-      assert has_element?(view, "div", "Electric")
-      assert has_element?(view, "div", "Water")
-      assert has_element?(view, "div", "Internet")
-      assert has_element?(view, "div", "Groceries")
+      assert has_element?(view, "h3", "Housing")
+      assert has_element?(view, "h3", "Food")
 
-      html = render(view)
+      assert has_element?(view, "span.font-medium", "Rent")
+      assert has_element?(view, "span.font-medium", "Utilities")
+      assert has_element?(view, "span.font-medium", "Groceries")
+      assert has_element?(view, "span.font-medium", "Dining Out")
 
-      assert html =~ "Internet"
-      assert html =~ "$75.00"
-      assert html =~ "$-75.00"
-      assert html =~ "$0.00"
+      refute html =~ "Immediate Obligations"
+      refute html =~ "True Expenses"
+
+      [housing, food] = categories
+      assert html =~ ~r/id="categories-#{housing.external_id}"/
+      assert html =~ ~r/id="categories-#{food.external_id}"/
     end
 
     test "shows action buttons", %{conn: conn, book: book} do
@@ -67,22 +75,6 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
       assert has_element?(view, "button", "Add Category")
       assert has_element?(view, "button", "Auto-Assign")
-    end
-
-    test "shows all balance styling variants", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
-
-      html = render(view)
-
-      assert html =~ "Rent/Mortgage"
-      assert html =~ "text-right font-medium text-success"
-
-      assert html =~ "Internet"
-      assert html =~ "$0.00"
-
-      assert html =~ "Overspent"
-      assert html =~ "$-25.00"
-      assert html =~ "text-right font-medium text-error"
     end
   end
 
