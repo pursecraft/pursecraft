@@ -221,4 +221,59 @@ defmodule PurseCraft.BudgetingTest do
       assert %Ecto.Changeset{} = Budgeting.change_book(book, %{})
     end
   end
+
+  describe "create_category/3" do
+    test "with valid data creates a category", %{scope: scope, book: book} do
+      attrs = %{name: "some category name"}
+
+      assert {:ok, category} = Budgeting.create_category(scope, book, attrs)
+      assert category.name == "some category name"
+      assert category.book_id == book.id
+    end
+
+    test "with invalid data returns error changeset", %{scope: scope, book: book} do
+      attrs = %{name: ""}
+
+      assert {:error, changeset} = Budgeting.create_category(scope, book, attrs)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+
+    test "with owner role (authorized scope) creates a category", %{scope: scope, book: book} do
+      # The default setup already has owner role
+      attrs = %{name: "owner category"}
+
+      assert {:ok, category} = Budgeting.create_category(scope, book, attrs)
+      assert category.name == "owner category"
+    end
+
+    test "with editor role (authorized scope) creates a category", %{book: book} do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      attrs = %{name: "editor category"}
+
+      assert {:ok, category} = Budgeting.create_category(scope, book, attrs)
+      assert category.name == "editor category"
+    end
+
+    test "with commenter role (unauthorized scope) returns error", %{book: book} do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      attrs = %{name: "commenter category"}
+
+      assert {:error, :unauthorized} = Budgeting.create_category(scope, book, attrs)
+    end
+
+    test "with no association to book (unauthorized scope) returns error", %{book: book} do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      attrs = %{name: "unauthorized category"}
+
+      assert {:error, :unauthorized} = Budgeting.create_category(scope, book, attrs)
+    end
+  end
 end

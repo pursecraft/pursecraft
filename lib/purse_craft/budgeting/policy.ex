@@ -30,4 +30,12 @@ defmodule PurseCraft.Budgeting.Policy do
       desc "Delete a Book"
     end
   end
+
+  object :category do
+    action :create do
+      allow role: :owner
+      allow role: :editor
+      desc "Create a new Category"
+    end
+  end
 end

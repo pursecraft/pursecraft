@@ -9,6 +9,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Repo
 
@@ -21,6 +22,10 @@ defmodule PurseCraft.Budgeting do
         }
 
   @type change_book_attrs :: %{
+          optional(:name) => String.t()
+        }
+
+  @type create_category_attrs :: %{
           optional(:name) => String.t()
         }
 
@@ -285,5 +290,40 @@ defmodule PurseCraft.Budgeting do
   @spec change_book(Book.t(), change_book_attrs()) :: Ecto.Changeset.t()
   def change_book(%Book{} = book, attrs \\ %{}) do
     Book.changeset(book, attrs)
+  end
+
+  @doc """
+  Creates a category for a book.
+
+  ## Examples
+
+      iex> create_category(authorized_scope, book, %{field: value})
+      {:ok, %Category{}}
+
+      iex> create_category(authorized_scope, book, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+      iex> create_category(unauthorized_scope, book, %{field: value})
+      {:error, :unauthorized}
+
+  """
+  @spec create_category(Scope.t(), Book.t(), create_category_attrs()) ::
+          {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
+  def create_category(%Scope{} = scope, %Book{} = book, attrs \\ %{}) do
+    with :ok <- Policy.authorize(:category_create, scope, %{book: book}) do
+      attrs = Map.put(attrs, :book_id, book.id)
+
+      %Category{}
+      |> Category.changeset(attrs)
+      |> Repo.insert()
+      |> case do
+        {:ok, category} ->
+          broadcast_book(book, {:category_created, category})
+          {:ok, category}
+
+        error ->
+          error
+      end
+    end
   end
 end

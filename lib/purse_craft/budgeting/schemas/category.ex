@@ -7,6 +7,8 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
   alias Ecto.Association.NotLoaded
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Envelope
@@ -36,5 +38,13 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
     has_many :envelopes, Envelope
 
     timestamps(type: :utc_datetime)
+  end
+
+  @doc false
+  @spec changeset(t(), changeset_attrs()) :: Ecto.Changeset.t()
+  def changeset(category, attrs) do
+    category
+    |> cast(attrs, [:name, :book_id])
+    |> validate_required([:name, :book_id])
   end
 end
