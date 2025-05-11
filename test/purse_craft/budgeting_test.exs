@@ -231,6 +231,21 @@ defmodule PurseCraft.BudgetingTest do
       assert category.book_id == book.id
     end
 
+    test "with string keys in attrs creates a category correctly", %{scope: scope, book: book} do
+      attrs = %{"name" => "string key category"}
+
+      assert {:ok, category} = Budgeting.create_category(scope, book, attrs)
+      assert category.name == "string key category"
+      assert category.book_id == book.id
+    end
+
+    test "with mixed string and atom keys creates a category correctly", %{scope: scope, book: book} do
+      attrs = %{"name" => "mixed keys category", priority: 1}
+
+      assert {:ok, category} = Budgeting.create_category(scope, book, attrs)
+      assert category.name == "mixed keys category"
+    end
+
     test "with invalid data returns error changeset", %{scope: scope, book: book} do
       attrs = %{name: ""}
 

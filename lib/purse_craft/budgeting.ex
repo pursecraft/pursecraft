@@ -12,6 +12,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Repo
+  alias PurseCraft.Utilities
 
   @type create_book_attrs :: %{
           optional(:name) => String.t()
@@ -311,7 +312,10 @@ defmodule PurseCraft.Budgeting do
           {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
   def create_category(%Scope{} = scope, %Book{} = book, attrs \\ %{}) do
     with :ok <- Policy.authorize(:category_create, scope, %{book: book}) do
-      attrs = Map.put(attrs, :book_id, book.id)
+      attrs =
+        attrs
+        |> Utilities.atomize_keys()
+        |> Map.put(:book_id, book.id)
 
       %Category{}
       |> Category.changeset(attrs)
@@ -325,5 +329,19 @@ defmodule PurseCraft.Budgeting do
           error
       end
     end
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking category changes.
+
+  ## Examples
+
+      iex> change_category(category)
+      %Ecto.Changeset{data: %Category{}}
+
+  """
+  @spec change_category(Category.t(), map()) :: Ecto.Changeset.t()
+  def change_category(%Category{} = category, attrs \\ %{}) do
+    Category.changeset(category, attrs)
   end
 end

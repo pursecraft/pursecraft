@@ -4,6 +4,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   import Mimic
   import Phoenix.LiveViewTest
 
+  alias PurseCraft.Budgeting
+  alias PurseCraft.Budgeting.Policy
   alias PurseCraft.BudgetingFactory
 
   setup :register_and_log_in_user
@@ -78,11 +80,105 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     end
   end
 
+  describe "Category Creation" do
+    test "opens and closes category modal", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      refute has_element?(view, ".modal-open")
+
+      view
+      |> element("button", "Add Category")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+      assert has_element?(view, "h3", "Add New Category")
+
+      view
+      |> element("button", "Cancel")
+      |> render_click()
+
+      refute has_element?(view, ".modal-open")
+
+      view
+      |> element("button", "Add Category")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+
+      view
+      |> element(".modal-backdrop")
+      |> render_click()
+
+      refute has_element?(view, ".modal-open")
+    end
+
+    test "creates new category through modal", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button", "Add Category")
+      |> render_click()
+
+      view
+      |> form("#category-form", %{category: %{name: "Test Category"}})
+      |> render_submit()
+
+      assert has_element?(view, ".alert-info", "Category created successfully")
+
+      refute has_element?(view, ".modal-open")
+
+      assert has_element?(view, "h3", "Test Category")
+    end
+
+    test "handles form validation errors for empty name", %{conn: conn, book: book, user: user} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button", "Add Category")
+      |> render_click()
+
+      {:error, changeset} =
+        Budgeting.create_category(
+          %PurseCraft.Identity.Schemas.Scope{user: user},
+          book,
+          %{name: ""}
+        )
+
+      assert changeset.errors[:name]
+
+      view
+      |> form("#category-form", %{category: %{name: ""}})
+      |> render_submit()
+
+      assert has_element?(view, ".modal-open")
+    end
+
+    test "handles unauthorized category creation", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button", "Add Category")
+      |> render_click()
+
+      stub(Policy, :authorize, fn :category_create, _scope, _resource ->
+        {:error, :unauthorized}
+      end)
+
+      view
+      |> form("#category-form", %{category: %{name: "Unauthorized Category"}})
+      |> render_submit()
+
+      assert has_element?(view, ".alert-error", "You don't have permission to create categories")
+
+      refute has_element?(view, ".modal-open")
+    end
+  end
+
   describe "Error handling" do
     test "redirects to books page when book doesn't exist with not_found error", %{conn: conn} do
       non_existent_id = Ecto.UUID.generate()
 
-      stub(PurseCraft.Budgeting.Policy, :authorize, fn :book_read, _scope, _book ->
+      stub(Policy, :authorize, fn :book_read, _scope, _book ->
         :ok
       end)
 

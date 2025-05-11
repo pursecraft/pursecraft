@@ -4,6 +4,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Budgeting
+  alias PurseCraft.Budgeting.Schemas.Category
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
@@ -16,6 +17,8 @@ defmodule PurseCraftWeb.BudgetLive.Index do
           |> assign(:page_title, "Budget - #{book.name}")
           |> assign(:current_path, "/books/#{book.external_id}/budget")
           |> assign(:book, book)
+          |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
+          |> assign(:category_modal_open, false)
           |> stream_configure(:categories, dom_id: &"categories-#{&1.external_id}")
           |> stream(:categories, book.categories)
 
@@ -54,10 +57,30 @@ defmodule PurseCraftWeb.BudgetLive.Index do
             </div>
           </div>
           <div class="flex gap-2">
-            <button class="btn btn-primary btn-sm sm:btn-md">Add Category</button>
+            <button class="btn btn-primary btn-sm sm:btn-md" phx-click="open_category_modal">
+              Add Category
+            </button>
             <button class="btn btn-outline btn-sm sm:btn-md">Auto-Assign</button>
           </div>
         </div>
+
+        <%= if @category_modal_open do %>
+          <div class="modal modal-open" role="dialog">
+            <div class="modal-box">
+              <h3 class="font-bold text-lg mb-4">Add New Category</h3>
+              <.form for={@category_form} id="category-form" phx-submit="create-category">
+                <.input field={@category_form[:name]} type="text" label="Category Name" />
+                <div class="modal-action">
+                  <button type="button" class="btn" phx-click="reset-category-form">Cancel</button>
+                  <button type="submit" class="btn btn-primary" phx-disable-with="Creating...">
+                    Create
+                  </button>
+                </div>
+              </.form>
+            </div>
+            <div class="modal-backdrop" phx-click="close_category_modal"></div>
+          </div>
+        <% end %>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div class="card bg-success/10 border border-success/20">
@@ -106,14 +129,23 @@ defmodule PurseCraftWeb.BudgetLive.Index do
                   </div>
 
                   <div class="space-y-1">
-                    <div :for={envelope <- category.envelopes} id={"envelope-#{envelope.external_id}"}>
-                      <.category_row
-                        name={envelope.name}
-                        assigned="100.00"
-                        activity="0.00"
-                        available="100.00"
-                      />
-                    </div>
+                    <%= if is_struct(category.envelopes, Ecto.Association.NotLoaded) or Enum.empty?(category.envelopes) do %>
+                      <div class="py-3 pl-6 sm:pl-8 text-sm text-base-content/60 italic">
+                        No envelopes in this category yet
+                      </div>
+                    <% else %>
+                      <div
+                        :for={envelope <- category.envelopes}
+                        id={"envelope-#{envelope.external_id}"}
+                      >
+                        <.category_row
+                          name={envelope.name}
+                          assigned="100.00"
+                          activity="0.00"
+                          available="100.00"
+                        />
+                      </div>
+                    <% end %>
                   </div>
                 </div>
               </div>
@@ -161,5 +193,47 @@ defmodule PurseCraftWeb.BudgetLive.Index do
       </div>
     </div>
     """
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("open_category_modal", _params, socket) do
+    {:noreply, assign(socket, :category_modal_open, true)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("close_category_modal", _params, socket) do
+    {:noreply, assign(socket, :category_modal_open, false)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("reset-category-form", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
+     |> assign(:category_modal_open, false)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("create-category", %{"category" => category_params}, socket) do
+    case Budgeting.create_category(socket.assigns.current_scope, socket.assigns.book, category_params) do
+      {:ok, category} ->
+        socket =
+          socket
+          |> stream_insert(:categories, category, at: 0)
+          |> assign(:category_modal_open, false)
+          |> put_flash(:info, "Category created successfully")
+          |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
+
+        {:noreply, socket}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :category_form, to_form(changeset))}
+
+      {:error, :unauthorized} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "You don't have permission to create categories")
+         |> assign(:category_modal_open, false)}
+    end
   end
 end
