@@ -174,6 +174,93 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     end
   end
 
+  describe "Category Editing" do
+    test "when edit button is clicked opens modal", %{conn: conn, book: book, categories: [housing_category, _]} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='edit_category'][phx-value-id='#{housing_category.external_id}']")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+      assert has_element?(view, "h3", "Edit Category")
+      assert has_element?(view, "input[value='Housing']")
+      assert has_element?(view, "form[phx-submit='update-category']")
+      assert has_element?(view, "button[type='submit']", "Update")
+    end
+
+    test "updates category when submitting edit form", %{conn: conn, book: book, categories: [housing_category, _]} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='edit_category'][phx-value-id='#{housing_category.external_id}']")
+      |> render_click()
+
+      view
+      |> form("#category-form", %{category: %{name: "Updated Housing"}})
+      |> render_submit()
+
+      assert has_element?(view, ".alert-info", "Category updated successfully")
+      refute has_element?(view, ".modal-open")
+      assert has_element?(view, "h3", "Updated Housing")
+    end
+
+    test "handles validation errors when updating category", %{conn: conn, book: book, categories: [housing_category, _]} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='edit_category'][phx-value-id='#{housing_category.external_id}']")
+      |> render_click()
+
+      view
+      |> form("#category-form", %{category: %{name: ""}})
+      |> render_submit()
+
+      assert has_element?(view, ".modal-open")
+    end
+
+    test "handles unauthorized category update", %{conn: conn, book: book, categories: [housing_category, _]} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='edit_category'][phx-value-id='#{housing_category.external_id}']")
+      |> render_click()
+
+      stub(Policy, :authorize, fn :category_update, _scope, _resource ->
+        {:error, :unauthorized}
+      end)
+
+      view
+      |> form("#category-form", %{category: %{name: "Updated Housing"}})
+      |> render_submit()
+
+      assert has_element?(view, ".alert-error", "You don't have permission to update categories")
+      refute has_element?(view, ".modal-open")
+    end
+
+    test "correctly resets form when canceling edit", %{conn: conn, book: book, categories: [housing_category, _]} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='edit_category'][phx-value-id='#{housing_category.external_id}']")
+      |> render_click()
+
+      view
+      |> element("button", "Cancel")
+      |> render_click()
+
+      refute has_element?(view, ".modal-open")
+
+      view
+      |> element("button", "Add Category")
+      |> render_click()
+
+      assert has_element?(view, "h3", "Add New Category")
+      assert has_element?(view, "button[type='submit']", "Create")
+      assert has_element?(view, "form[phx-submit='create-category']")
+    end
+  end
+
   describe "Error handling" do
     test "redirects to books page when book doesn't exist with not_found error", %{conn: conn} do
       non_existent_id = Ecto.UUID.generate()
