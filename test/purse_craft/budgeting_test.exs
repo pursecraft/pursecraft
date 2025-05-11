@@ -291,4 +291,108 @@ defmodule PurseCraft.BudgetingTest do
       assert {:error, :unauthorized} = Budgeting.create_category(scope, book, attrs)
     end
   end
+
+  describe "update_category/5" do
+    setup %{book: book} do
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      %{category: category, envelope: envelope}
+    end
+
+    test "with owner role (authorized scope) and valid data updates the category", %{
+      scope: scope,
+      book: book,
+      category: category
+    } do
+      attrs = %{name: "updated category name"}
+
+      assert {:ok, updated_category} = Budgeting.update_category(scope, book, category, attrs)
+      assert updated_category.name == "updated category name"
+      assert updated_category.book_id == book.id
+    end
+
+    test "with preload option returns category with associations", %{
+      scope: scope,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      attrs = %{name: "updated with preload"}
+
+      assert {:ok, updated_category} = Budgeting.update_category(scope, book, category, attrs, preload: [:envelopes])
+      assert updated_category.name == "updated with preload"
+      assert [loaded_envelope] = updated_category.envelopes
+      assert loaded_envelope.id == envelope.id
+    end
+
+    test "with editor role (authorized scope) and valid data updates the category", %{
+      book: book,
+      category: category
+    } do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      attrs = %{name: "editor updated category"}
+
+      assert {:ok, updated_category} = Budgeting.update_category(scope, book, category, attrs)
+      assert updated_category.name == "editor updated category"
+    end
+
+    test "with commenter role (unauthorized scope) returns error", %{
+      book: book,
+      category: category
+    } do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      attrs = %{name: "commenter category"}
+
+      assert {:error, :unauthorized} = Budgeting.update_category(scope, book, category, attrs)
+    end
+
+    test "with no association to book (unauthorized scope) returns error", %{
+      book: book,
+      category: category
+    } do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      attrs = %{name: "unauthorized category update"}
+
+      assert {:error, :unauthorized} = Budgeting.update_category(scope, book, category, attrs)
+    end
+
+    test "with invalid data returns error changeset", %{
+      scope: scope,
+      book: book,
+      category: category
+    } do
+      attrs = %{name: ""}
+
+      assert {:error, changeset} = Budgeting.update_category(scope, book, category, attrs)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+
+    test "with string keys in attrs updates the category correctly", %{
+      scope: scope,
+      book: book,
+      category: category
+    } do
+      attrs = %{"name" => "string key updated category"}
+
+      assert {:ok, updated_category} = Budgeting.update_category(scope, book, category, attrs)
+      assert updated_category.name == "string key updated category"
+    end
+  end
+
+  describe "change_category/2" do
+    test "returns a category changeset", %{book: book} do
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+
+      assert %Ecto.Changeset{} = Budgeting.change_category(category, %{})
+    end
+  end
 end

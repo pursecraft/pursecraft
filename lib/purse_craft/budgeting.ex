@@ -30,6 +30,13 @@ defmodule PurseCraft.Budgeting do
           optional(:name) => String.t()
         }
 
+  @type update_category_attrs :: %{
+          optional(:name) => String.t()
+        }
+
+  @type update_category_option :: {:preload, Keyword.t()}
+  @type update_category_options :: [update_category_option()]
+
   @type fetch_book_by_external_id_option :: {:preload, Keyword.t()}
   @type fetch_book_by_external_id_options :: [fetch_book_by_external_id_option()]
 
@@ -328,6 +335,48 @@ defmodule PurseCraft.Budgeting do
         error ->
           error
       end
+    end
+  end
+
+  @doc """
+  Updates a category.
+
+  ## Preloading options
+
+  The `:preload` option accepts a list of associations to preload. For example:
+
+  - `[:envelopes]` - preloads only envelopes
+
+  ## Examples
+
+      iex> update_category(authorized_scope, book, category, %{field: new_value})
+      {:ok, %Category{}}
+
+      iex> update_category(authorized_scope, book, category, %{field: new_value}, preload: [:envelopes])
+      {:ok, %Category{envelopes: [%Envelope{}, ...]}}
+
+      iex> update_category(authorized_scope, book, category, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+      iex> update_category(unauthorized_scope, book, category, %{field: new_value})
+      {:error, :unauthorized}
+
+  """
+  @spec update_category(Scope.t(), Book.t(), Category.t(), update_category_attrs(), update_category_options()) ::
+          {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
+  def update_category(%Scope{} = scope, %Book{} = book, %Category{} = category, attrs, opts \\ []) do
+    attrs = Utilities.atomize_keys(attrs)
+
+    with :ok <- Policy.authorize(:category_update, scope, %{book: book}),
+         {:ok, %Category{} = category} <-
+           category
+           |> Category.changeset(attrs)
+           |> Repo.update() do
+      preloads = Keyword.get(opts, :preload, [])
+      category = Repo.preload(category, preloads)
+
+      broadcast_book(book, {:category_updated, category})
+      {:ok, category}
     end
   end
 

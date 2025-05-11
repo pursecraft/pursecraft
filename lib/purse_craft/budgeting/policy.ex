@@ -37,5 +37,11 @@ defmodule PurseCraft.Budgeting.Policy do
       allow role: :editor
       desc "Create a new Category"
     end
+
+    action :update do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      desc "Update a Category"
+    end
   end
 end
