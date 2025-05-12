@@ -230,18 +230,25 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   @impl Phoenix.LiveView
   def handle_event("edit_category", %{"id" => external_id}, socket) do
-    category = Enum.find(socket.assigns.book.categories, &(&1.external_id == external_id))
+    case Budgeting.fetch_category_by_external_id(socket.assigns.current_scope, socket.assigns.book, external_id) do
+      {:ok, category} ->
+        socket =
+          socket
+          |> assign(:editing_category, category)
+          |> assign(:category_form, to_form(Budgeting.change_category(category)))
+          |> assign(:modal_title, "Edit Category")
+          |> assign(:modal_action, "update-category")
+          |> assign(:modal_button, "Update")
+          |> assign(:category_modal_open, true)
 
-    socket =
-      socket
-      |> assign(:editing_category, category)
-      |> assign(:category_form, to_form(Budgeting.change_category(category)))
-      |> assign(:modal_title, "Edit Category")
-      |> assign(:modal_action, "update-category")
-      |> assign(:modal_button, "Update")
-      |> assign(:category_modal_open, true)
+        {:noreply, socket}
 
-    {:noreply, socket}
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Category not found")}
+
+      {:error, :unauthorized} ->
+        {:noreply, put_flash(socket, :error, "You don't have permission to edit this category")}
+    end
   end
 
   @impl Phoenix.LiveView

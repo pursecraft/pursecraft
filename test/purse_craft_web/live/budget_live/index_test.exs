@@ -259,6 +259,31 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, "button[type='submit']", "Create")
       assert has_element?(view, "form[phx-submit='create-category']")
     end
+
+    test "shows error when category is not found during edit", %{conn: conn, book: book} do
+      non_existent_id = Ecto.UUID.generate()
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id ->
+        {:error, :not_found}
+      end)
+
+      render_click(view, "edit_category", %{"id" => non_existent_id})
+
+      assert has_element?(view, ".alert-error", "Category not found")
+    end
+
+    test "shows error when unauthorized to edit category", %{conn: conn, book: book, categories: [housing_category, _]} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id ->
+        {:error, :unauthorized}
+      end)
+
+      render_click(view, "edit_category", %{"id" => housing_category.external_id})
+
+      assert has_element?(view, ".alert-error", "You don't have permission to edit this category")
+    end
   end
 
   describe "Error handling" do
