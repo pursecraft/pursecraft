@@ -4,6 +4,7 @@ defmodule PurseCraft.BudgetingTest do
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.Repo
@@ -474,6 +475,55 @@ defmodule PurseCraft.BudgetingTest do
 
       assert {:ok, updated_category} = Budgeting.update_category(scope, book, category, attrs)
       assert updated_category.name == "string key updated category"
+    end
+  end
+
+  describe "delete_category/3" do
+    setup %{book: book} do
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      %{category: category}
+    end
+
+    test "with associated category, owner role (authorized scope) deletes the category", %{
+      scope: scope,
+      book: book,
+      category: category
+    } do
+      assert {:ok, %Category{}} = Budgeting.delete_category(scope, book, category)
+      assert {:error, :not_found} = Budgeting.fetch_category_by_external_id(scope, book, category.external_id)
+    end
+
+    test "with associated category, editor role (authorized scope) deletes the category", %{
+      book: book,
+      category: category
+    } do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:ok, %Category{}} = Budgeting.delete_category(scope, book, category)
+      assert {:error, :not_found} = Budgeting.fetch_category_by_external_id(scope, book, category.external_id)
+    end
+
+    test "with commenter role (unauthorized scope) returns error", %{
+      book: book,
+      category: category
+    } do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:error, :unauthorized} = Budgeting.delete_category(scope, book, category)
+    end
+
+    test "with no association to book (unauthorized scope) returns error", %{
+      book: book,
+      category: category
+    } do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:error, :unauthorized} = Budgeting.delete_category(scope, book, category)
     end
   end
 

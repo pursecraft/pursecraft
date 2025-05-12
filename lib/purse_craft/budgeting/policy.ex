@@ -50,5 +50,11 @@ defmodule PurseCraft.Budgeting.Policy do
       allow [:own_resource, role: :editor]
       desc "Update a Category"
     end
+
+    action :delete do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      desc "Delete a Category"
+    end
   end
 end

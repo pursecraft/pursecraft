@@ -424,6 +424,29 @@ defmodule PurseCraft.Budgeting do
   end
 
   @doc """
+  Deletes a category.
+
+  ## Examples
+
+      iex> delete_category(authorized_scope, book, category)
+      {:ok, %Category{}}
+
+      iex> delete_category(unauthorized_scope, book, category)
+      {:error, :unauthorized}
+
+  """
+  @spec delete_category(Scope.t(), Book.t(), Category.t()) ::
+          {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
+  def delete_category(%Scope{} = scope, %Book{} = book, %Category{} = category) do
+    with :ok <- Policy.authorize(:category_delete, scope, %{book: book}),
+         {:ok, %Category{} = category} <-
+           Repo.delete(category) do
+      broadcast_book(book, {:category_deleted, category})
+      {:ok, category}
+    end
+  end
+
+  @doc """
   Returns an `%Ecto.Changeset{}` for tracking category changes.
 
   ## Examples
