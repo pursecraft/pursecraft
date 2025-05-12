@@ -19,7 +19,9 @@ defmodule PurseCraftWeb.BudgetLive.Index do
           |> assign(:book, book)
           |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
           |> assign(:category_modal_open, false)
+          |> assign(:delete_modal_open, false)
           |> assign(:editing_category, nil)
+          |> assign(:category_to_delete, nil)
           |> assign(:modal_title, "Add New Category")
           |> assign(:modal_action, "create-category")
           |> assign(:modal_button, "Create")
@@ -86,6 +88,28 @@ defmodule PurseCraftWeb.BudgetLive.Index do
           </div>
         <% end %>
 
+        <%= if @delete_modal_open do %>
+          <div class="modal modal-open" role="dialog">
+            <div class="modal-box">
+              <h3 class="font-bold text-lg mb-4">Delete Category</h3>
+              <p class="mb-4">Are you sure you want to delete the category "{@category_to_delete.name}"?</p>
+              <p class="text-error mb-4">This action cannot be undone.</p>
+              <div class="modal-action">
+                <button type="button" class="btn" phx-click="close_delete_modal">Cancel</button>
+                <button
+                  type="button"
+                  class="btn btn-error"
+                  phx-click="delete_category"
+                  phx-value-id={@category_to_delete.external_id}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <div class="modal-backdrop" phx-click="close_delete_modal"></div>
+          </div>
+        <% end %>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div class="card bg-success/10 border border-success/20">
             <div class="card-body p-4">
@@ -131,6 +155,15 @@ defmodule PurseCraftWeb.BudgetLive.Index do
                       >
                         <.icon name="hero-pencil-square" class="h-4 w-4" />
                       </button>
+                      <%= if Enum.empty?(category.envelopes) do %>
+                        <button
+                          class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity text-error"
+                          phx-click="open_delete_modal"
+                          phx-value-id={category.external_id}
+                        >
+                          <.icon name="hero-trash" class="h-4 w-4" />
+                        </button>
+                      <% end %>
                     </div>
                     <div class="flex justify-end w-1/2 text-xs sm:text-sm font-medium">
                       <span class="w-[80px] sm:w-[100px] text-right">Assigned</span>
@@ -255,6 +288,8 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   def handle_event("create-category", %{"category" => category_params}, socket) do
     case Budgeting.create_category(socket.assigns.current_scope, socket.assigns.book, category_params) do
       {:ok, category} ->
+        category = %{category | envelopes: []}
+
         socket =
           socket
           |> stream_insert(:categories, category, at: 0)
@@ -279,7 +314,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   def handle_event("update-category", %{"category" => category_params}, socket) do
     category = socket.assigns.editing_category
 
-    case Budgeting.update_category(socket.assigns.current_scope, socket.assigns.book, category, category_params) do
+    case Budgeting.update_category(socket.assigns.current_scope, socket.assigns.book, category, category_params, preload: [:envelopes]) do
       {:ok, updated_category} ->
         socket =
           socket
@@ -300,6 +335,66 @@ defmodule PurseCraftWeb.BudgetLive.Index do
          |> put_flash(:error, "You don't have permission to update categories")
          |> assign(:category_modal_open, false)
          |> assign(:editing_category, nil)}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("open_delete_modal", %{"id" => external_id}, socket) do
+    case Budgeting.fetch_category_by_external_id(socket.assigns.current_scope, socket.assigns.book, external_id, preload: [:envelopes]) do
+      {:ok, category} ->
+        unless Enum.empty?(category.envelopes) do
+          {:noreply, put_flash(socket, :error, "Cannot delete a category with envelopes")}
+        else
+          {:noreply,
+           socket
+           |> assign(:category_to_delete, category)
+           |> assign(:delete_modal_open, true)}
+        end
+
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Category not found")}
+
+      {:error, :unauthorized} ->
+        {:noreply, put_flash(socket, :error, "You don't have permission to delete this category")}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("close_delete_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:delete_modal_open, false)
+     |> assign(:category_to_delete, nil)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("delete_category", %{"id" => _external_id}, socket) do
+    category = socket.assigns.category_to_delete
+
+    case Budgeting.delete_category(socket.assigns.current_scope, socket.assigns.book, category) do
+      {:ok, deleted_category} ->
+        socket =
+          socket
+          |> stream_delete(:categories, deleted_category)
+          |> assign(:delete_modal_open, false)
+          |> assign(:category_to_delete, nil)
+          |> put_flash(:info, "Category deleted successfully")
+
+        {:noreply, socket}
+
+      {:error, :unauthorized} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "You don't have permission to delete this category")
+         |> assign(:delete_modal_open, false)
+         |> assign(:category_to_delete, nil)}
+
+      {:error, _reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Error deleting category")
+         |> assign(:delete_modal_open, false)
+         |> assign(:category_to_delete, nil)}
     end
   end
 end

@@ -286,6 +286,158 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     end
   end
 
+  describe "Category Deletion" do
+    setup %{book: book} do
+      empty_category = BudgetingFactory.insert(:category, name: "Empty Category", book_id: book.id)
+
+      %{empty_category: empty_category}
+    end
+    test "delete button only appears for categories without envelopes", %{
+      conn: conn,
+      book: book,
+      categories: [housing_category, _food_category],
+      empty_category: empty_category
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      refute has_element?(
+        view,
+        "button[phx-click='open_delete_modal'][phx-value-id='#{housing_category.external_id}']"
+      )
+
+      assert has_element?(
+        view,
+        "button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']"
+      )
+    end
+
+    test "opens delete confirmation modal when delete button is clicked", %{
+      conn: conn,
+      book: book,
+      empty_category: empty_category
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+      assert has_element?(view, "h3", "Delete Category")
+      assert has_element?(view, "p", ~r/Are you sure you want to delete the category "Empty Category"\?/)
+      assert has_element?(view, "button", "Cancel")
+      assert has_element?(view, "button", "Delete")
+    end
+
+    test "cancels deletion when cancel button is clicked", %{
+      conn: conn,
+      book: book,
+      empty_category: empty_category
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+
+      view
+      |> element("button", "Cancel")
+      |> render_click()
+
+      refute has_element?(view, ".modal-open")
+    end
+
+    test "successfully deletes category when confirmed", %{
+      conn: conn,
+      book: book,
+      empty_category: empty_category
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']")
+      |> render_click()
+
+      view
+      |> element("button.btn-error", "Delete")
+      |> render_click()
+
+      assert has_element?(view, ".alert-info", "Category deleted successfully")
+      refute has_element?(view, "h3", "Empty Category")
+    end
+
+    test "handles unauthorized category deletion", %{
+      conn: conn,
+      book: book,
+      empty_category: empty_category
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']")
+      |> render_click()
+
+      stub(Budgeting, :delete_category, fn _scope, _book, _category ->
+        {:error, :unauthorized}
+      end)
+
+      view
+      |> element("button.btn-error", "Delete")
+      |> render_click()
+
+      assert has_element?(view, ".alert-error", "You don't have permission to delete this category")
+    end
+
+    test "handles general error when deleting category", %{
+      conn: conn,
+      book: book,
+      empty_category: empty_category
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']")
+      |> render_click()
+
+      stub(Budgeting, :delete_category, fn _scope, _book, _category ->
+        {:error, %Ecto.Changeset{}}
+      end)
+
+      view
+      |> element("button.btn-error", "Delete")
+      |> render_click()
+
+      assert has_element?(view, ".alert-error", "Error deleting category")
+    end
+
+    test "shows error when category is not found during open_delete_modal", %{conn: conn, book: book} do
+      non_existent_id = Ecto.UUID.generate()
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id, _opts ->
+        {:error, :not_found}
+      end)
+
+      render_click(view, "open_delete_modal", %{"id" => non_existent_id})
+
+      assert has_element?(view, ".alert-error", "Category not found")
+    end
+
+    test "shows error when unauthorized to open delete modal", %{conn: conn, book: book, empty_category: empty_category} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id, _opts ->
+        {:error, :unauthorized}
+      end)
+
+      render_click(view, "open_delete_modal", %{"id" => empty_category.external_id})
+
+      assert has_element?(view, ".alert-error", "You don't have permission to delete this category")
+    end
+  end
+
   describe "Error handling" do
     test "redirects to books page when book doesn't exist with not_found error", %{conn: conn} do
       non_existent_id = Ecto.UUID.generate()
