@@ -40,6 +40,9 @@ defmodule PurseCraft.Budgeting do
   @type fetch_book_by_external_id_option :: {:preload, Keyword.t()}
   @type fetch_book_by_external_id_options :: [fetch_book_by_external_id_option()]
 
+  @type fetch_category_by_external_id_option :: {:preload, Keyword.t()}
+  @type fetch_category_by_external_id_options :: [fetch_category_by_external_id_option()]
+
   @doc """
   Subscribes to notifications about any book changes associated with the scoped user.
 
@@ -334,6 +337,46 @@ defmodule PurseCraft.Budgeting do
 
         error ->
           error
+      end
+    end
+  end
+
+  @doc """
+  Fetches a single `Category` by its `external_id` from a specific book with optional preloading of associations.
+
+  Returns a tuple of `{:ok, category}` if the category exists, or `{:error, :not_found}` if not found.
+  Returns `{:error, :unauthorized}` if the given scope is not authorized to view the category.
+
+  ## Preloading options
+
+  The `:preload` option accepts a list of associations to preload. For example:
+
+  - `[:envelopes]` - preloads the envelopes associated with this category
+
+  ## Examples
+
+      iex> fetch_category_by_external_id(authorized_scope, book, "abcd-1234", preload: [:envelopes])
+      {:ok, %Category{envelopes: [%Envelope{}, ...]}}
+
+      iex> fetch_category_by_external_id(authorized_scope, book, "invalid-id")
+      {:error, :not_found}
+
+      iex> fetch_category_by_external_id(unauthorized_scope, book, "abcd-1234")
+      {:error, :unauthorized}
+
+  """
+  @spec fetch_category_by_external_id(Scope.t(), Book.t(), Ecto.UUID.t(), fetch_category_by_external_id_options()) ::
+          {:ok, Category.t()} | {:error, :not_found | :unauthorized}
+  def fetch_category_by_external_id(%Scope{} = scope, %Book{} = book, external_id, opts \\ []) do
+    with :ok <- Policy.authorize(:category_read, scope, %{book: book}) do
+      case Repo.get_by(Category, external_id: external_id, book_id: book.id) do
+        nil ->
+          {:error, :not_found}
+
+        category ->
+          preloads = Keyword.get(opts, :preload, [])
+          category = if preloads == [], do: category, else: Repo.preload(category, preloads)
+          {:ok, category}
       end
     end
   end

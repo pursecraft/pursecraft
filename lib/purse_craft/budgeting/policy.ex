@@ -38,6 +38,13 @@ defmodule PurseCraft.Budgeting.Policy do
       desc "Create a new Category"
     end
 
+    action :read do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      allow [:own_resource, role: :commenter]
+      desc "Read a Category"
+    end
+
     action :update do
       allow [:own_resource, role: :owner]
       allow [:own_resource, role: :editor]

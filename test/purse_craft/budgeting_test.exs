@@ -292,6 +292,95 @@ defmodule PurseCraft.BudgetingTest do
     end
   end
 
+  describe "fetch_category_by_external_id/4" do
+    setup %{book: book} do
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      %{category: category, envelope: envelope}
+    end
+
+    test "with associated category (authorized scope) returns category", %{
+      scope: scope,
+      book: book,
+      category: category
+    } do
+      assert {:ok, fetched_category} = Budgeting.fetch_category_by_external_id(scope, book, category.external_id)
+      assert fetched_category.id == category.id
+      assert fetched_category.name == category.name
+      assert fetched_category.external_id == category.external_id
+      assert fetched_category.book_id == book.id
+    end
+
+    test "with associated category and preload options returns preloaded category", %{
+      scope: scope,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      assert {:ok, fetched_category} =
+               Budgeting.fetch_category_by_external_id(scope, book, category.external_id, preload: [:envelopes])
+
+      assert fetched_category.id == category.id
+      assert fetched_category.name == category.name
+      assert fetched_category.external_id == category.external_id
+
+      assert [loaded_envelope] = fetched_category.envelopes
+      assert loaded_envelope.id == envelope.id
+      assert loaded_envelope.name == envelope.name
+    end
+
+    test "with non-existent category returns not_found error", %{scope: scope, book: book} do
+      non_existent_id = Ecto.UUID.generate()
+
+      assert {:error, :not_found} = Budgeting.fetch_category_by_external_id(scope, book, non_existent_id)
+    end
+
+    test "with category from a different book returns not_found error", %{scope: scope, book: book} do
+      other_book = BudgetingFactory.insert(:book)
+      BudgetingFactory.insert(:book_user, book_id: other_book.id, user_id: scope.user.id, role: :owner)
+
+      other_category = BudgetingFactory.insert(:category, book_id: other_book.id)
+
+      # Trying to fetch a category using its external_id but with the wrong book
+      assert {:error, :not_found} = Budgeting.fetch_category_by_external_id(scope, book, other_category.external_id)
+    end
+
+    test "with editor role (authorized scope) returns category", %{
+      book: book,
+      category: category
+    } do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:ok, fetched_category} = Budgeting.fetch_category_by_external_id(scope, book, category.external_id)
+      assert fetched_category.id == category.id
+    end
+
+    test "with commenter role (authorized scope) returns category", %{
+      book: book,
+      category: category
+    } do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:ok, fetched_category} = Budgeting.fetch_category_by_external_id(scope, book, category.external_id)
+      assert fetched_category.id == category.id
+    end
+
+    test "with no association to book (unauthorized scope) returns error", %{
+      book: book,
+      category: category
+    } do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:error, :unauthorized} = Budgeting.fetch_category_by_external_id(scope, book, category.external_id)
+    end
+  end
+
   describe "update_category/5" do
     setup %{book: book} do
       category = BudgetingFactory.insert(:category, book_id: book.id)
