@@ -18,6 +18,9 @@ defmodule PurseCraft.Budgeting do
           optional(:name) => String.t()
         }
 
+  @type fetch_book_by_external_id_option :: {:preload, Keyword.t()}
+  @type fetch_book_by_external_id_options :: [fetch_book_by_external_id_option()]
+
   @type update_book_attrs :: %{
           optional(:name) => String.t()
         }
@@ -30,18 +33,18 @@ defmodule PurseCraft.Budgeting do
           optional(:name) => String.t()
         }
 
+  @type fetch_category_by_external_id_option :: {:preload, Keyword.t()}
+  @type fetch_category_by_external_id_options :: [fetch_category_by_external_id_option()]
+
+  @type list_categories_option :: {:preload, Keyword.t()}
+  @type list_categories_options :: [list_categories_option()]
+
   @type update_category_attrs :: %{
           optional(:name) => String.t()
         }
 
   @type update_category_option :: {:preload, Keyword.t()}
   @type update_category_options :: [update_category_option()]
-
-  @type fetch_book_by_external_id_option :: {:preload, Keyword.t()}
-  @type fetch_book_by_external_id_options :: [fetch_book_by_external_id_option()]
-
-  @type fetch_category_by_external_id_option :: {:preload, Keyword.t()}
-  @type fetch_category_by_external_id_options :: [fetch_category_by_external_id_option()]
 
   @doc """
   Subscribes to notifications about any book changes associated with the scoped user.
@@ -342,6 +345,29 @@ defmodule PurseCraft.Budgeting do
   end
 
   @doc """
+  Deletes a category.
+
+  ## Examples
+
+      iex> delete_category(authorized_scope, book, category)
+      {:ok, %Category{}}
+
+      iex> delete_category(unauthorized_scope, book, category)
+      {:error, :unauthorized}
+
+  """
+  @spec delete_category(Scope.t(), Book.t(), Category.t()) ::
+          {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
+  def delete_category(%Scope{} = scope, %Book{} = book, %Category{} = category) do
+    with :ok <- Policy.authorize(:category_delete, scope, %{book: book}),
+         {:ok, %Category{} = category} <-
+           Repo.delete(category) do
+      broadcast_book(book, {:category_deleted, category})
+      {:ok, category}
+    end
+  end
+
+  @doc """
   Fetches a single `Category` by its `external_id` from a specific book with optional preloading of associations.
 
   Returns a tuple of `{:ok, category}` if the category exists, or `{:error, :not_found}` if not found.
@@ -378,6 +404,41 @@ defmodule PurseCraft.Budgeting do
           category = if preloads == [], do: category, else: Repo.preload(category, preloads)
           {:ok, category}
       end
+    end
+  end
+
+  @doc """
+  Returns a list of categories for a given book.
+
+  ## Preloading options
+
+  The `:preload` option accepts a list of associations to preload. For example:
+
+  - `[:envelopes]` - preloads the envelopes associated with categories
+
+  ## Examples
+
+      iex> list_categories(authorized_scope, book)
+      [%Category{}, ...]
+
+      iex> list_categories(authorized_scope, book, preload: [:envelopes])
+      [%Category{envelopes: [%Envelope{}, ...]}, ...]
+
+      iex> list_categories(unauthorized_scope, book)
+      {:error, :unauthorized}
+
+  """
+  @spec list_categories(Scope.t(), Book.t(), list_categories_options()) ::
+          list(Category.t()) | {:error, :unauthorized}
+  def list_categories(%Scope{} = scope, %Book{} = book, opts \\ []) do
+    with :ok <- Policy.authorize(:category_read, scope, %{book: book}) do
+      categories =
+        Category
+        |> where([c], c.book_id == ^book.id)
+        |> Repo.all()
+
+      preloads = Keyword.get(opts, :preload, [])
+      if preloads == [], do: categories, else: Repo.preload(categories, preloads)
     end
   end
 
@@ -419,29 +480,6 @@ defmodule PurseCraft.Budgeting do
       category = Repo.preload(category, preloads)
 
       broadcast_book(book, {:category_updated, category})
-      {:ok, category}
-    end
-  end
-
-  @doc """
-  Deletes a category.
-
-  ## Examples
-
-      iex> delete_category(authorized_scope, book, category)
-      {:ok, %Category{}}
-
-      iex> delete_category(unauthorized_scope, book, category)
-      {:error, :unauthorized}
-
-  """
-  @spec delete_category(Scope.t(), Book.t(), Category.t()) ::
-          {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def delete_category(%Scope{} = scope, %Book{} = book, %Category{} = category) do
-    with :ok <- Policy.authorize(:category_delete, scope, %{book: book}),
-         {:ok, %Category{} = category} <-
-           Repo.delete(category) do
-      broadcast_book(book, {:category_deleted, category})
       {:ok, category}
     end
   end

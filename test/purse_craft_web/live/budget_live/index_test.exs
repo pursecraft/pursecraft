@@ -292,6 +292,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
       %{empty_category: empty_category}
     end
+
     test "delete button only appears for categories without envelopes", %{
       conn: conn,
       book: book,
@@ -301,14 +302,14 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       refute has_element?(
-        view,
-        "button[phx-click='open_delete_modal'][phx-value-id='#{housing_category.external_id}']"
-      )
+               view,
+               "button[phx-click='open_delete_modal'][phx-value-id='#{housing_category.external_id}']"
+             )
 
       assert has_element?(
-        view,
-        "button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']"
-      )
+               view,
+               "button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']"
+             )
     end
 
     test "opens delete confirmation modal when delete button is clicked", %{
@@ -461,6 +462,20 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       book = BudgetingFactory.insert(:book, name: "Someone Else's Budget")
 
       assert {:error, {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book"}}}} =
+               live(conn, ~p"/books/#{book.external_id}/budget")
+    end
+
+    test "redirects when categories access is unauthorized", %{conn: conn, book: book} do
+      stub(Budgeting, :fetch_book_by_external_id, fn _scope, _external_id ->
+        {:ok, book}
+      end)
+
+      stub(Budgeting, :list_categories, fn _scope, _book, _opts ->
+        {:error, :unauthorized}
+      end)
+
+      assert {:error,
+              {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book's categories"}}}} =
                live(conn, ~p"/books/#{book.external_id}/budget")
     end
   end

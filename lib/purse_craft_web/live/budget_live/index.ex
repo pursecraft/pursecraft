@@ -8,27 +8,34 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
-    preloads = [categories: :envelopes]
-
-    case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id, preload: preloads) do
+    case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
       {:ok, book} ->
-        socket =
-          socket
-          |> assign(:page_title, "Budget - #{book.name}")
-          |> assign(:current_path, "/books/#{book.external_id}/budget")
-          |> assign(:book, book)
-          |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
-          |> assign(:category_modal_open, false)
-          |> assign(:delete_modal_open, false)
-          |> assign(:editing_category, nil)
-          |> assign(:category_to_delete, nil)
-          |> assign(:modal_title, "Add New Category")
-          |> assign(:modal_action, "create-category")
-          |> assign(:modal_button, "Create")
-          |> stream_configure(:categories, dom_id: &"categories-#{&1.external_id}")
-          |> stream(:categories, book.categories)
+        case Budgeting.list_categories(socket.assigns.current_scope, book, preload: [:envelopes]) do
+          {:error, :unauthorized} ->
+            {:ok,
+             socket
+             |> put_flash(:error, "You don't have access to this book's categories")
+             |> push_navigate(to: ~p"/books")}
 
-        {:ok, socket}
+          categories ->
+            socket =
+              socket
+              |> assign(:page_title, "Budget - #{book.name}")
+              |> assign(:current_path, "/books/#{book.external_id}/budget")
+              |> assign(:book, book)
+              |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
+              |> assign(:category_modal_open, false)
+              |> assign(:delete_modal_open, false)
+              |> assign(:editing_category, nil)
+              |> assign(:category_to_delete, nil)
+              |> assign(:modal_title, "Add New Category")
+              |> assign(:modal_action, "create-category")
+              |> assign(:modal_button, "Create")
+              |> stream_configure(:categories, dom_id: &"categories-#{&1.external_id}")
+              |> stream(:categories, categories)
+
+            {:ok, socket}
+        end
 
       {:error, :not_found} ->
         {:ok,
@@ -92,7 +99,9 @@ defmodule PurseCraftWeb.BudgetLive.Index do
           <div class="modal modal-open" role="dialog">
             <div class="modal-box">
               <h3 class="font-bold text-lg mb-4">Delete Category</h3>
-              <p class="mb-4">Are you sure you want to delete the category "{@category_to_delete.name}"?</p>
+              <p class="mb-4">
+                Are you sure you want to delete the category "{@category_to_delete.name}"?
+              </p>
               <p class="text-error mb-4">This action cannot be undone.</p>
               <div class="modal-action">
                 <button type="button" class="btn" phx-click="close_delete_modal">Cancel</button>
@@ -314,7 +323,9 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   def handle_event("update-category", %{"category" => category_params}, socket) do
     category = socket.assigns.editing_category
 
-    case Budgeting.update_category(socket.assigns.current_scope, socket.assigns.book, category, category_params, preload: [:envelopes]) do
+    case Budgeting.update_category(socket.assigns.current_scope, socket.assigns.book, category, category_params,
+           preload: [:envelopes]
+         ) do
       {:ok, updated_category} ->
         socket =
           socket
@@ -340,15 +351,17 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   @impl Phoenix.LiveView
   def handle_event("open_delete_modal", %{"id" => external_id}, socket) do
-    case Budgeting.fetch_category_by_external_id(socket.assigns.current_scope, socket.assigns.book, external_id, preload: [:envelopes]) do
+    case Budgeting.fetch_category_by_external_id(socket.assigns.current_scope, socket.assigns.book, external_id,
+           preload: [:envelopes]
+         ) do
       {:ok, category} ->
-        unless Enum.empty?(category.envelopes) do
-          {:noreply, put_flash(socket, :error, "Cannot delete a category with envelopes")}
-        else
+        if Enum.empty?(category.envelopes) do
           {:noreply,
            socket
            |> assign(:category_to_delete, category)
            |> assign(:delete_modal_open, true)}
+        else
+          {:noreply, put_flash(socket, :error, "Cannot delete a category with envelopes")}
         end
 
       {:error, :not_found} ->
