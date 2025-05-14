@@ -643,4 +643,75 @@ defmodule PurseCraft.BudgetingTest do
       assert %Ecto.Changeset{} = Budgeting.change_category(category, %{})
     end
   end
+
+  describe "fetch_envelope_by_external_id/3" do
+    setup %{book: book} do
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      %{category: category, envelope: envelope}
+    end
+
+    test "with associated envelope (authorized scope) returns envelope", %{
+      scope: scope,
+      book: book,
+      envelope: envelope
+    } do
+      assert {:ok, fetched_envelope} = Budgeting.fetch_envelope_by_external_id(scope, book, envelope.external_id)
+      assert fetched_envelope.id == envelope.id
+      assert fetched_envelope.name == envelope.name
+      assert fetched_envelope.external_id == envelope.external_id
+      assert fetched_envelope.category_id == envelope.category_id
+    end
+
+    test "with non-existent envelope returns not_found error", %{scope: scope, book: book} do
+      non_existent_id = Ecto.UUID.generate()
+
+      assert {:error, :not_found} = Budgeting.fetch_envelope_by_external_id(scope, book, non_existent_id)
+    end
+
+    test "with envelope from a different book returns not_found error", %{scope: scope, book: book} do
+      other_book = BudgetingFactory.insert(:book)
+      BudgetingFactory.insert(:book_user, book_id: other_book.id, user_id: scope.user.id, role: :owner)
+
+      other_category = BudgetingFactory.insert(:category, book_id: other_book.id)
+      other_envelope = BudgetingFactory.insert(:envelope, category_id: other_category.id)
+
+      assert {:error, :not_found} = Budgeting.fetch_envelope_by_external_id(scope, book, other_envelope.external_id)
+    end
+
+    test "with editor role (authorized scope) returns envelope", %{
+      book: book,
+      envelope: envelope
+    } do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:ok, fetched_envelope} = Budgeting.fetch_envelope_by_external_id(scope, book, envelope.external_id)
+      assert fetched_envelope.id == envelope.id
+    end
+
+    test "with commenter role (authorized scope) returns envelope", %{
+      book: book,
+      envelope: envelope
+    } do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:ok, fetched_envelope} = Budgeting.fetch_envelope_by_external_id(scope, book, envelope.external_id)
+      assert fetched_envelope.id == envelope.id
+    end
+
+    test "with no association to book (unauthorized scope) returns error", %{
+      book: book,
+      envelope: envelope
+    } do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:error, :unauthorized} = Budgeting.fetch_envelope_by_external_id(scope, book, envelope.external_id)
+    end
+  end
 end

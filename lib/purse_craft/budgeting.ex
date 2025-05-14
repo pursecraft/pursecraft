@@ -10,6 +10,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Budgeting.Schemas.Category
+  alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Repo
   alias PurseCraft.Utilities
@@ -499,5 +500,41 @@ defmodule PurseCraft.Budgeting do
   @spec change_category(Category.t(), map()) :: Ecto.Changeset.t()
   def change_category(%Category{} = category, attrs \\ %{}) do
     Category.changeset(category, attrs)
+  end
+
+  @doc """
+  Fetches a single `Envelope` by its `external_id` from a specific book.
+
+  Returns a tuple of `{:ok, envelope}` if the envelope exists, or `{:error, :not_found}` if not found.
+  Returns `{:error, :unauthorized}` if the given scope is not authorized to view the envelope.
+
+  ## Examples
+
+      iex> fetch_envelope_by_external_id(authorized_scope, book, "abcd-1234")
+      {:ok, %Envelope{}}
+
+      iex> fetch_envelope_by_external_id(authorized_scope, book, "invalid-id")
+      {:error, :not_found}
+
+      iex> fetch_envelope_by_external_id(unauthorized_scope, book, "abcd-1234")
+      {:error, :unauthorized}
+
+  """
+  @spec fetch_envelope_by_external_id(Scope.t(), Book.t(), Ecto.UUID.t()) ::
+          {:ok, Envelope.t()} | {:error, :not_found | :unauthorized}
+  def fetch_envelope_by_external_id(%Scope{} = scope, %Book{} = book, external_id) do
+    with :ok <- Policy.authorize(:envelope_read, scope, %{book: book}) do
+      Envelope
+      |> join(:inner, [e], c in Category, on: e.category_id == c.id)
+      |> where([e, c], e.external_id == ^external_id and c.book_id == ^book.id)
+      |> Repo.one()
+      |> case do
+        nil ->
+          {:error, :not_found}
+
+        envelope ->
+          {:ok, envelope}
+      end
+    end
   end
 end

@@ -57,4 +57,13 @@ defmodule PurseCraft.Budgeting.Policy do
       desc "Delete a Category"
     end
   end
+
+  object :envelope do
+    action :read do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      allow [:own_resource, role: :commenter]
+      desc "Read an Envelope"
+    end
+  end
 end
