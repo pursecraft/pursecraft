@@ -14,11 +14,14 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Repo
   alias PurseCraft.Utilities
 
+  @type preload_item :: atom() | {atom(), preload_item()} | [preload_item()]
+  @type preload :: preload_item() | [preload_item()]
+
   @type create_book_attrs :: %{
           optional(:name) => String.t()
         }
 
-  @type fetch_book_by_external_id_option :: {:preload, Keyword.t()}
+  @type fetch_book_by_external_id_option :: {:preload, preload()}
   @type fetch_book_by_external_id_options :: [fetch_book_by_external_id_option()]
 
   @type update_book_attrs :: %{
@@ -33,17 +36,17 @@ defmodule PurseCraft.Budgeting do
           optional(:name) => String.t()
         }
 
-  @type fetch_category_by_external_id_option :: {:preload, Keyword.t()}
+  @type fetch_category_by_external_id_option :: {:preload, preload()}
   @type fetch_category_by_external_id_options :: [fetch_category_by_external_id_option()]
 
-  @type list_categories_option :: {:preload, Keyword.t()}
+  @type list_categories_option :: {:preload, preload()}
   @type list_categories_options :: [list_categories_option()]
 
   @type update_category_attrs :: %{
           optional(:name) => String.t()
         }
 
-  @type update_category_option :: {:preload, Keyword.t()}
+  @type update_category_option :: {:preload, preload()}
   @type update_category_options :: [update_category_option()]
 
   @doc """
