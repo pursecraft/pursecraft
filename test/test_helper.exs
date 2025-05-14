@@ -2,3 +2,6 @@
 ExUnit.start()
 Ecto.Adapters.SQL.Sandbox.mode(PurseCraft.Repo, :manual)
 Faker.start()
+
+Mimic.copy(PurseCraft.Budgeting.Policy)
+Mimic.copy(PurseCraft.Budgeting)

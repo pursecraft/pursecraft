@@ -10,6 +10,7 @@ defmodule PurseCraft.Budgeting.Schemas.Book do
   import Ecto.Changeset
 
   alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.User
 
   @type t :: %__MODULE__{
@@ -17,6 +18,7 @@ defmodule PurseCraft.Budgeting.Schemas.Book do
           id: integer() | nil,
           name: String.t() | nil,
           external_id: Ecto.UUID.t() | nil,
+          categories: [Category.t()] | Ecto.Association.NotLoaded.t() | nil,
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
         }
@@ -31,6 +33,7 @@ defmodule PurseCraft.Budgeting.Schemas.Book do
 
     many_to_many :users, User, join_through: BookUser
     has_many :books_users, BookUser
+    has_many :categories, Category
 
     timestamps(type: :utc_datetime)
   end

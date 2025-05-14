@@ -1,6 +1,7 @@
 defmodule PurseCraftWeb.BookLive.IndexTest do
   use PurseCraftWeb.ConnCase, async: true
 
+  import Mimic
   import Phoenix.LiveViewTest
 
   alias PurseCraft.Budgeting
@@ -133,6 +134,48 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
   end
 
   describe "Delete Book" do
+    test "deleting non-existent book returns flash error", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/books")
+
+      stub(Budgeting, :fetch_book_by_external_id, fn _scope, _id, _opts ->
+        {:error, :not_found}
+      end)
+
+      result = render_hook(view, "delete", %{"external_id" => Ecto.UUID.generate()})
+
+      assert has_element?(view, "#flash-error")
+
+      assert result =~ "flash-error"
+    end
+
+    test "with unauthorized scope returns flash error", %{conn: conn, user: user} do
+      book = BudgetingFactory.insert(:book)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+
+      {:ok, view, _html} = live(conn, ~p"/books")
+
+      render_hook(view, "delete", %{"external_id" => book.external_id})
+
+      assert has_element?(view, "#flash-error")
+      assert render(view) =~ "Failed to delete book"
+    end
+
+    test "handles error when book deletion fails", %{conn: conn, user: user} do
+      book = BudgetingFactory.insert(:book)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+
+      {:ok, view, _html} = live(conn, ~p"/books")
+
+      stub(Budgeting, :delete_book, fn _scope, _book ->
+        {:error, :some_error}
+      end)
+
+      render_hook(view, "delete", %{"external_id" => book.external_id})
+
+      assert has_element?(view, "#flash-error")
+      assert render(view) =~ "Failed to delete book"
+    end
+
     test "with owner role and associated book deletes book in listing", %{conn: conn, user: user} do
       book = BudgetingFactory.insert(:book)
       BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)

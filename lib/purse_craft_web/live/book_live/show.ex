@@ -31,13 +31,27 @@ defmodule PurseCraftWeb.BookLive.Show do
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
-    book = Budgeting.get_book_by_external_id!(socket.assigns.current_scope, external_id)
-    Budgeting.subscribe_book(book)
+    case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
+      {:ok, book} ->
+        Budgeting.subscribe_book(book)
 
-    {:ok,
-     socket
-     |> assign(:page_title, "Show Book")
-     |> assign(:book, book)}
+        {:ok,
+         socket
+         |> assign(:page_title, "Show Book")
+         |> assign(:book, book)}
+
+      {:error, :not_found} ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Book not found")
+         |> push_navigate(to: ~p"/books")}
+
+      {:error, :unauthorized} ->
+        {:ok,
+         socket
+         |> put_flash(:error, "You don't have access to this book")
+         |> push_navigate(to: ~p"/books")}
+    end
   end
 
   @impl Phoenix.LiveView
