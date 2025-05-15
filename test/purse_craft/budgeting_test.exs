@@ -225,12 +225,24 @@ defmodule PurseCraft.BudgetingTest do
   end
 
   describe "create_category/3" do
-    test "with valid data creates a category", %{scope: scope, book: book} do
-      attrs = %{name: "some category name"}
+    test "with valid data creates a category at position 0 and shifts others", %{scope: scope, book: book} do
+      # First create some categories with known positions
+      category1 = BudgetingFactory.insert(:category, book_id: book.id, position: 0)
+      category2 = BudgetingFactory.insert(:category, book_id: book.id, position: 1)
 
-      assert {:ok, category} = Budgeting.create_category(scope, book, attrs)
-      assert category.name == "some category name"
-      assert category.book_id == book.id
+      attrs = %{name: "new category"}
+
+      assert {:ok, new_category} = Budgeting.create_category(scope, book, attrs)
+      assert new_category.name == "new category"
+      assert new_category.book_id == book.id
+      assert new_category.position == 0
+
+      # Verify that existing categories were shifted down
+      reloaded_category1 = Repo.reload(category1)
+      reloaded_category2 = Repo.reload(category2)
+
+      assert reloaded_category1.position == 1
+      assert reloaded_category2.position == 2
     end
 
     test "with string keys in attrs creates a category correctly", %{scope: scope, book: book} do
@@ -435,8 +447,8 @@ defmodule PurseCraft.BudgetingTest do
   describe "list_categories/3" do
     setup %{book: book} do
       categories =
-        for _index <- 1..3 do
-          BudgetingFactory.insert(:category, book_id: book.id)
+        for index <- 1..3 do
+          BudgetingFactory.insert(:category, book_id: book.id, position: index - 1)
         end
 
       other_book = BudgetingFactory.insert(:book)
@@ -445,22 +457,24 @@ defmodule PurseCraft.BudgetingTest do
       %{categories: categories, other_book: other_book, other_category: other_category}
     end
 
-    test "with associated book (authorized scope) returns all book categories", %{
+    test "with associated book (authorized scope) returns all book categories ordered by position", %{
       scope: scope,
       book: book,
       categories: categories
     } do
       result = Budgeting.list_categories(scope, book)
 
-      sorted_result = Enum.sort_by(result, & &1.id)
-      sorted_categories = Enum.sort_by(categories, & &1.id)
+      # Categories should be returned ordered by position
+      sorted_categories = Enum.sort_by(categories, & &1.position)
 
-      assert length(sorted_result) == length(sorted_categories)
+      assert length(result) == length(sorted_categories)
 
-      sorted_result
+      # Verify ordering by position
+      result
       |> Enum.zip(sorted_categories)
       |> Enum.each(fn {result_cat, expected_cat} ->
         assert result_cat.id == expected_cat.id
+        assert result_cat.position == expected_cat.position
         assert result_cat.name == expected_cat.name
         assert result_cat.external_id == expected_cat.external_id
         assert result_cat.book_id == book.id
@@ -651,12 +665,28 @@ defmodule PurseCraft.BudgetingTest do
       %{category: category}
     end
 
-    test "with valid data creates an envelope", %{scope: scope, book: book, category: category} do
-      attrs = %{name: "some envelope name"}
+    test "with valid data creates an envelope at position 0 and shifts others", %{
+      scope: scope,
+      book: book,
+      category: category
+    } do
+      # First create some envelopes with known positions
+      envelope1 = BudgetingFactory.insert(:envelope, category_id: category.id, position: 0)
+      envelope2 = BudgetingFactory.insert(:envelope, category_id: category.id, position: 1)
 
-      assert {:ok, envelope} = Budgeting.create_envelope(scope, book, category, attrs)
-      assert envelope.name == "some envelope name"
-      assert envelope.category_id == category.id
+      attrs = %{name: "new envelope"}
+
+      assert {:ok, new_envelope} = Budgeting.create_envelope(scope, book, category, attrs)
+      assert new_envelope.name == "new envelope"
+      assert new_envelope.category_id == category.id
+      assert new_envelope.position == 0
+
+      # Verify that existing envelopes were shifted down
+      reloaded_envelope1 = Repo.reload(envelope1)
+      reloaded_envelope2 = Repo.reload(envelope2)
+
+      assert reloaded_envelope1.position == 1
+      assert reloaded_envelope2.position == 2
     end
 
     test "with string keys in attrs creates an envelope correctly", %{scope: scope, book: book, category: category} do
@@ -912,6 +942,291 @@ defmodule PurseCraft.BudgetingTest do
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} = Budgeting.delete_envelope(scope, book, envelope)
+    end
+  end
+
+  describe "reorder_category/4" do
+    setup %{book: book} do
+      categories =
+        Enum.map(0..3, fn position ->
+          BudgetingFactory.insert(:category, book_id: book.id, position: position, name: "Category #{position}")
+        end)
+
+      %{categories: categories}
+    end
+
+    test "reorders a category to a higher position", %{scope: scope, book: book, categories: categories} do
+      [category0, category1, category2, category3] = categories
+
+      # Move category0 from position 0 to position 2
+      assert {:ok, updated_category} = Budgeting.reorder_category(scope, book, category0, 2)
+      assert updated_category.position == 2
+
+      # Reload all categories to see their updated positions
+      reloaded_categories = Budgeting.list_categories(scope, book)
+      assert length(reloaded_categories) == 4
+
+      # Verify the positions
+      assert Enum.find(reloaded_categories, &(&1.id == category1.id)).position == 0
+      assert Enum.find(reloaded_categories, &(&1.id == category2.id)).position == 1
+      assert Enum.find(reloaded_categories, &(&1.id == category0.id)).position == 2
+      assert Enum.find(reloaded_categories, &(&1.id == category3.id)).position == 3
+    end
+
+    test "reorders a category to a lower position", %{scope: scope, book: book, categories: categories} do
+      [category0, category1, category2, category3] = categories
+
+      # Move category3 from position 3 to position 1
+      assert {:ok, updated_category} = Budgeting.reorder_category(scope, book, category3, 1)
+      assert updated_category.position == 1
+
+      # Reload all categories to see their updated positions
+      reloaded_categories = Budgeting.list_categories(scope, book)
+      assert length(reloaded_categories) == 4
+
+      # Verify the positions
+      assert Enum.find(reloaded_categories, &(&1.id == category0.id)).position == 0
+      assert Enum.find(reloaded_categories, &(&1.id == category3.id)).position == 1
+      assert Enum.find(reloaded_categories, &(&1.id == category1.id)).position == 2
+      assert Enum.find(reloaded_categories, &(&1.id == category2.id)).position == 3
+    end
+
+    test "with invalid position returns error", %{scope: scope, book: book, categories: categories} do
+      category = hd(categories)
+
+      assert {:error, :invalid_position} = Budgeting.reorder_category(scope, book, category, -1)
+    end
+
+    test "with unauthorized scope returns error", %{book: book, categories: categories} do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+      category = hd(categories)
+
+      assert {:error, :unauthorized} = Budgeting.reorder_category(scope, book, category, 2)
+    end
+
+    test "handles transaction errors gracefully", %{scope: scope, book: book, categories: categories} do
+      category = hd(categories)
+
+      # Mock a database error during the transaction
+      Mimic.expect(PurseCraft.Repo, :transaction, fn _multi ->
+        {:error, :shift_other_categories, :database_error, %{}}
+      end)
+
+      assert {:error, :database_error} = Budgeting.reorder_category(scope, book, category, 2)
+    end
+
+    test "caps position at maximum available position", %{scope: scope, book: book, categories: categories} do
+      category = hd(categories)
+
+      # Try to move category beyond maximum position
+      assert {:ok, updated_category} = Budgeting.reorder_category(scope, book, category, 10)
+      # Max position is number of categories - 1
+      assert updated_category.position == 3
+    end
+  end
+
+  describe "reorder_envelope/4" do
+    setup %{book: book} do
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+
+      envelopes =
+        Enum.map(0..3, fn position ->
+          BudgetingFactory.insert(:envelope, category_id: category.id, position: position, name: "Envelope #{position}")
+        end)
+
+      %{category: category, envelopes: envelopes}
+    end
+
+    test "reorders an envelope to a higher position", %{scope: scope, book: book, envelopes: envelopes} do
+      [envelope0, envelope1, envelope2, envelope3] = envelopes
+
+      # Move envelope0 from position 0 to position 2
+      assert {:ok, updated_envelope} = Budgeting.reorder_envelope(scope, book, envelope0, 2)
+      assert updated_envelope.position == 2
+
+      # Verify the positions of all envelopes
+      reloaded_envelope0 = Repo.reload(envelope0)
+      reloaded_envelope1 = Repo.reload(envelope1)
+      reloaded_envelope2 = Repo.reload(envelope2)
+      reloaded_envelope3 = Repo.reload(envelope3)
+
+      assert reloaded_envelope0.position == 2
+      assert reloaded_envelope1.position == 0
+      assert reloaded_envelope2.position == 1
+      assert reloaded_envelope3.position == 3
+    end
+
+    test "reorders an envelope to a lower position", %{scope: scope, book: book, envelopes: envelopes} do
+      [envelope0, envelope1, envelope2, envelope3] = envelopes
+
+      # Move envelope3 from position 3 to position 1
+      assert {:ok, updated_envelope} = Budgeting.reorder_envelope(scope, book, envelope3, 1)
+      assert updated_envelope.position == 1
+
+      # Verify the positions of all envelopes
+      reloaded_envelope0 = Repo.reload(envelope0)
+      reloaded_envelope1 = Repo.reload(envelope1)
+      reloaded_envelope2 = Repo.reload(envelope2)
+      reloaded_envelope3 = Repo.reload(envelope3)
+
+      assert reloaded_envelope0.position == 0
+      assert reloaded_envelope1.position == 2
+      assert reloaded_envelope2.position == 3
+      assert reloaded_envelope3.position == 1
+    end
+
+    test "with invalid position returns error", %{scope: scope, book: book, envelopes: envelopes} do
+      envelope = hd(envelopes)
+
+      assert {:error, :invalid_position} = Budgeting.reorder_envelope(scope, book, envelope, -1)
+    end
+
+    test "with unauthorized scope returns error", %{book: book, envelopes: envelopes} do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+      envelope = hd(envelopes)
+
+      assert {:error, :unauthorized} = Budgeting.reorder_envelope(scope, book, envelope, 2)
+    end
+
+    test "handles transaction errors gracefully", %{scope: scope, book: book, envelopes: envelopes} do
+      envelope = hd(envelopes)
+
+      # Mock a database error during the transaction
+      Mimic.expect(PurseCraft.Repo, :transaction, fn _multi ->
+        {:error, :shift_other_envelopes, :database_error, %{}}
+      end)
+
+      assert {:error, :database_error} = Budgeting.reorder_envelope(scope, book, envelope, 2)
+    end
+  end
+
+  describe "move_envelope/5" do
+    setup %{book: book} do
+      source_category = BudgetingFactory.insert(:category, book_id: book.id, name: "Source Category")
+      target_category = BudgetingFactory.insert(:category, book_id: book.id, name: "Target Category")
+
+      # Create envelopes in source category
+      source_envelopes =
+        Enum.map(0..2, fn position ->
+          BudgetingFactory.insert(:envelope,
+            category_id: source_category.id,
+            position: position,
+            name: "Source Envelope #{position}"
+          )
+        end)
+
+      # Create envelopes in target category
+      target_envelopes =
+        Enum.map(0..2, fn position ->
+          BudgetingFactory.insert(:envelope,
+            category_id: target_category.id,
+            position: position,
+            name: "Target Envelope #{position}"
+          )
+        end)
+
+      %{
+        source_category: source_category,
+        target_category: target_category,
+        source_envelopes: source_envelopes,
+        target_envelopes: target_envelopes
+      }
+    end
+
+    test "moves an envelope to a different category at specified position", %{
+      scope: scope,
+      book: book,
+      target_category: target_category,
+      source_envelopes: source_envelopes,
+      target_envelopes: target_envelopes
+    } do
+      [source_envelope0, source_envelope1, source_envelope2] = source_envelopes
+      [target_envelope0, target_envelope1, target_envelope2] = target_envelopes
+
+      # Move source_envelope1 to target_category at position 1
+      assert {:ok, moved_envelope} = Budgeting.move_envelope(scope, book, source_envelope1, target_category, 1)
+      assert moved_envelope.category_id == target_category.id
+      assert moved_envelope.position == 1
+
+      # Verify source category envelopes
+      reloaded_source_envelope0 = Repo.reload(source_envelope0)
+      reloaded_source_envelope2 = Repo.reload(source_envelope2)
+
+      assert reloaded_source_envelope0.position == 0
+      # Position adjusted down
+      assert reloaded_source_envelope2.position == 1
+
+      # Verify target category envelopes
+      reloaded_target_envelope0 = Repo.reload(target_envelope0)
+      reloaded_target_envelope1 = Repo.reload(target_envelope1)
+      reloaded_target_envelope2 = Repo.reload(target_envelope2)
+
+      assert reloaded_target_envelope0.position == 0
+      # The moved envelope
+      assert moved_envelope.position == 1
+      # Shifted down
+      assert reloaded_target_envelope1.position == 2
+      # Shifted down
+      assert reloaded_target_envelope2.position == 3
+    end
+
+    test "with invalid position returns error", %{
+      scope: scope,
+      book: book,
+      source_envelopes: source_envelopes,
+      target_category: target_category
+    } do
+      envelope = hd(source_envelopes)
+
+      assert {:error, :invalid_position} = Budgeting.move_envelope(scope, book, envelope, target_category, -1)
+    end
+
+    test "with unauthorized scope returns error", %{
+      book: book,
+      source_envelopes: source_envelopes,
+      target_category: target_category
+    } do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+      envelope = hd(source_envelopes)
+
+      assert {:error, :unauthorized} = Budgeting.move_envelope(scope, book, envelope, target_category, 0)
+    end
+
+    test "handles transaction errors gracefully", %{
+      scope: scope,
+      book: book,
+      source_envelopes: source_envelopes,
+      target_category: target_category
+    } do
+      envelope = hd(source_envelopes)
+
+      # Mock a database error during the transaction
+      Mimic.expect(PurseCraft.Repo, :transaction, fn _multi ->
+        {:error, :adjust_source_category, :database_error, %{}}
+      end)
+
+      assert {:error, :database_error} = Budgeting.move_envelope(scope, book, envelope, target_category, 0)
+    end
+
+    test "uses reorder_envelope when target category is the same as current category", %{
+      scope: scope,
+      book: book,
+      source_envelopes: source_envelopes,
+      source_category: source_category
+    } do
+      envelope = hd(source_envelopes)
+
+      # Make sure we're testing with the correct category
+      test_envelope = %{envelope | category_id: source_category.id}
+
+      # This will reorder within the same category
+      assert {:ok, updated_envelope} = Budgeting.move_envelope(scope, book, test_envelope, source_category, 2)
+
+      # Verify it called reorder_envelope instead of moving between categories
+      assert updated_envelope.category_id == source_category.id
     end
   end
 end

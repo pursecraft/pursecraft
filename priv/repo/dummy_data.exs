@@ -139,16 +139,18 @@ envelope_names = %{
   ]
 }
 
-Enum.each(category_names, fn category_name ->
+Enum.with_index(category_names) |> Enum.each(fn {category_name, category_index} ->
   category = Repo.insert!(%Category{
     name: category_name,
-    book_id: dummy_book.id
+    book_id: dummy_book.id,
+    position: category_index
   })
 
-  Enum.each(envelope_names[category_name], fn envelope_name ->
+  Enum.with_index(envelope_names[category_name]) |> Enum.each(fn {envelope_name, envelope_index} ->
     Repo.insert!(%Envelope{
       name: envelope_name,
-      category_id: category.id
+      category_id: category.id,
+      position: envelope_index
     })
   end)
 end)

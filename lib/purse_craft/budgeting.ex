@@ -344,17 +344,28 @@ defmodule PurseCraft.Budgeting do
         attrs
         |> Utilities.atomize_keys()
         |> Map.put(:book_id, book.id)
+        |> Map.put_new(:position, 0)
 
-      %Category{}
-      |> Category.changeset(attrs)
-      |> Repo.insert()
+      # Use a transaction to ensure atomicity
+      Ecto.Multi.new()
+      |> Ecto.Multi.run(:shift_positions, fn repo, _changes ->
+        # Shift all existing categories in this book down by 1
+        Category
+        |> where([c], c.book_id == ^book.id)
+        |> update([c], inc: [position: 1])
+        |> repo.update_all([])
+
+        {:ok, nil}
+      end)
+      |> Ecto.Multi.insert(:category, Category.changeset(%Category{}, attrs))
+      |> Repo.transaction()
       |> case do
-        {:ok, category} ->
+        {:ok, %{category: category}} ->
           broadcast_book(book, {:category_created, category})
           {:ok, category}
 
-        error ->
-          error
+        {:error, _failed_operation, changeset, _changes} ->
+          {:error, changeset}
       end
     end
   end
@@ -450,6 +461,7 @@ defmodule PurseCraft.Budgeting do
       categories =
         Category
         |> where([c], c.book_id == ^book.id)
+        |> order_by([c], c.position)
         |> Repo.all()
 
       preloads = Keyword.get(opts, :preload, [])
@@ -536,17 +548,28 @@ defmodule PurseCraft.Budgeting do
         attrs
         |> Utilities.atomize_keys()
         |> Map.put(:category_id, category.id)
+        |> Map.put_new(:position, 0)
 
-      %Envelope{}
-      |> Envelope.changeset(attrs)
-      |> Repo.insert()
+      # Use a transaction to ensure atomicity
+      Ecto.Multi.new()
+      |> Ecto.Multi.run(:shift_positions, fn repo, _changes ->
+        # Shift all existing envelopes in this category down by 1
+        Envelope
+        |> where([e], e.category_id == ^category.id)
+        |> update([e], inc: [position: 1])
+        |> repo.update_all([])
+
+        {:ok, nil}
+      end)
+      |> Ecto.Multi.insert(:envelope, Envelope.changeset(%Envelope{}, attrs))
+      |> Repo.transaction()
       |> case do
-        {:ok, envelope} ->
+        {:ok, %{envelope: envelope}} ->
           broadcast_book(book, {:envelope_created, envelope})
           {:ok, envelope}
 
-        error ->
-          error
+        {:error, _failed_operation, changeset, _changes} ->
+          {:error, changeset}
       end
     end
   end
@@ -657,5 +680,269 @@ defmodule PurseCraft.Budgeting do
   @spec change_envelope(Envelope.t(), map()) :: Ecto.Changeset.t()
   def change_envelope(%Envelope{} = envelope, attrs \\ %{}) do
     Envelope.changeset(envelope, attrs)
+  end
+
+  @doc """
+  Reorders a category within its book by changing its position and adjusting other categories.
+
+  This function ensures consistent ordering by:
+  1. Moving the category to the target position
+  2. Adjusting other categories' positions to maintain a contiguous sequence
+
+  ## Examples
+
+      iex> reorder_category(authorized_scope, book, category, 3)
+      {:ok, %Category{position: 3}}
+
+      iex> reorder_category(authorized_scope, book, category, -1)
+      {:error, :invalid_position}
+
+      iex> reorder_category(unauthorized_scope, book, category, 3)
+      {:error, :unauthorized}
+
+  """
+  @spec reorder_category(Scope.t(), Book.t(), Category.t(), integer()) ::
+          {:ok, Category.t()} | {:error, atom() | Ecto.Changeset.t()}
+  def reorder_category(%Scope{} = scope, %Book{} = book, %Category{} = category, new_position)
+      when is_integer(new_position) and new_position >= 0 do
+    with :ok <- Policy.authorize(:category_update, scope, %{book: book}) do
+      # Get the current list of categories for this book to determine max position
+      categories = list_categories(scope, book)
+      max_position = length(categories) - 1
+
+      # If the position is greater than the max position, cap it at max_position
+      new_position = min(new_position, max_position)
+
+      # Current position of the category
+      current_position = category.position
+
+      # If the positions are the same, nothing to do
+      if current_position == new_position do
+        {:ok, category}
+      else
+        # Start a transaction to ensure all position updates are atomic
+        multi = Ecto.Multi.new()
+
+        # Define a function to handle position updates
+        update_positions = fn repo, _changes ->
+          query =
+            Category
+            |> where([c], c.book_id == ^book.id)
+            |> where([c], c.id != ^category.id)
+
+          # Apply the appropriate query based on direction
+          query = apply_position_update(query, current_position, new_position)
+
+          repo.update_all(query, [])
+          {:ok, nil}
+        end
+
+        # Add the operation to the transaction
+        multi = Ecto.Multi.run(multi, :shift_other_categories, update_positions)
+
+        # Complete the transaction
+        multi
+        |> Ecto.Multi.update(:category, Category.position_changeset(category, new_position))
+        |> Repo.transaction()
+        |> case do
+          {:ok, %{category: updated_category}} ->
+            broadcast_book(book, {:category_updated, updated_category})
+            {:ok, updated_category}
+
+          {:error, _failed_operation, failed_value, _changes} ->
+            {:error, failed_value}
+        end
+      end
+    end
+  end
+
+  def reorder_category(_scope, _book, _category, _new_position) do
+    {:error, :invalid_position}
+  end
+
+  # Helper function to apply position update based on direction
+  defp apply_position_update(query, current_position, new_position) do
+    if current_position < new_position do
+      # Moving down, decrement positions for items in between
+      query
+      |> where([item], item.position > ^current_position and item.position <= ^new_position)
+      |> update([item], set: [position: fragment("position - 1")])
+    else
+      # Moving up, increment positions for items in between
+      query
+      |> where([item], item.position >= ^new_position and item.position < ^current_position)
+      |> update([item], set: [position: fragment("position + 1")])
+    end
+  end
+
+  @doc """
+  Reorders an envelope within its category by changing its position and adjusting other envelopes.
+
+  This function ensures consistent ordering by:
+  1. Moving the envelope to the target position
+  2. Adjusting other envelopes' positions to maintain a contiguous sequence
+
+  ## Examples
+
+      iex> reorder_envelope(authorized_scope, book, envelope, 3)
+      {:ok, %Envelope{position: 3}}
+
+      iex> reorder_envelope(authorized_scope, book, envelope, -1)
+      {:error, :invalid_position}
+
+      iex> reorder_envelope(unauthorized_scope, book, envelope, 3)
+      {:error, :unauthorized}
+
+  """
+  @spec reorder_envelope(Scope.t(), Book.t(), Envelope.t(), integer()) ::
+          {:ok, Envelope.t()} | {:error, atom() | Ecto.Changeset.t()}
+  def reorder_envelope(%Scope{} = scope, %Book{} = book, %Envelope{} = envelope, new_position)
+      when is_integer(new_position) and new_position >= 0 do
+    with :ok <- Policy.authorize(:envelope_update, scope, %{book: book}) do
+      # Need to fetch the category to know how many envelopes it has
+      category =
+        Category
+        |> Repo.get(envelope.category_id)
+        |> Repo.preload(:envelopes)
+
+      envelopes = Enum.sort_by(category.envelopes, & &1.position)
+      max_position = length(envelopes) - 1
+
+      # If the position is greater than the max position, cap it at max_position
+      new_position = min(new_position, max_position)
+
+      # Current position of the envelope
+      current_position = envelope.position
+
+      # If the positions are the same, nothing to do
+      if current_position == new_position do
+        {:ok, envelope}
+      else
+        # Start a transaction to ensure all position updates are atomic
+        multi = Ecto.Multi.new()
+
+        # Define a function to handle position updates
+        update_positions = fn repo, _changes ->
+          query =
+            Envelope
+            |> where([e], e.category_id == ^envelope.category_id)
+            |> where([e], e.id != ^envelope.id)
+
+          # Apply the appropriate query based on direction
+          query = apply_position_update(query, current_position, new_position)
+
+          repo.update_all(query, [])
+          {:ok, nil}
+        end
+
+        # Add the operation to the transaction
+        multi = Ecto.Multi.run(multi, :shift_other_envelopes, update_positions)
+
+        # Complete the transaction
+        multi
+        |> Ecto.Multi.update(:envelope, Envelope.position_changeset(envelope, new_position))
+        |> Repo.transaction()
+        |> case do
+          {:ok, %{envelope: updated_envelope}} ->
+            broadcast_book(book, {:envelope_updated, updated_envelope})
+            {:ok, updated_envelope}
+
+          {:error, _failed_operation, failed_value, _changes} ->
+            {:error, failed_value}
+        end
+      end
+    end
+  end
+
+  def reorder_envelope(_scope, _book, _envelope, _new_position) do
+    {:error, :invalid_position}
+  end
+
+  @doc """
+  Moves an envelope from one category to another with position handling.
+
+  This function:
+  1. Changes the envelope's category
+  2. Places the envelope at the specified position in the target category
+  3. Adjusts positions of other envelopes in both the source and target categories
+
+  ## Examples
+
+      iex> move_envelope(authorized_scope, book, envelope, target_category, 0)
+      {:ok, %Envelope{}}
+
+      iex> move_envelope(authorized_scope, book, envelope, target_category, -1)
+      {:error, :invalid_position}
+
+      iex> move_envelope(unauthorized_scope, book, envelope, target_category, 0)
+      {:error, :unauthorized}
+
+  """
+  @spec move_envelope(Scope.t(), Book.t(), Envelope.t(), Category.t(), integer()) ::
+          {:ok, Envelope.t()} | {:error, atom() | Ecto.Changeset.t()}
+  def move_envelope(%Scope{} = scope, %Book{} = book, %Envelope{} = envelope, %Category{} = target_category, new_position)
+      when is_integer(new_position) and new_position >= 0 do
+    with :ok <- Policy.authorize(:envelope_update, scope, %{book: book}) do
+      # Can't move to the same category
+      if envelope.category_id == target_category.id do
+        # Use reorder_envelope instead
+        reorder_envelope(scope, book, envelope, new_position)
+      else
+        # Get the source category and its envelopes to adjust their positions
+        source_category_id = envelope.category_id
+        current_position = envelope.position
+
+        # Count envelopes in target category to validate new_position
+        target_envelopes_count =
+          Envelope
+          |> where([e], e.category_id == ^target_category.id)
+          |> select([e], count(e.id))
+          |> Repo.one()
+
+        # Cap the position at the end of the target category's envelopes
+        capped_position = min(new_position, target_envelopes_count)
+
+        # Start a transaction for all operations
+        Ecto.Multi.new()
+        |> Ecto.Multi.run(:adjust_source_category, fn repo, _changes ->
+          # Close the gap in the source category
+          Envelope
+          |> where([e], e.category_id == ^source_category_id and e.position > ^current_position)
+          |> update([e], set: [position: fragment("position - 1")])
+          |> repo.update_all([])
+
+          {:ok, nil}
+        end)
+        |> Ecto.Multi.run(:adjust_target_category, fn repo, _changes ->
+          # Make space in the target category
+          Envelope
+          |> where([e], e.category_id == ^target_category.id and e.position >= ^capped_position)
+          |> update([e], set: [position: fragment("position + 1")])
+          |> repo.update_all([])
+
+          {:ok, nil}
+        end)
+        |> Ecto.Multi.update(
+          :envelope,
+          Envelope.changeset(envelope, %{
+            category_id: target_category.id,
+            position: capped_position
+          })
+        )
+        |> Repo.transaction()
+        |> case do
+          {:ok, %{envelope: updated_envelope}} ->
+            broadcast_book(book, {:envelope_updated, updated_envelope})
+            {:ok, updated_envelope}
+
+          {:error, _failed_operation, failed_value, _changes} ->
+            {:error, failed_value}
+        end
+      end
+    end
+  end
+
+  def move_envelope(_scope, _book, _envelope, _target_category, _new_position) do
+    {:error, :invalid_position}
   end
 end

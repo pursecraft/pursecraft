@@ -5,3 +5,4 @@ Faker.start()
 
 Mimic.copy(PurseCraft.Budgeting.Policy)
 Mimic.copy(PurseCraft.Budgeting)
+Mimic.copy(PurseCraft.Repo)
