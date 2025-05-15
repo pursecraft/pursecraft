@@ -439,6 +439,151 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     end
   end
 
+  describe "Envelope Creation" do
+    test "opens envelope modal when + button is clicked", %{
+      conn: conn,
+      book: book,
+      categories: [housing_category, _food_category]
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+      assert has_element?(view, "h3", "Add New Envelope")
+      assert has_element?(view, "form[phx-submit='create-envelope']")
+      assert has_element?(view, "label", "Envelope Name")
+    end
+
+    test "closes envelope modal when cancel button is clicked", %{
+      conn: conn,
+      book: book,
+      categories: [housing_category, _]
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+
+      view
+      |> element("button", "Cancel")
+      |> render_click()
+
+      refute has_element?(view, ".modal-open")
+    end
+
+    test "closes envelope modal when clicking backdrop", %{
+      conn: conn,
+      book: book,
+      categories: [housing_category, _food_category]
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+
+      view
+      |> element(".modal-backdrop")
+      |> render_click()
+
+      refute has_element?(view, ".modal-open")
+    end
+
+    test "creates a new envelope successfully", %{conn: conn, book: book, categories: [housing_category, _food_category]} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> render_click()
+
+      view
+      |> form("#envelope-form", %{envelope: %{name: "New Home Insurance"}})
+      |> render_submit()
+
+      assert has_element?(view, ".alert-info", "Envelope created successfully")
+      refute has_element?(view, ".modal-open")
+      assert has_element?(view, "span.font-medium", "New Home Insurance")
+    end
+
+    test "handles validation errors when creating an envelope", %{
+      conn: conn,
+      book: book,
+      categories: [housing_category, _]
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> render_click()
+
+      view
+      |> form("#envelope-form", %{envelope: %{name: ""}})
+      |> render_submit()
+
+      assert has_element?(view, ".modal-open")
+    end
+
+    test "handles unauthorized envelope creation", %{
+      conn: conn,
+      book: book,
+      categories: [housing_category, _food_category]
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      view
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> render_click()
+
+      stub(Policy, :authorize, fn :envelope_create, _scope, _resource ->
+        {:error, :unauthorized}
+      end)
+
+      view
+      |> form("#envelope-form", %{envelope: %{name: "Unauthorized Envelope"}})
+      |> render_submit()
+
+      assert has_element?(view, ".alert-error", "You don't have permission to create envelopes")
+      refute has_element?(view, ".modal-open")
+    end
+
+    test "shows error when category is not found during open_envelope_modal", %{conn: conn, book: book} do
+      non_existent_id = Ecto.UUID.generate()
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id, _opts ->
+        {:error, :not_found}
+      end)
+
+      render_click(view, "open_envelope_modal", %{"id" => non_existent_id})
+
+      assert has_element?(view, ".alert-error", "Category not found")
+    end
+
+    test "shows error when unauthorized to open envelope modal", %{
+      conn: conn,
+      book: book,
+      categories: [housing_category, _food_category]
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id, _opts ->
+        {:error, :unauthorized}
+      end)
+
+      render_click(view, "open_envelope_modal", %{"id" => housing_category.external_id})
+
+      assert has_element?(view, ".alert-error", "You don't have permission to access this category")
+    end
+  end
+
   describe "Error handling" do
     test "redirects to books page when book doesn't exist with not_found error", %{conn: conn} do
       non_existent_id = Ecto.UUID.generate()

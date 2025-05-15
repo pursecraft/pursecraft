@@ -5,6 +5,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Category
+  alias PurseCraft.Budgeting.Schemas.Envelope
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
@@ -24,10 +25,16 @@ defmodule PurseCraftWeb.BudgetLive.Index do
               |> assign(:current_path, "/books/#{book.external_id}/budget")
               |> assign(:book, book)
               |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
+              |> assign(
+                :envelope_form,
+                to_form(Envelope.changeset(%Envelope{}, %{}))
+              )
               |> assign(:category_modal_open, false)
+              |> assign(:envelope_modal_open, false)
               |> assign(:delete_modal_open, false)
               |> assign(:editing_category, nil)
               |> assign(:category_to_delete, nil)
+              |> assign(:selected_category_for_envelope, nil)
               |> assign(:modal_title, "Add New Category")
               |> assign(:modal_action, "create-category")
               |> assign(:modal_button, "Create")
@@ -119,6 +126,24 @@ defmodule PurseCraftWeb.BudgetLive.Index do
           </div>
         <% end %>
 
+        <%= if @envelope_modal_open do %>
+          <div class="modal modal-open" role="dialog">
+            <div class="modal-box">
+              <h3 class="font-bold text-lg mb-4">Add New Envelope</h3>
+              <.form for={@envelope_form} id="envelope-form" phx-submit="create-envelope">
+                <.input field={@envelope_form[:name]} type="text" label="Envelope Name" />
+                <div class="modal-action">
+                  <button type="button" class="btn" phx-click="close_envelope_modal">Cancel</button>
+                  <button type="submit" class="btn btn-primary" phx-disable-with="Saving...">
+                    Create
+                  </button>
+                </div>
+              </.form>
+            </div>
+            <div class="modal-backdrop" phx-click="close_envelope_modal"></div>
+          </div>
+        <% end %>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div class="card bg-success/10 border border-success/20">
             <div class="card-body p-4">
@@ -173,6 +198,13 @@ defmodule PurseCraftWeb.BudgetLive.Index do
                           <.icon name="hero-trash" class="h-4 w-4" />
                         </button>
                       <% end %>
+                      <button
+                        class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity text-success"
+                        phx-click="open_envelope_modal"
+                        phx-value-id={category.external_id}
+                      >
+                        <.icon name="hero-plus" class="h-4 w-4" />
+                      </button>
                     </div>
                     <div class="flex justify-end w-1/2 text-xs sm:text-sm font-medium">
                       <span class="w-[80px] sm:w-[100px] text-right">Assigned</span>
@@ -408,6 +440,73 @@ defmodule PurseCraftWeb.BudgetLive.Index do
          |> put_flash(:error, "Error deleting category")
          |> assign(:delete_modal_open, false)
          |> assign(:category_to_delete, nil)}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("open_envelope_modal", %{"id" => external_id}, socket) do
+    case Budgeting.fetch_category_by_external_id(socket.assigns.current_scope, socket.assigns.book, external_id,
+           preload: [:envelopes]
+         ) do
+      {:ok, category} ->
+        {:noreply,
+         socket
+         |> assign(:selected_category_for_envelope, category)
+         |> assign(:envelope_form, to_form(Envelope.changeset(%Envelope{}, %{})))
+         |> assign(:envelope_modal_open, true)}
+
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Category not found")}
+
+      {:error, :unauthorized} ->
+        {:noreply, put_flash(socket, :error, "You don't have permission to access this category")}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("close_envelope_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:envelope_modal_open, false)
+     |> assign(:selected_category_for_envelope, nil)
+     |> assign(:envelope_form, to_form(Envelope.changeset(%Envelope{}, %{})))}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("create-envelope", %{"envelope" => envelope_params}, socket) do
+    category = socket.assigns.selected_category_for_envelope
+
+    case Budgeting.create_envelope(
+           socket.assigns.current_scope,
+           socket.assigns.book,
+           category,
+           envelope_params
+         ) do
+      {:ok, envelope} ->
+        updated_category = %{
+          category
+          | envelopes: [envelope | category.envelopes]
+        }
+
+        socket =
+          socket
+          |> stream_insert(:categories, updated_category)
+          |> assign(:envelope_modal_open, false)
+          |> assign(:selected_category_for_envelope, nil)
+          |> assign(:envelope_form, to_form(Envelope.changeset(%Envelope{}, %{})))
+          |> put_flash(:info, "Envelope created successfully")
+
+        {:noreply, socket}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :envelope_form, to_form(changeset))}
+
+      {:error, :unauthorized} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "You don't have permission to create envelopes")
+         |> assign(:envelope_modal_open, false)
+         |> assign(:selected_category_for_envelope, nil)}
     end
   end
 end
