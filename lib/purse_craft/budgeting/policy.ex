@@ -71,5 +71,11 @@ defmodule PurseCraft.Budgeting.Policy do
       allow [:own_resource, role: :commenter]
       desc "Read an Envelope"
     end
+
+    action :update do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      desc "Update an Envelope"
+    end
   end
 end

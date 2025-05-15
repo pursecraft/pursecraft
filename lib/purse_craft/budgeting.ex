@@ -54,6 +54,10 @@ defmodule PurseCraft.Budgeting do
           optional(:name) => String.t()
         }
 
+  @type update_envelope_attrs :: %{
+          optional(:name) => String.t()
+        }
+
   @doc """
   Subscribes to notifications about any book changes associated with the scoped user.
 
@@ -577,6 +581,36 @@ defmodule PurseCraft.Budgeting do
         envelope ->
           {:ok, envelope}
       end
+    end
+  end
+
+  @doc """
+  Updates an envelope.
+
+  ## Examples
+
+      iex> update_envelope(authorized_scope, book, envelope, %{field: new_value})
+      {:ok, %Envelope{}}
+
+      iex> update_envelope(authorized_scope, book, envelope, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+      iex> update_envelope(unauthorized_scope, book, envelope, %{field: new_value})
+      {:error, :unauthorized}
+
+  """
+  @spec update_envelope(Scope.t(), Book.t(), Envelope.t(), update_envelope_attrs()) ::
+          {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
+  def update_envelope(%Scope{} = scope, %Book{} = book, %Envelope{} = envelope, attrs) do
+    attrs = Utilities.atomize_keys(attrs)
+
+    with :ok <- Policy.authorize(:envelope_update, scope, %{book: book}),
+         {:ok, %Envelope{} = envelope} <-
+           envelope
+           |> Envelope.changeset(attrs)
+           |> Repo.update() do
+      broadcast_book(book, {:envelope_updated, envelope})
+      {:ok, envelope}
     end
   end
 end
