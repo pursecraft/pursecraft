@@ -35,6 +35,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
               |> assign(:editing_category, nil)
               |> assign(:editing_envelope, nil)
               |> assign(:category_to_delete, nil)
+              |> assign(:envelope_to_delete, nil)
               |> assign(:selected_category_for_envelope, nil)
               |> assign(:envelope_modal_title, "Add New Envelope")
               |> assign(:envelope_modal_action, "create-envelope")
@@ -130,7 +131,31 @@ defmodule PurseCraftWeb.BudgetLive.Index do
           </div>
         <% end %>
 
-        <%= if @envelope_modal_open do %>
+        <%= if @envelope_modal_open && @envelope_modal_action == "delete-envelope" do %>
+          <div class="modal modal-open" role="dialog">
+            <div class="modal-box">
+              <h3 class="font-bold text-lg mb-4">Delete Envelope</h3>
+              <p class="mb-4">
+                Are you sure you want to delete the envelope "{@envelope_to_delete.name}"?
+              </p>
+              <p class="text-error mb-4">This action cannot be undone.</p>
+              <div class="modal-action">
+                <button type="button" class="btn" phx-click="close_envelope_modal">Cancel</button>
+                <button
+                  type="button"
+                  class="btn btn-error"
+                  phx-click="delete_envelope"
+                  phx-value-id={@envelope_to_delete.external_id}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <div class="modal-backdrop" phx-click="close_envelope_modal"></div>
+          </div>
+        <% end %>
+
+        <%= if @envelope_modal_open && @envelope_modal_action != "delete-envelope" do %>
           <div class="modal modal-open" role="dialog">
             <div class="modal-box">
               <h3 class="font-bold text-lg mb-4">{@envelope_modal_title}</h3>
@@ -278,6 +303,13 @@ defmodule PurseCraftWeb.BudgetLive.Index do
           phx-value-id={@id}
         >
           <.icon name="hero-pencil-square" class="h-4 w-4" />
+        </button>
+        <button
+          class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity text-error"
+          phx-click="open_delete_envelope_modal"
+          phx-value-id={@id}
+        >
+          <.icon name="hero-trash" class="h-4 w-4" />
         </button>
       </div>
       <div class="flex justify-end w-1/2 text-xs sm:text-sm">
@@ -585,6 +617,69 @@ defmodule PurseCraftWeb.BudgetLive.Index do
          |> put_flash(:error, "You don't have permission to update envelopes")
          |> assign(:envelope_modal_open, false)
          |> assign(:editing_envelope, nil)
+         |> assign(:selected_category_for_envelope, nil)}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("open_delete_envelope_modal", %{"id" => external_id}, socket) do
+    case Budgeting.fetch_envelope_by_external_id(
+           socket.assigns.current_scope,
+           socket.assigns.book,
+           external_id,
+           preload: [category: [:envelopes]]
+         ) do
+      {:ok, envelope} ->
+        {:noreply,
+         socket
+         |> assign(:envelope_to_delete, envelope)
+         |> assign(:selected_category_for_envelope, envelope.category)
+         |> assign(:envelope_modal_title, "Delete Envelope")
+         |> assign(:envelope_modal_action, "delete-envelope")
+         |> assign(:envelope_modal_open, true)}
+
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Envelope not found")}
+
+      {:error, :unauthorized} ->
+        {:noreply, put_flash(socket, :error, "You don't have permission to delete this envelope")}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("delete_envelope", %{"id" => _external_id}, socket) do
+    envelope = socket.assigns.envelope_to_delete
+    category = socket.assigns.selected_category_for_envelope
+
+    case Budgeting.delete_envelope(socket.assigns.current_scope, socket.assigns.book, envelope) do
+      {:ok, deleted_envelope} ->
+        updated_envelopes = Enum.reject(category.envelopes, fn e -> e.id == deleted_envelope.id end)
+        updated_category = %{category | envelopes: updated_envelopes}
+
+        socket =
+          socket
+          |> stream_insert(:categories, updated_category)
+          |> assign(:envelope_modal_open, false)
+          |> assign(:envelope_to_delete, nil)
+          |> assign(:selected_category_for_envelope, nil)
+          |> put_flash(:info, "Envelope deleted successfully")
+
+        {:noreply, socket}
+
+      {:error, :unauthorized} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "You don't have permission to delete this envelope")
+         |> assign(:envelope_modal_open, false)
+         |> assign(:envelope_to_delete, nil)
+         |> assign(:selected_category_for_envelope, nil)}
+
+      {:error, _reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Error deleting envelope")
+         |> assign(:envelope_modal_open, false)
+         |> assign(:envelope_to_delete, nil)
          |> assign(:selected_category_for_envelope, nil)}
     end
   end

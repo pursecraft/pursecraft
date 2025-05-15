@@ -432,6 +432,191 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     end
   end
 
+  describe "Envelope Deletion" do
+    test "opens delete confirmation modal when delete button is clicked", %{
+      conn: conn,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+        if external_id == envelope.external_id do
+          {:ok, %{envelope | category: category}}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      view
+      |> element("button[phx-click='open_delete_envelope_modal'][phx-value-id='#{envelope.external_id}']")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+      assert has_element?(view, "h3", "Delete Envelope")
+      assert has_element?(view, "p", ~r/Are you sure you want to delete the envelope "Rent"\?/)
+      assert has_element?(view, "button", "Cancel")
+      assert has_element?(view, "button", "Delete")
+    end
+
+    test "cancels deletion when cancel button is clicked", %{
+      conn: conn,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+        if external_id == envelope.external_id do
+          {:ok, %{envelope | category: category}}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      view
+      |> element("button[phx-click='open_delete_envelope_modal'][phx-value-id='#{envelope.external_id}']")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+
+      view
+      |> element("button", "Cancel")
+      |> render_click()
+
+      refute has_element?(view, ".modal-open")
+    end
+
+    test "successfully deletes envelope when confirmed", %{
+      conn: conn,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+        if external_id == envelope.external_id do
+          {:ok, %{envelope | category: category}}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      view
+      |> element("button[phx-click='open_delete_envelope_modal'][phx-value-id='#{envelope.external_id}']")
+      |> render_click()
+
+      stub(Budgeting, :delete_envelope, fn _scope, _book, _envelope ->
+        # Return successful deletion
+        {:ok, envelope}
+      end)
+
+      view
+      |> element("button.btn-error", "Delete")
+      |> render_click()
+
+      assert has_element?(view, ".alert-info", "Envelope deleted successfully")
+      refute has_element?(view, "span.font-medium", "Rent")
+    end
+
+    test "handles unauthorized envelope deletion", %{
+      conn: conn,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+        if external_id == envelope.external_id do
+          {:ok, %{envelope | category: category}}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      view
+      |> element("button[phx-click='open_delete_envelope_modal'][phx-value-id='#{envelope.external_id}']")
+      |> render_click()
+
+      stub(Budgeting, :delete_envelope, fn _scope, _book, _envelope ->
+        {:error, :unauthorized}
+      end)
+
+      view
+      |> element("button.btn-error", "Delete")
+      |> render_click()
+
+      assert has_element?(view, ".alert-error", "You don't have permission to delete this envelope")
+    end
+
+    test "handles general error when deleting envelope", %{
+      conn: conn,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+        if external_id == envelope.external_id do
+          {:ok, %{envelope | category: category}}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      view
+      |> element("button[phx-click='open_delete_envelope_modal'][phx-value-id='#{envelope.external_id}']")
+      |> render_click()
+
+      stub(Budgeting, :delete_envelope, fn _scope, _book, _envelope ->
+        {:error, %Ecto.Changeset{}}
+      end)
+
+      view
+      |> element("button.btn-error", "Delete")
+      |> render_click()
+
+      assert has_element?(view, ".alert-error", "Error deleting envelope")
+    end
+
+    test "shows error when envelope is not found during open_delete_envelope_modal", %{
+      conn: conn,
+      book: book
+    } do
+      non_existent_id = Ecto.UUID.generate()
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book, _external_id, _opts ->
+        {:error, :not_found}
+      end)
+
+      render_click(view, "open_delete_envelope_modal", %{"id" => non_existent_id})
+
+      assert has_element?(view, ".alert-error", "Envelope not found")
+    end
+
+    test "shows error when unauthorized to open delete envelope modal", %{
+      conn: conn,
+      book: book,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book, _external_id, _opts ->
+        {:error, :unauthorized}
+      end)
+
+      render_click(view, "open_delete_envelope_modal", %{"id" => envelope.external_id})
+
+      assert has_element?(view, ".alert-error", "You don't have permission to delete this envelope")
+    end
+  end
+
   describe "Envelope Editing" do
     test "when edit button is clicked opens edit modal", %{
       conn: conn,
