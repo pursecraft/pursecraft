@@ -77,5 +77,11 @@ defmodule PurseCraft.Budgeting.Policy do
       allow [:own_resource, role: :editor]
       desc "Update an Envelope"
     end
+
+    action :delete do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      desc "Delete an Envelope"
+    end
   end
 end

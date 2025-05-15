@@ -5,6 +5,7 @@ defmodule PurseCraft.BudgetingTest do
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Budgeting.Schemas.Category
+  alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.Repo
@@ -861,6 +862,56 @@ defmodule PurseCraft.BudgetingTest do
 
       assert {:ok, updated_envelope} = Budgeting.update_envelope(scope, book, envelope, attrs)
       assert updated_envelope.name == "string key updated envelope"
+    end
+  end
+
+  describe "delete_envelope/3" do
+    setup %{book: book} do
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+      %{category: category, envelope: envelope}
+    end
+
+    test "with associated envelope, owner role (authorized scope) deletes the envelope", %{
+      scope: scope,
+      book: book,
+      envelope: envelope
+    } do
+      assert {:ok, %Envelope{}} = Budgeting.delete_envelope(scope, book, envelope)
+      assert {:error, :not_found} = Budgeting.fetch_envelope_by_external_id(scope, book, envelope.external_id)
+    end
+
+    test "with associated envelope, editor role (authorized scope) deletes the envelope", %{
+      book: book,
+      envelope: envelope
+    } do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:ok, %Envelope{}} = Budgeting.delete_envelope(scope, book, envelope)
+      assert {:error, :not_found} = Budgeting.fetch_envelope_by_external_id(scope, book, envelope.external_id)
+    end
+
+    test "with commenter role (unauthorized scope) returns error", %{
+      book: book,
+      envelope: envelope
+    } do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:error, :unauthorized} = Budgeting.delete_envelope(scope, book, envelope)
+    end
+
+    test "with no association to book (unauthorized scope) returns error", %{
+      book: book,
+      envelope: envelope
+    } do
+      user = IdentityFactory.insert(:user)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      assert {:error, :unauthorized} = Budgeting.delete_envelope(scope, book, envelope)
     end
   end
 end

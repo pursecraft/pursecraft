@@ -552,6 +552,29 @@ defmodule PurseCraft.Budgeting do
   end
 
   @doc """
+  Deletes an envelope.
+
+  ## Examples
+
+      iex> delete_envelope(authorized_scope, book, envelope)
+      {:ok, %Envelope{}}
+
+      iex> delete_envelope(unauthorized_scope, book, envelope)
+      {:error, :unauthorized}
+
+  """
+  @spec delete_envelope(Scope.t(), Book.t(), Envelope.t()) ::
+          {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
+  def delete_envelope(%Scope{} = scope, %Book{} = book, %Envelope{} = envelope) do
+    with :ok <- Policy.authorize(:envelope_delete, scope, %{book: book}),
+         {:ok, %Envelope{} = envelope} <-
+           Repo.delete(envelope) do
+      broadcast_book(book, {:envelope_deleted, envelope})
+      {:ok, envelope}
+    end
+  end
+
+  @doc """
   Fetches a single `Envelope` by its `external_id` from a specific book.
 
   Returns a tuple of `{:ok, envelope}` if the envelope exists, or `{:error, :not_found}` if not found.
