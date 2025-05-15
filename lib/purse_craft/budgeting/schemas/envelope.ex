@@ -7,6 +7,8 @@ defmodule PurseCraft.Budgeting.Schemas.Envelope do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
   alias PurseCraft.Budgeting.Schemas.Category
 
   @type t :: %__MODULE__{
@@ -32,5 +34,24 @@ defmodule PurseCraft.Budgeting.Schemas.Envelope do
     belongs_to :category, Category
 
     timestamps(type: :utc_datetime)
+  end
+
+  @doc """
+  Creates a changeset for an envelope.
+
+  ## Examples
+
+      iex> changeset(%Envelope{}, %{name: "Groceries", category_id: 1})
+      #Ecto.Changeset<valid?=true, ...>
+
+      iex> changeset(%Envelope{}, %{})
+      #Ecto.Changeset<valid?=false, errors=[name: {"can't be blank", ...}, category_id: {"can't be blank", ...}]>
+
+  """
+  @spec changeset(t(), changeset_attrs()) :: Ecto.Changeset.t()
+  def changeset(envelope, attrs) do
+    envelope
+    |> cast(attrs, [:name, :category_id])
+    |> validate_required([:name, :category_id])
   end
 end

@@ -10,6 +10,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Budgeting.Schemas.Category
+  alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Repo
   alias PurseCraft.Utilities
@@ -48,6 +49,17 @@ defmodule PurseCraft.Budgeting do
 
   @type update_category_option :: {:preload, preload()}
   @type update_category_options :: [update_category_option()]
+
+  @type create_envelope_attrs :: %{
+          optional(:name) => String.t()
+        }
+
+  @type update_envelope_attrs :: %{
+          optional(:name) => String.t()
+        }
+
+  @type fetch_envelope_by_external_id_option :: {:preload, preload()}
+  @type fetch_envelope_by_external_id_options :: [fetch_envelope_by_external_id_option()]
 
   @doc """
   Subscribes to notifications about any book changes associated with the scoped user.
@@ -499,5 +511,151 @@ defmodule PurseCraft.Budgeting do
   @spec change_category(Category.t(), map()) :: Ecto.Changeset.t()
   def change_category(%Category{} = category, attrs \\ %{}) do
     Category.changeset(category, attrs)
+  end
+
+  @doc """
+  Creates an envelope for a category.
+
+  ## Examples
+
+      iex> create_envelope(authorized_scope, book, category, %{name: "Groceries"})
+      {:ok, %Envelope{}}
+
+      iex> create_envelope(authorized_scope, book, category, %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+      iex> create_envelope(unauthorized_scope, book, category, %{name: "Groceries"})
+      {:error, :unauthorized}
+
+  """
+  @spec create_envelope(Scope.t(), Book.t(), Category.t(), create_envelope_attrs()) ::
+          {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
+  def create_envelope(%Scope{} = scope, %Book{} = book, %Category{} = category, attrs \\ %{}) do
+    with :ok <- Policy.authorize(:envelope_create, scope, %{book: book}) do
+      attrs =
+        attrs
+        |> Utilities.atomize_keys()
+        |> Map.put(:category_id, category.id)
+
+      %Envelope{}
+      |> Envelope.changeset(attrs)
+      |> Repo.insert()
+      |> case do
+        {:ok, envelope} ->
+          broadcast_book(book, {:envelope_created, envelope})
+          {:ok, envelope}
+
+        error ->
+          error
+      end
+    end
+  end
+
+  @doc """
+  Deletes an envelope.
+
+  ## Examples
+
+      iex> delete_envelope(authorized_scope, book, envelope)
+      {:ok, %Envelope{}}
+
+      iex> delete_envelope(unauthorized_scope, book, envelope)
+      {:error, :unauthorized}
+
+  """
+  @spec delete_envelope(Scope.t(), Book.t(), Envelope.t()) ::
+          {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
+  def delete_envelope(%Scope{} = scope, %Book{} = book, %Envelope{} = envelope) do
+    with :ok <- Policy.authorize(:envelope_delete, scope, %{book: book}),
+         {:ok, %Envelope{} = envelope} <-
+           Repo.delete(envelope) do
+      broadcast_book(book, {:envelope_deleted, envelope})
+      {:ok, envelope}
+    end
+  end
+
+  @doc """
+  Fetches a single `Envelope` by its `external_id` from a specific book.
+
+  Returns a tuple of `{:ok, envelope}` if the envelope exists, or `{:error, :not_found}` if not found.
+  Returns `{:error, :unauthorized}` if the given scope is not authorized to view the envelope.
+
+  ## Examples
+
+      iex> fetch_envelope_by_external_id(authorized_scope, book, "abcd-1234")
+      {:ok, %Envelope{}}
+
+      iex> fetch_envelope_by_external_id(authorized_scope, book, "invalid-id")
+      {:error, :not_found}
+
+      iex> fetch_envelope_by_external_id(unauthorized_scope, book, "abcd-1234")
+      {:error, :unauthorized}
+
+      iex> fetch_envelope_by_external_id(authorized_scope, book, "abcd-1234", preload: [:category])
+      {:ok, %Envelope{category: %Category{}}}
+
+  """
+  @spec fetch_envelope_by_external_id(Scope.t(), Book.t(), Ecto.UUID.t(), fetch_envelope_by_external_id_options()) ::
+          {:ok, Envelope.t()} | {:error, :not_found | :unauthorized}
+  def fetch_envelope_by_external_id(%Scope{} = scope, %Book{} = book, external_id, opts \\ []) do
+    with :ok <- Policy.authorize(:envelope_read, scope, %{book: book}) do
+      Envelope
+      |> join(:inner, [e], c in Category, on: e.category_id == c.id)
+      |> where([e, c], e.external_id == ^external_id and c.book_id == ^book.id)
+      |> Repo.one()
+      |> case do
+        nil ->
+          {:error, :not_found}
+
+        envelope ->
+          preloads = Keyword.get(opts, :preload, [])
+          envelope = if preloads == [], do: envelope, else: Repo.preload(envelope, preloads)
+          {:ok, envelope}
+      end
+    end
+  end
+
+  @doc """
+  Updates an envelope.
+
+  ## Examples
+
+      iex> update_envelope(authorized_scope, book, envelope, %{field: new_value})
+      {:ok, %Envelope{}}
+
+      iex> update_envelope(authorized_scope, book, envelope, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+      iex> update_envelope(unauthorized_scope, book, envelope, %{field: new_value})
+      {:error, :unauthorized}
+
+  """
+  @spec update_envelope(Scope.t(), Book.t(), Envelope.t(), update_envelope_attrs()) ::
+          {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
+  def update_envelope(%Scope{} = scope, %Book{} = book, %Envelope{} = envelope, attrs) do
+    attrs = Utilities.atomize_keys(attrs)
+
+    with :ok <- Policy.authorize(:envelope_update, scope, %{book: book}),
+         {:ok, %Envelope{} = envelope} <-
+           envelope
+           |> Envelope.changeset(attrs)
+           |> Repo.update() do
+      broadcast_book(book, {:envelope_updated, envelope})
+      {:ok, envelope}
+    end
+  end
+
+  @doc """
+  Returns a changeset for tracking envelope changes.
+
+  ## Examples
+
+      iex> change_envelope(envelope)
+      %Ecto.Changeset{data: %Envelope{}}
+
+  """
+  @spec change_envelope(Envelope.t(), map()) :: Ecto.Changeset.t()
+  def change_envelope(%Envelope{} = envelope, attrs \\ %{}) do
+    Envelope.changeset(envelope, attrs)
   end
 end
