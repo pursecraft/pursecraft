@@ -14,15 +14,15 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     book = BudgetingFactory.insert(:book, name: "Test Budget Book")
     BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
-    housing_category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id)
-    food_category = BudgetingFactory.insert(:category, name: "Food", book_id: book.id)
+    category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id)
+    envelope = BudgetingFactory.insert(:envelope, name: "Rent", category_id: category.id)
+    category_with_envelope = %{category | envelopes: [envelope]}
 
-    BudgetingFactory.insert(:envelope, name: "Rent", category_id: housing_category.id)
-    BudgetingFactory.insert(:envelope, name: "Utilities", category_id: housing_category.id)
-    BudgetingFactory.insert(:envelope, name: "Groceries", category_id: food_category.id)
-    BudgetingFactory.insert(:envelope, name: "Dining Out", category_id: food_category.id)
-
-    %{book: book, categories: [housing_category, food_category]}
+    %{
+      book: book,
+      category: category_with_envelope,
+      envelope: envelope
+    }
   end
 
   describe "Budget page" do
@@ -53,23 +53,16 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert html =~ user.email
     end
 
-    test "shows budget categories and envelopes from database", %{conn: conn, book: book, categories: categories} do
+    test "shows budget category and envelope from database", %{conn: conn, book: book, category: category} do
       {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       assert has_element?(view, "h3", "Housing")
-      assert has_element?(view, "h3", "Food")
-
       assert has_element?(view, "span.font-medium", "Rent")
-      assert has_element?(view, "span.font-medium", "Utilities")
-      assert has_element?(view, "span.font-medium", "Groceries")
-      assert has_element?(view, "span.font-medium", "Dining Out")
 
       refute html =~ "Immediate Obligations"
       refute html =~ "True Expenses"
 
-      [housing, food] = categories
-      assert html =~ ~r/id="categories-#{housing.external_id}"/
-      assert html =~ ~r/id="categories-#{food.external_id}"/
+      assert html =~ ~r/id="categories-#{category.external_id}"/
     end
 
     test "shows action buttons", %{conn: conn, book: book} do
@@ -175,11 +168,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   end
 
   describe "Category Editing" do
-    test "when edit button is clicked opens modal", %{conn: conn, book: book, categories: [housing_category, _]} do
+    test "when edit button is clicked opens modal", %{conn: conn, book: book, category: category} do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='edit_category'][phx-value-id='#{housing_category.external_id}']")
+      |> element("button[phx-click='edit_category'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       assert has_element?(view, ".modal-open")
@@ -189,11 +182,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, "button[type='submit']", "Update")
     end
 
-    test "updates category when submitting edit form", %{conn: conn, book: book, categories: [housing_category, _]} do
+    test "updates category when submitting edit form", %{conn: conn, book: book, category: category} do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='edit_category'][phx-value-id='#{housing_category.external_id}']")
+      |> element("button[phx-click='edit_category'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       view
@@ -205,11 +198,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, "h3", "Updated Housing")
     end
 
-    test "handles validation errors when updating category", %{conn: conn, book: book, categories: [housing_category, _]} do
+    test "handles validation errors when updating category", %{conn: conn, book: book, category: category} do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='edit_category'][phx-value-id='#{housing_category.external_id}']")
+      |> element("button[phx-click='edit_category'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       view
@@ -219,11 +212,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".modal-open")
     end
 
-    test "handles unauthorized category update", %{conn: conn, book: book, categories: [housing_category, _]} do
+    test "handles unauthorized category update", %{conn: conn, book: book, category: category} do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='edit_category'][phx-value-id='#{housing_category.external_id}']")
+      |> element("button[phx-click='edit_category'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       stub(Policy, :authorize, fn :category_update, _scope, _resource ->
@@ -238,11 +231,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       refute has_element?(view, ".modal-open")
     end
 
-    test "correctly resets form when canceling edit", %{conn: conn, book: book, categories: [housing_category, _]} do
+    test "correctly resets form when canceling edit", %{conn: conn, book: book, category: category} do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='edit_category'][phx-value-id='#{housing_category.external_id}']")
+      |> element("button[phx-click='edit_category'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       view
@@ -273,14 +266,14 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".alert-error", "Category not found")
     end
 
-    test "shows error when unauthorized to edit category", %{conn: conn, book: book, categories: [housing_category, _]} do
+    test "shows error when unauthorized to edit category", %{conn: conn, book: book, category: category} do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id ->
         {:error, :unauthorized}
       end)
 
-      render_click(view, "edit_category", %{"id" => housing_category.external_id})
+      render_click(view, "edit_category", %{"id" => category.external_id})
 
       assert has_element?(view, ".alert-error", "You don't have permission to edit this category")
     end
@@ -296,14 +289,14 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     test "delete button only appears for categories without envelopes", %{
       conn: conn,
       book: book,
-      categories: [housing_category, _food_category],
+      category: category_with_envelope,
       empty_category: empty_category
     } do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       refute has_element?(
                view,
-               "button[phx-click='open_delete_modal'][phx-value-id='#{housing_category.external_id}']"
+               "button[phx-click='open_delete_modal'][phx-value-id='#{category_with_envelope.external_id}']"
              )
 
       assert has_element?(
@@ -439,16 +432,211 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     end
   end
 
+  describe "Envelope Editing" do
+    test "when edit button is clicked opens edit modal", %{
+      conn: conn,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+        if external_id == envelope.external_id do
+          {:ok, %{envelope | category: category}}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      view
+      |> element("button[phx-click='edit_envelope'][phx-value-id='#{envelope.external_id}']")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+      assert has_element?(view, "h3", "Edit Envelope")
+      assert has_element?(view, "input[value='Rent']")
+      assert has_element?(view, "form[phx-submit='update-envelope']")
+      assert has_element?(view, "button[type='submit']", "Update")
+    end
+
+    test "updates envelope when submitting edit form", %{
+      conn: conn,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      # Mock the necessary functions for fetching and preloading
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+        if external_id == envelope.external_id do
+          {:ok, %{envelope | category: category}}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      view
+      |> element("button[phx-click='edit_envelope'][phx-value-id='#{envelope.external_id}']")
+      |> render_click()
+
+      stub(Budgeting, :update_envelope, fn _scope, _book_param, _envelope, envelope_params ->
+        updated_envelope = %{envelope | name: envelope_params[:name]}
+        {:ok, updated_envelope}
+      end)
+
+      view
+      |> form("#envelope-form", %{envelope: %{name: "Updated Rent"}})
+      |> render_submit()
+
+      assert has_element?(view, ".alert-info", "Envelope updated successfully")
+      refute has_element?(view, ".modal-open")
+    end
+
+    test "handles validation errors when updating envelope", %{
+      conn: conn,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+        if external_id == envelope.external_id do
+          {:ok, %{envelope | category: category}}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      view
+      |> element("button[phx-click='edit_envelope'][phx-value-id='#{envelope.external_id}']")
+      |> render_click()
+
+      stub(Budgeting, :update_envelope, fn _scope, _book_param, _envelope, _envelope_params ->
+        changeset = Ecto.Changeset.change(envelope)
+        changeset = Ecto.Changeset.add_error(changeset, :name, "can't be blank")
+        {:error, changeset}
+      end)
+
+      view
+      |> form("#envelope-form", %{envelope: %{name: ""}})
+      |> render_submit()
+
+      assert has_element?(view, ".modal-open")
+    end
+
+    test "handles unauthorized envelope update", %{
+      conn: conn,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+        if external_id == envelope.external_id do
+          {:ok, %{envelope | category: category}}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      view
+      |> element("button[phx-click='edit_envelope'][phx-value-id='#{envelope.external_id}']")
+      |> render_click()
+
+      stub(Budgeting, :update_envelope, fn _scope, _book_param, _envelope, _envelope_params ->
+        {:error, :unauthorized}
+      end)
+
+      view
+      |> form("#envelope-form", %{envelope: %{name: "Updated Rent"}})
+      |> render_submit()
+
+      assert has_element?(view, ".alert-error", "You don't have permission to update envelopes")
+      refute has_element?(view, ".modal-open")
+    end
+
+    test "shows error when envelope is not found during edit", %{conn: conn, book: book} do
+      non_existent_id = Ecto.UUID.generate()
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, _external_id, _opts ->
+        {:error, :not_found}
+      end)
+
+      render_click(view, "edit_envelope", %{"id" => non_existent_id})
+
+      assert has_element?(view, ".alert-error", "Envelope not found")
+    end
+
+    test "shows error when unauthorized to edit envelope", %{
+      conn: conn,
+      book: book,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, _external_id, _opts ->
+        {:error, :unauthorized}
+      end)
+
+      render_click(view, "edit_envelope", %{"id" => envelope.external_id})
+
+      assert has_element?(view, ".alert-error", "You don't have permission to edit this envelope")
+    end
+
+    test "correctly resets form when canceling edit", %{
+      conn: conn,
+      book: book,
+      category: category,
+      envelope: envelope
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+        if external_id == envelope.external_id do
+          {:ok, %{envelope | category: category}}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      view
+      |> element("button[phx-click='edit_envelope'][phx-value-id='#{envelope.external_id}']")
+      |> render_click()
+
+      assert has_element?(view, ".modal-open")
+      assert has_element?(view, "h3", "Edit Envelope")
+
+      view
+      |> element("button", "Cancel")
+      |> render_click()
+
+      refute has_element?(view, ".modal-open")
+
+      view
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
+      |> render_click()
+
+      assert has_element?(view, "h3", "Add New Envelope")
+      assert has_element?(view, "button[type='submit']", "Create")
+      assert has_element?(view, "form[phx-submit='create-envelope']")
+    end
+  end
+
   describe "Envelope Creation" do
     test "opens envelope modal when + button is clicked", %{
       conn: conn,
       book: book,
-      categories: [housing_category, _food_category]
+      category: category
     } do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       assert has_element?(view, ".modal-open")
@@ -460,12 +648,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     test "closes envelope modal when cancel button is clicked", %{
       conn: conn,
       book: book,
-      categories: [housing_category, _]
+      category: category
     } do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       assert has_element?(view, ".modal-open")
@@ -480,12 +668,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     test "closes envelope modal when clicking backdrop", %{
       conn: conn,
       book: book,
-      categories: [housing_category, _food_category]
+      category: category
     } do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       assert has_element?(view, ".modal-open")
@@ -497,11 +685,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       refute has_element?(view, ".modal-open")
     end
 
-    test "creates a new envelope successfully", %{conn: conn, book: book, categories: [housing_category, _food_category]} do
+    test "creates a new envelope successfully", %{conn: conn, book: book, category: category} do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       view
@@ -516,12 +704,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     test "handles validation errors when creating an envelope", %{
       conn: conn,
       book: book,
-      categories: [housing_category, _]
+      category: category
     } do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       view
@@ -534,12 +722,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     test "handles unauthorized envelope creation", %{
       conn: conn,
       book: book,
-      categories: [housing_category, _food_category]
+      category: category
     } do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{housing_category.external_id}']")
+      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       stub(Policy, :authorize, fn :envelope_create, _scope, _resource ->
@@ -570,7 +758,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     test "shows error when unauthorized to open envelope modal", %{
       conn: conn,
       book: book,
-      categories: [housing_category, _food_category]
+      category: category
     } do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
@@ -578,7 +766,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
         {:error, :unauthorized}
       end)
 
-      render_click(view, "open_envelope_modal", %{"id" => housing_category.external_id})
+      render_click(view, "open_envelope_modal", %{"id" => category.external_id})
 
       assert has_element?(view, ".alert-error", "You don't have permission to access this category")
     end

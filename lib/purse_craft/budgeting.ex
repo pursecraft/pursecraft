@@ -58,6 +58,9 @@ defmodule PurseCraft.Budgeting do
           optional(:name) => String.t()
         }
 
+  @type fetch_envelope_by_external_id_option :: {:preload, preload()}
+  @type fetch_envelope_by_external_id_options :: [fetch_envelope_by_external_id_option()]
+
   @doc """
   Subscribes to notifications about any book changes associated with the scoped user.
 
@@ -565,10 +568,13 @@ defmodule PurseCraft.Budgeting do
       iex> fetch_envelope_by_external_id(unauthorized_scope, book, "abcd-1234")
       {:error, :unauthorized}
 
+      iex> fetch_envelope_by_external_id(authorized_scope, book, "abcd-1234", preload: [:category])
+      {:ok, %Envelope{category: %Category{}}}
+
   """
-  @spec fetch_envelope_by_external_id(Scope.t(), Book.t(), Ecto.UUID.t()) ::
+  @spec fetch_envelope_by_external_id(Scope.t(), Book.t(), Ecto.UUID.t(), fetch_envelope_by_external_id_options()) ::
           {:ok, Envelope.t()} | {:error, :not_found | :unauthorized}
-  def fetch_envelope_by_external_id(%Scope{} = scope, %Book{} = book, external_id) do
+  def fetch_envelope_by_external_id(%Scope{} = scope, %Book{} = book, external_id, opts \\ []) do
     with :ok <- Policy.authorize(:envelope_read, scope, %{book: book}) do
       Envelope
       |> join(:inner, [e], c in Category, on: e.category_id == c.id)
@@ -579,6 +585,8 @@ defmodule PurseCraft.Budgeting do
           {:error, :not_found}
 
         envelope ->
+          preloads = Keyword.get(opts, :preload, [])
+          envelope = if preloads == [], do: envelope, else: Repo.preload(envelope, preloads)
           {:ok, envelope}
       end
     end
@@ -612,5 +620,19 @@ defmodule PurseCraft.Budgeting do
       broadcast_book(book, {:envelope_updated, envelope})
       {:ok, envelope}
     end
+  end
+
+  @doc """
+  Returns a changeset for tracking envelope changes.
+
+  ## Examples
+
+      iex> change_envelope(envelope)
+      %Ecto.Changeset{data: %Envelope{}}
+
+  """
+  @spec change_envelope(Envelope.t(), map()) :: Ecto.Changeset.t()
+  def change_envelope(%Envelope{} = envelope, attrs \\ %{}) do
+    Envelope.changeset(envelope, attrs)
   end
 end
