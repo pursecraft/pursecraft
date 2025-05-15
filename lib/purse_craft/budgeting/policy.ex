@@ -59,6 +59,12 @@ defmodule PurseCraft.Budgeting.Policy do
   end
 
   object :envelope do
+    action :create do
+      allow role: :owner
+      allow role: :editor
+      desc "Create a new Envelope"
+    end
+
     action :read do
       allow [:own_resource, role: :owner]
       allow [:own_resource, role: :editor]

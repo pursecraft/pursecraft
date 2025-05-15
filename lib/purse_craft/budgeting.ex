@@ -50,6 +50,10 @@ defmodule PurseCraft.Budgeting do
   @type update_category_option :: {:preload, preload()}
   @type update_category_options :: [update_category_option()]
 
+  @type create_envelope_attrs :: %{
+          optional(:name) => String.t()
+        }
+
   @doc """
   Subscribes to notifications about any book changes associated with the scoped user.
 
@@ -500,6 +504,44 @@ defmodule PurseCraft.Budgeting do
   @spec change_category(Category.t(), map()) :: Ecto.Changeset.t()
   def change_category(%Category{} = category, attrs \\ %{}) do
     Category.changeset(category, attrs)
+  end
+
+  @doc """
+  Creates an envelope for a category.
+
+  ## Examples
+
+      iex> create_envelope(authorized_scope, book, category, %{name: "Groceries"})
+      {:ok, %Envelope{}}
+
+      iex> create_envelope(authorized_scope, book, category, %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+      iex> create_envelope(unauthorized_scope, book, category, %{name: "Groceries"})
+      {:error, :unauthorized}
+
+  """
+  @spec create_envelope(Scope.t(), Book.t(), Category.t(), create_envelope_attrs()) ::
+          {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
+  def create_envelope(%Scope{} = scope, %Book{} = book, %Category{} = category, attrs \\ %{}) do
+    with :ok <- Policy.authorize(:envelope_create, scope, %{book: book}) do
+      attrs =
+        attrs
+        |> Utilities.atomize_keys()
+        |> Map.put(:category_id, category.id)
+
+      %Envelope{}
+      |> Envelope.changeset(attrs)
+      |> Repo.insert()
+      |> case do
+        {:ok, envelope} ->
+          broadcast_book(book, {:envelope_created, envelope})
+          {:ok, envelope}
+
+        error ->
+          error
+      end
+    end
   end
 
   @doc """
