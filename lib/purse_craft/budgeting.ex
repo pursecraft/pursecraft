@@ -6,6 +6,7 @@ defmodule PurseCraft.Budgeting do
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
+  alias PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooks
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.BookUser
@@ -72,11 +73,7 @@ defmodule PurseCraft.Budgeting do
 
   """
   @spec subscribe_user_books(Scope.t()) :: :ok | {:error, term()}
-  def subscribe_user_books(%Scope{} = scope) do
-    key = scope.user.id
-
-    Phoenix.PubSub.subscribe(PurseCraft.PubSub, "user:#{key}:books")
-  end
+  defdelegate subscribe_user_books(scope), to: SubscribeUserBooks, as: :call
 
   @doc """
   Sends notifications about any book changes associated with the scoped user.
