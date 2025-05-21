@@ -6,6 +6,7 @@ defmodule PurseCraft.Budgeting do
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
+  alias PurseCraft.Budgeting.Commands.Books.FetchBookByExternalId
   alias PurseCraft.Budgeting.Commands.Books.GetBookByExternalId
   alias PurseCraft.Budgeting.Commands.Books.ListBooks
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
@@ -13,6 +14,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooks
   alias PurseCraft.Budgeting.Policy
+  alias PurseCraft.Budgeting.Repositories.BookRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Budgeting.Schemas.Category
@@ -28,8 +30,7 @@ defmodule PurseCraft.Budgeting do
           optional(:name) => String.t()
         }
 
-  @type fetch_book_by_external_id_option :: {:preload, preload()}
-  @type fetch_book_by_external_id_options :: [fetch_book_by_external_id_option()]
+  @type fetch_book_by_external_id_options :: BookRepository.get_book_options()
 
   @type update_book_attrs :: %{
           optional(:name) => String.t()
@@ -179,18 +180,7 @@ defmodule PurseCraft.Budgeting do
   """
   @spec fetch_book_by_external_id(Scope.t(), Ecto.UUID.t(), fetch_book_by_external_id_options()) ::
           {:ok, Book.t()} | {:error, :not_found | :unauthorized}
-  def fetch_book_by_external_id(%Scope{} = scope, external_id, opts \\ []) do
-    with :ok <- Policy.authorize(:book_read, scope, %{book: %Book{external_id: external_id}}) do
-      case Repo.get_by(Book, external_id: external_id) do
-        nil ->
-          {:error, :not_found}
-
-        book ->
-          preloads = Keyword.get(opts, :preload, [])
-          {:ok, Repo.preload(book, preloads)}
-      end
-    end
-  end
+  defdelegate fetch_book_by_external_id(scope, external_id, opts \\ []), to: FetchBookByExternalId, as: :call
 
   @doc """
   Creates a book.
