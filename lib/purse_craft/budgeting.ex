@@ -13,6 +13,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Books.ListBooks
   alias PurseCraft.Budgeting.Commands.Books.UpdateBook
   alias PurseCraft.Budgeting.Commands.Categories.CreateCategory
+  alias PurseCraft.Budgeting.Commands.Categories.DeleteCategory
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
@@ -277,14 +278,7 @@ defmodule PurseCraft.Budgeting do
   """
   @spec delete_category(Scope.t(), Book.t(), Category.t()) ::
           {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def delete_category(%Scope{} = scope, %Book{} = book, %Category{} = category) do
-    with :ok <- Policy.authorize(:category_delete, scope, %{book: book}),
-         {:ok, %Category{} = category} <-
-           Repo.delete(category) do
-      broadcast_book(book, {:category_deleted, category})
-      {:ok, category}
-    end
-  end
+  defdelegate delete_category(scope, book, category), to: DeleteCategory, as: :call
 
   @doc """
   Fetches a single `Category` by its `external_id` from a specific book with optional preloading of associations.
