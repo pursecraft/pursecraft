@@ -23,4 +23,18 @@ defmodule PurseCraft.Budgeting.Queries.BookQueries do
     |> join(:inner, [b], bu in BookUser, on: bu.book_id == b.id)
     |> where([_b, bu], bu.user_id == ^user_id)
   end
+
+  @doc """
+  Returns a query for finding a book by its external ID.
+
+  ## Examples
+
+      iex> by_external_id("abcd-1234")
+      #Ecto.Query<...>
+
+  """
+  @spec by_external_id(Ecto.UUID.t()) :: Ecto.Query.t()
+  def by_external_id(external_id) do
+    from(b in Book, where: b.external_id == ^external_id)
+  end
 end

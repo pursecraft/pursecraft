@@ -22,4 +22,25 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
     |> BookQueries.by_user()
     |> Repo.all()
   end
+
+  @doc """
+  Gets a book by its external ID.
+
+  Raises `Ecto.NoResultsError` if the Book does not exist.
+
+  ## Examples
+
+      iex> get_by_external_id!("abcd-1234")
+      %Book{}
+
+      iex> get_by_external_id!("non-existent-id")
+      ** (Ecto.NoResultsError)
+
+  """
+  @spec get_by_external_id!(Ecto.UUID.t()) :: Book.t()
+  def get_by_external_id!(external_id) do
+    external_id
+    |> BookQueries.by_external_id()
+    |> Repo.one!()
+  end
 end

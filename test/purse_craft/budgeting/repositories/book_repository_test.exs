@@ -25,4 +25,20 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
       assert BookRepository.list_by_user(user.id) == []
     end
   end
+
+  describe "get_by_external_id!/1" do
+    test "with existing book returns the book" do
+      book = BudgetingFactory.insert(:book)
+
+      assert BookRepository.get_by_external_id!(book.external_id) == book
+    end
+
+    test "with non-existent book raises Ecto.NoResultsError" do
+      assert_raise Ecto.NoResultsError, fn ->
+        non_existent_id = Ecto.UUID.generate()
+
+        BookRepository.get_by_external_id!(non_existent_id)
+      end
+    end
+  end
 end

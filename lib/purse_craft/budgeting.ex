@@ -6,6 +6,7 @@ defmodule PurseCraft.Budgeting do
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
+  alias PurseCraft.Budgeting.Commands.Books.GetBookByExternalId
   alias PurseCraft.Budgeting.Commands.Books.ListBooks
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
@@ -149,11 +150,7 @@ defmodule PurseCraft.Budgeting do
 
   """
   @spec get_book_by_external_id!(Scope.t(), Ecto.UUID.t()) :: Book.t()
-  def get_book_by_external_id!(%Scope{} = scope, external_id) do
-    :ok = Policy.authorize!(:book_read, scope, %{book: %Book{external_id: external_id}})
-
-    Repo.get_by!(Book, external_id: external_id)
-  end
+  defdelegate get_book_by_external_id!(scope, external_id), to: GetBookByExternalId, as: :call!
 
   @doc """
   Fetches a single `Book` by its `external_id` with optional preloading of associations.
