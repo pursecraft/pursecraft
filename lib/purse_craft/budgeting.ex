@@ -6,6 +6,7 @@ defmodule PurseCraft.Budgeting do
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
+  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooks
@@ -112,9 +113,7 @@ defmodule PurseCraft.Budgeting do
 
   """
   @spec broadcast_book(Book.t(), tuple()) :: :ok | {:error, term()}
-  def broadcast_book(%Book{} = book, message) do
-    Phoenix.PubSub.broadcast(PurseCraft.PubSub, "book:#{book.external_id}", message)
-  end
+  defdelegate broadcast_book(book, message), to: BroadcastBook, as: :call
 
   @doc """
   Returns the list of books.
