@@ -1,0 +1,26 @@
+defmodule PurseCraft.Budgeting.Queries.BookQueries do
+  @moduledoc """
+  Query functions for `Book`.
+  """
+
+  import Ecto.Query
+
+  alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Budgeting.Schemas.BookUser
+
+  @doc """
+  Returns a query for books associated with a specific user.
+
+  ## Examples
+
+      iex> by_user(user_id)
+      #Ecto.Query<...>
+
+  """
+  @spec by_user(integer()) :: Ecto.Query.t()
+  def by_user(user_id) do
+    Book
+    |> join(:inner, [b], bu in BookUser, on: bu.book_id == b.id)
+    |> where([_b, bu], bu.user_id == ^user_id)
+  end
+end

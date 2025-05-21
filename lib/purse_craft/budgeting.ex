@@ -6,6 +6,7 @@ defmodule PurseCraft.Budgeting do
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
+  alias PurseCraft.Budgeting.Commands.Books.ListBooks
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
@@ -128,14 +129,7 @@ defmodule PurseCraft.Budgeting do
 
   """
   @spec list_books(Scope.t()) :: list(Book.t()) | {:error, :unauthorized}
-  def list_books(%Scope{} = scope) do
-    with :ok <- Policy.authorize(:book_list, scope) do
-      Book
-      |> join(:inner, [b], bu in BookUser, on: bu.book_id == b.id)
-      |> where([_b, bu], bu.user_id == ^scope.user.id)
-      |> Repo.all()
-    end
-  end
+  defdelegate list_books(scope), to: ListBooks, as: :call
 
   @doc """
   Gets a single `Book` by its `external_id`.
