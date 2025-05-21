@@ -113,4 +113,27 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
       assert %{name: ["can't be blank"]} = errors_on(changeset)
     end
   end
+
+  describe "update/2" do
+    test "with valid data updates the book" do
+      book = BudgetingFactory.insert(:book, name: "Original Name")
+      attrs = %{name: "Updated Name"}
+
+      assert {:ok, updated_book} = BookRepository.update(book, attrs)
+      assert updated_book.name == "Updated Name"
+      assert updated_book.id == book.id
+      assert updated_book.external_id == book.external_id
+    end
+
+    test "with invalid data returns error changeset" do
+      book = BudgetingFactory.insert(:book, name: "Original Name")
+      attrs = %{name: ""}
+
+      assert {:error, changeset} = BookRepository.update(book, attrs)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+
+      reloaded_book = PurseCraft.Repo.get(PurseCraft.Budgeting.Schemas.Book, book.id)
+      assert reloaded_book.name == "Original Name"
+    end
+  end
 end

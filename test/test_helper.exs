@@ -5,3 +5,5 @@ Faker.start()
 
 Mimic.copy(PurseCraft.Budgeting.Policy)
 Mimic.copy(PurseCraft.Budgeting)
+Mimic.copy(PurseCraft.Budgeting.Commands.PubSub.BroadcastBook)
+Mimic.copy(PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook)

@@ -19,6 +19,10 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
           optional(:name) => String.t()
         }
 
+  @type update_attrs :: %{
+          optional(:name) => String.t()
+        }
+
   @doc """
   Lists all books for a specific user.
 
@@ -139,5 +143,24 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
       {:ok, %{book: book}} -> {:ok, book}
       {:error, _operations, changeset, _changes} -> {:error, changeset}
     end
+  end
+
+  @doc """
+  Updates a book.
+
+  ## Examples
+
+      iex> update(%Book{}, %{name: "Updated Name"})
+      {:ok, %Book{}}
+
+      iex> update(%Book{}, %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec update(Book.t(), update_attrs()) :: {:ok, Book.t()} | {:error, Ecto.Changeset.t()}
+  def update(%Book{} = book, attrs) do
+    book
+    |> Book.changeset(attrs)
+    |> Repo.update()
   end
 end

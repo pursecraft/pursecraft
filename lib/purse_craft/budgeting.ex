@@ -9,6 +9,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Books.FetchBookByExternalId
   alias PurseCraft.Budgeting.Commands.Books.GetBookByExternalId
   alias PurseCraft.Budgeting.Commands.Books.ListBooks
+  alias PurseCraft.Budgeting.Commands.Books.UpdateBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
@@ -213,22 +214,9 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
-  @spec update_book(Scope.t(), Book.t(), update_book_attrs()) ::
+  @spec update_book(Scope.t(), Book.t(), BookRepository.update_attrs()) ::
           {:ok, Book.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def update_book(%Scope{} = scope, %Book{} = book, attrs) do
-    with :ok <- Policy.authorize(:book_update, scope, %{book: book}),
-         {:ok, %Book{} = book} <-
-           book
-           |> Book.changeset(attrs)
-           |> Repo.update() do
-      message = {:updated, book}
-
-      broadcast_user_book(scope, message)
-      broadcast_book(book, message)
-
-      {:ok, book}
-    end
-  end
+  defdelegate update_book(scope, book, attrs), to: UpdateBook, as: :call
 
   @doc """
   Deletes a book.
