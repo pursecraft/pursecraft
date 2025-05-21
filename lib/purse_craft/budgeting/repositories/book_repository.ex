@@ -163,4 +163,33 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
     |> Book.changeset(attrs)
     |> Repo.update()
   end
+
+  @doc """
+  Deletes a book and its associated BookUser records.
+
+  ## Examples
+
+      iex> delete(%Book{})
+      {:ok, %Book{}}
+
+      iex> delete(%Book{})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec delete(Book.t()) :: {:ok, Book.t()} | {:error, Ecto.Changeset.t()}
+  def delete(%Book{} = book) do
+    Multi.new()
+    |> Multi.delete_all(:delete_book_users, BookQueries.book_users_by_book_id(book.id))
+    |> Multi.delete(:delete_book, book)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{delete_book: book}} ->
+        {:ok, book}
+
+      # coveralls-ignore-start
+      {:error, _operation, error, _changes} ->
+        {:error, error}
+        # coveralls-ignore-stop
+    end
+  end
 end

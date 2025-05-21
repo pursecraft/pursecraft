@@ -2,8 +2,11 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
   use PurseCraft.DataCase, async: true
 
   alias PurseCraft.Budgeting.Repositories.BookRepository
+  alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.IdentityFactory
+  alias PurseCraft.Repo
 
   describe "list_by_user/1" do
     test "returns all books associated with a user" do
@@ -132,8 +135,33 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
       assert {:error, changeset} = BookRepository.update(book, attrs)
       assert %{name: ["can't be blank"]} = errors_on(changeset)
 
-      reloaded_book = PurseCraft.Repo.get(PurseCraft.Budgeting.Schemas.Book, book.id)
+      reloaded_book = Repo.get(Book, book.id)
       assert reloaded_book.name == "Original Name"
+    end
+  end
+
+  describe "delete/1" do
+    test "deletes the book successfully" do
+      book = BudgetingFactory.insert(:book)
+
+      assert {:ok, deleted_book} = BookRepository.delete(book)
+      assert deleted_book.id == book.id
+      assert Repo.get(Book, book.id) == nil
+    end
+
+    test "deletes associated book_user records" do
+      book = BudgetingFactory.insert(:book)
+      user1 = IdentityFactory.insert(:user)
+      user2 = IdentityFactory.insert(:user)
+
+      book_user1 = BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user1.id, role: :owner)
+      book_user2 = BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user2.id, role: :editor)
+
+      assert {:ok, _deleted_book} = BookRepository.delete(book)
+
+      assert Repo.get(Book, book.id) == nil
+      assert Repo.get(BookUser, book_user1.id) == nil
+      assert Repo.get(BookUser, book_user2.id) == nil
     end
   end
 end

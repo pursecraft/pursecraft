@@ -6,6 +6,7 @@ defmodule PurseCraft.Budgeting do
   import Ecto.Query, warn: false
 
   alias PurseCraft.Budgeting.Commands.Books.CreateBook
+  alias PurseCraft.Budgeting.Commands.Books.DeleteBook
   alias PurseCraft.Budgeting.Commands.Books.FetchBookByExternalId
   alias PurseCraft.Budgeting.Commands.Books.GetBookByExternalId
   alias PurseCraft.Budgeting.Commands.Books.ListBooks
@@ -231,18 +232,7 @@ defmodule PurseCraft.Budgeting do
 
   """
   @spec delete_book(Scope.t(), Book.t()) :: {:ok, Book.t()} | {:error, :unauthorized}
-  def delete_book(%Scope{} = scope, %Book{} = book) do
-    with :ok <- Policy.authorize(:book_delete, scope, %{book: book}),
-         {:ok, %Book{} = book} <-
-           Repo.delete(book) do
-      message = {:deleted, book}
-
-      broadcast_user_book(scope, message)
-      broadcast_book(book, message)
-
-      {:ok, book}
-    end
-  end
+  defdelegate delete_book(scope, book), to: DeleteBook, as: :call
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking book changes.

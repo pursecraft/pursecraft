@@ -37,4 +37,18 @@ defmodule PurseCraft.Budgeting.Queries.BookQueries do
   def by_external_id(external_id) do
     from(b in Book, where: b.external_id == ^external_id)
   end
+
+  @doc """
+  Returns a query for book users associated with a specific book.
+
+  ## Examples
+
+      iex> book_users_by_book_id(1)
+      #Ecto.Query<...>
+
+  """
+  @spec book_users_by_book_id(integer()) :: Ecto.Query.t()
+  def book_users_by_book_id(book_id) do
+    from(bu in BookUser, where: bu.book_id == ^book_id)
+  end
 end
