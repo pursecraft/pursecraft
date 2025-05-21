@@ -1,6 +1,6 @@
 defmodule PurseCraft.Budgeting.Commands.Books.FetchBookByExternalId do
   @moduledoc """
-  Command for fetching a book by its external ID.
+  Fetches a book by its external ID with optional preloading of associations.
   """
 
   alias PurseCraft.Budgeting.Policy

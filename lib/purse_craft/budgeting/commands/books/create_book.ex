@@ -1,6 +1,6 @@
 defmodule PurseCraft.Budgeting.Commands.Books.CreateBook do
   @moduledoc """
-  Command for creating a new book.
+  Creates a book.
   """
 
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook

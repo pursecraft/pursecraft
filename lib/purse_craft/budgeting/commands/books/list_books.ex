@@ -1,6 +1,6 @@
 defmodule PurseCraft.Budgeting.Commands.Books.ListBooks do
   @moduledoc """
-  Command for listing books associated with a user.
+  Lists books associated with the scope's user.
   """
 
   alias PurseCraft.Budgeting.Policy

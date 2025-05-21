@@ -1,6 +1,6 @@
 defmodule PurseCraft.Budgeting.Commands.Books.UpdateBook do
   @moduledoc """
-  Command for updating a book.
+  Updates a book.
   """
 
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
