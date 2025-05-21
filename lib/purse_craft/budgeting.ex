@@ -7,6 +7,7 @@ defmodule PurseCraft.Budgeting do
 
   alias Ecto.Multi
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
+  alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooks
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Schemas.Book
@@ -99,9 +100,7 @@ defmodule PurseCraft.Budgeting do
 
   """
   @spec subscribe_book(Book.t()) :: :ok | {:error, term()}
-  def subscribe_book(%Book{} = book) do
-    Phoenix.PubSub.subscribe(PurseCraft.PubSub, "book:#{book.external_id}")
-  end
+  defdelegate subscribe_book(book), to: SubscribeBook, as: :call
 
   @doc """
   Sends notifications about any changes on the given book
