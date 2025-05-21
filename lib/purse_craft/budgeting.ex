@@ -5,7 +5,7 @@ defmodule PurseCraft.Budgeting do
 
   import Ecto.Query, warn: false
 
-  alias Ecto.Multi
+  alias PurseCraft.Budgeting.Commands.Books.CreateBook
   alias PurseCraft.Budgeting.Commands.Books.FetchBookByExternalId
   alias PurseCraft.Budgeting.Commands.Books.GetBookByExternalId
   alias PurseCraft.Budgeting.Commands.Books.ListBooks
@@ -16,7 +16,6 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.BookRepository
   alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
@@ -29,8 +28,6 @@ defmodule PurseCraft.Budgeting do
   @type create_book_attrs :: %{
           optional(:name) => String.t()
         }
-
-  @type fetch_book_by_external_id_options :: BookRepository.get_book_options()
 
   @type update_book_attrs :: %{
           optional(:name) => String.t()
@@ -178,7 +175,7 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
-  @spec fetch_book_by_external_id(Scope.t(), Ecto.UUID.t(), fetch_book_by_external_id_options()) ::
+  @spec fetch_book_by_external_id(Scope.t(), Ecto.UUID.t(), BookRepository.get_book_options()) ::
           {:ok, Book.t()} | {:error, :not_found | :unauthorized}
   defdelegate fetch_book_by_external_id(scope, external_id, opts \\ []), to: FetchBookByExternalId, as: :call
 
@@ -197,30 +194,9 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
-  @spec create_book(Scope.t(), create_book_attrs()) ::
+  @spec create_book(Scope.t(), BookRepository.create_attrs()) ::
           {:ok, Book.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def create_book(%Scope{} = scope, attrs \\ %{}) do
-    with :ok <- Policy.authorize(:book_create, scope) do
-      Multi.new()
-      |> Multi.insert(:book, Book.changeset(%Book{}, attrs))
-      |> Multi.insert(:book_user, fn %{book: book} ->
-        BookUser.changeset(%BookUser{}, %{
-          book_id: book.id,
-          user_id: scope.user.id,
-          role: :owner
-        })
-      end)
-      |> Repo.transaction()
-      |> case do
-        {:ok, %{book: book}} ->
-          broadcast_user_book(scope, {:created, book})
-          {:ok, book}
-
-        {:error, _operations, changeset, _changes} ->
-          {:error, changeset}
-      end
-    end
-  end
+  defdelegate create_book(scope, attrs \\ %{}), to: CreateBook, as: :call
 
   @doc """
   Updates a book.

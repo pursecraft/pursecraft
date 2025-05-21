@@ -3,8 +3,10 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
   Repository for `Book`.
   """
 
+  alias Ecto.Multi
   alias PurseCraft.Budgeting.Queries.BookQueries
   alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Repo
 
   @type preload_item :: atom() | {atom(), preload_item()} | [preload_item()]
@@ -12,6 +14,10 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
 
   @type get_book_option :: {:preload, preload()}
   @type get_book_options :: [get_book_option()]
+
+  @type create_attrs :: %{
+          optional(:name) => String.t()
+        }
 
   @doc """
   Lists all books for a specific user.
@@ -101,6 +107,37 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
       book ->
         preloads = Keyword.get(opts, :preload, [])
         if preloads == [], do: book, else: Repo.preload(book, preloads)
+    end
+  end
+
+  @doc """
+  Creates a book and associates it with a user as the owner.
+
+  ## Examples
+
+      iex> create_with_owner(%{name: "Household"}, user_id)
+      {:ok, %Book{}}
+
+      iex> create_with_owner(%{name: ""}, user_id)
+      {:error, %Ecto.Changeset{}}
+
+  """
+
+  @spec create_with_owner(create_attrs(), integer()) :: {:ok, Book.t()} | {:error, Ecto.Changeset.t()}
+  def create_with_owner(attrs, user_id) do
+    Multi.new()
+    |> Multi.insert(:book, Book.changeset(%Book{}, attrs))
+    |> Multi.insert(:book_user, fn %{book: book} ->
+      BookUser.changeset(%BookUser{}, %{
+        book_id: book.id,
+        user_id: user_id,
+        role: :owner
+      })
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{book: book}} -> {:ok, book}
+      {:error, _operations, changeset, _changes} -> {:error, changeset}
     end
   end
 end

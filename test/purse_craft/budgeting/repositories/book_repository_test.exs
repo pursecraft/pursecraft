@@ -91,4 +91,26 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
       assert match?(%Ecto.Association.NotLoaded{}, book_without_preload.categories)
     end
   end
+
+  describe "create_with_owner/2" do
+    test "with valid data creates a book and associates it with a user" do
+      user = IdentityFactory.insert(:user)
+      attrs = %{name: "Test Book"}
+
+      assert {:ok, book} = BookRepository.create_with_owner(attrs, user.id)
+      assert book.name == "Test Book"
+
+      book_user = PurseCraft.Repo.get_by(PurseCraft.Budgeting.Schemas.BookUser, book_id: book.id)
+      assert book_user.user_id == user.id
+      assert book_user.role == :owner
+    end
+
+    test "with invalid data returns error changeset" do
+      user = IdentityFactory.insert(:user)
+      attrs = %{name: ""}
+
+      assert {:error, changeset} = BookRepository.create_with_owner(attrs, user.id)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+  end
 end
