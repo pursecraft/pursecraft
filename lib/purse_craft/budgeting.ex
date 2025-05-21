@@ -12,6 +12,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Books.GetBookByExternalId
   alias PurseCraft.Budgeting.Commands.Books.ListBooks
   alias PurseCraft.Budgeting.Commands.Books.UpdateBook
+  alias PurseCraft.Budgeting.Commands.Categories.CreateCategory
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
@@ -37,10 +38,6 @@ defmodule PurseCraft.Budgeting do
         }
 
   @type change_book_attrs :: %{
-          optional(:name) => String.t()
-        }
-
-  @type create_category_attrs :: %{
           optional(:name) => String.t()
         }
 
@@ -262,28 +259,9 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
-  @spec create_category(Scope.t(), Book.t(), create_category_attrs()) ::
+  @spec create_category(Scope.t(), Book.t(), CreateCategory.create_attrs()) ::
           {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def create_category(%Scope{} = scope, %Book{} = book, attrs \\ %{}) do
-    with :ok <- Policy.authorize(:category_create, scope, %{book: book}) do
-      attrs =
-        attrs
-        |> Utilities.atomize_keys()
-        |> Map.put(:book_id, book.id)
-
-      %Category{}
-      |> Category.changeset(attrs)
-      |> Repo.insert()
-      |> case do
-        {:ok, category} ->
-          broadcast_book(book, {:category_created, category})
-          {:ok, category}
-
-        error ->
-          error
-      end
-    end
-  end
+  defdelegate create_category(scope, book, attrs \\ %{}), to: CreateCategory, as: :call
 
   @doc """
   Deletes a category.
