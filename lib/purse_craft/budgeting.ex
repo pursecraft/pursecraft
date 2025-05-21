@@ -5,6 +5,7 @@ defmodule PurseCraft.Budgeting do
 
   import Ecto.Query, warn: false
 
+  alias PurseCraft.Budgeting.Commands.Books.ChangeBook
   alias PurseCraft.Budgeting.Commands.Books.CreateBook
   alias PurseCraft.Budgeting.Commands.Books.DeleteBook
   alias PurseCraft.Budgeting.Commands.Books.FetchBookByExternalId
@@ -244,9 +245,7 @@ defmodule PurseCraft.Budgeting do
 
   """
   @spec change_book(Book.t(), change_book_attrs()) :: Ecto.Changeset.t()
-  def change_book(%Book{} = book, attrs \\ %{}) do
-    Book.changeset(book, attrs)
-  end
+  defdelegate change_book(book, attrs \\ %{}), to: ChangeBook, as: :call
 
   @doc """
   Creates a category for a book.
