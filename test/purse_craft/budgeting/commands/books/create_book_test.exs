@@ -1,7 +1,10 @@
 defmodule PurseCraft.Budgeting.Commands.Books.CreateBookTest do
   use PurseCraft.DataCase, async: true
 
+  import Mimic
+
   alias PurseCraft.Budgeting.Commands.Books.CreateBook
+  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.IdentityFactory
@@ -43,13 +46,27 @@ defmodule PurseCraft.Budgeting.Commands.Books.CreateBookTest do
       # This doesn't actually happen in reality since all users are allowed to create
       # `Book` records, so we are mocking this response to see if this branch of the
       # business logic actually works.
-      Mimic.expect(PurseCraft.Budgeting.Policy, :authorize, fn :book_create, _scope ->
+      expect(PurseCraft.Budgeting.Policy, :authorize, fn :book_create, _scope ->
         {:error, :unauthorized}
       end)
 
       attrs = %{name: "Unauthorized Book"}
 
       assert {:error, :unauthorized} = CreateBook.call(scope, attrs)
+    end
+
+    test "Invokes BroadcastUserBook when book is created successfully", %{scope: scope} do
+      expect(BroadcastUserBook, :call, fn broadcast_scope, {:created, broadcast_book} ->
+        assert broadcast_scope == scope
+        assert broadcast_book.name == "Broadcast Test Book"
+        :ok
+      end)
+
+      attrs = %{name: "Broadcast Test Book"}
+
+      assert {:ok, %Book{}} = CreateBook.call(scope, attrs)
+
+      verify!()
     end
   end
 end
