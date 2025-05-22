@@ -41,13 +41,10 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQueries do
       #Ecto.Query<...>
 
   """
-  # coveralls-ignore-start
   @spec by_book_id(integer()) :: Ecto.Query.t()
   def by_book_id(book_id) do
     by_book_id(Category, book_id)
   end
-
-  # coveralls-ignore-stop
 
   @spec by_book_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
   def by_book_id(queryable, book_id) do

@@ -15,6 +15,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Categories.CreateCategory
   alias PurseCraft.Budgeting.Commands.Categories.DeleteCategory
   alias PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalId
+  alias PurseCraft.Budgeting.Commands.Categories.ListCategories
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
@@ -42,9 +43,6 @@ defmodule PurseCraft.Budgeting do
   @type change_book_attrs :: %{
           optional(:name) => String.t()
         }
-
-  @type list_categories_option :: {:preload, preload()}
-  @type list_categories_options :: [list_categories_option()]
 
   @type update_category_attrs :: %{
           optional(:name) => String.t()
@@ -329,19 +327,9 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
-  @spec list_categories(Scope.t(), Book.t(), list_categories_options()) ::
+  @spec list_categories(Scope.t(), Book.t(), ListCategories.options()) ::
           list(Category.t()) | {:error, :unauthorized}
-  def list_categories(%Scope{} = scope, %Book{} = book, opts \\ []) do
-    with :ok <- Policy.authorize(:category_read, scope, %{book: book}) do
-      categories =
-        Category
-        |> where([c], c.book_id == ^book.id)
-        |> Repo.all()
-
-      preloads = Keyword.get(opts, :preload, [])
-      if preloads == [], do: categories, else: Repo.preload(categories, preloads)
-    end
-  end
+  defdelegate list_categories(scope, book, opts \\ []), to: ListCategories, as: :call
 
   @doc """
   Updates a category.

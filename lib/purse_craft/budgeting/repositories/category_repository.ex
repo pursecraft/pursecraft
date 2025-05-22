@@ -11,10 +11,42 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   @type get_option :: {:preload, Types.preload()}
   @type get_options :: [get_option()]
 
+  @type list_option :: {:preload, Types.preload()}
+  @type list_options :: [list_option()]
+
   @type create_attrs :: %{
           optional(:name) => String.t(),
           required(:book_id) => integer()
         }
+
+  @doc """
+  Lists all categories for a given book ID.
+
+  ## Options
+
+  The `:preload` option accepts a list of associations to preload. For example:
+
+  - `[preload: [:envelopes]]` - preloads only envelopes
+
+  ## Examples
+
+      iex> list_by_book_id(1)
+      [%Category{}, ...]
+
+      iex> list_by_book_id(1, preload: [:envelopes])
+      [%Category{envelopes: [%Envelope{}, ...]}, ...]
+
+  """
+  @spec list_by_book_id(integer(), list_options()) :: list(Category.t())
+  def list_by_book_id(book_id, opts \\ []) do
+    categories =
+      book_id
+      |> CategoryQueries.by_book_id()
+      |> Repo.all()
+
+    preloads = Keyword.get(opts, :preload, [])
+    if preloads == [], do: categories, else: Repo.preload(categories, preloads)
+  end
 
   @doc """
   Creates a category for a book.
