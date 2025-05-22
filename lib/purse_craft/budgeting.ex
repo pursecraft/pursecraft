@@ -12,6 +12,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Books.GetBookByExternalId
   alias PurseCraft.Budgeting.Commands.Books.ListBooks
   alias PurseCraft.Budgeting.Commands.Books.UpdateBook
+  alias PurseCraft.Budgeting.Commands.Categories.ChangeCategory
   alias PurseCraft.Budgeting.Commands.Categories.CreateCategory
   alias PurseCraft.Budgeting.Commands.Categories.DeleteCategory
   alias PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalId
@@ -363,9 +364,7 @@ defmodule PurseCraft.Budgeting do
 
   """
   @spec change_category(Category.t(), map()) :: Ecto.Changeset.t()
-  def change_category(%Category{} = category, attrs \\ %{}) do
-    Category.changeset(category, attrs)
-  end
+  defdelegate change_category(category, attrs \\ %{}), to: ChangeCategory, as: :call
 
   @doc """
   Creates an envelope for a category.
