@@ -3,8 +3,13 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   Repository for `Category`.
   """
 
+  alias PurseCraft.Budgeting.Queries.CategoryQueries
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Repo
+  alias PurseCraft.Types
+
+  @type get_option :: {:preload, Types.preload()}
+  @type get_options :: [get_option()]
 
   @type create_attrs :: %{
           optional(:name) => String.t(),
@@ -28,6 +33,42 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
     %Category{}
     |> Category.changeset(attrs)
     |> Repo.insert()
+  end
+
+  @doc """
+  Gets a category by its external ID and book ID with options.
+
+  Returns the category if it exists, or `nil` if not found.
+
+  ## Options
+
+  The `:preload` option accepts a list of associations to preload. For example:
+
+  - `[preload: [:envelopes]]` - preloads only envelopes
+
+  ## Examples
+
+      iex> get_by_external_id_and_book_id("abcd-1234", 1, preload: [:envelopes])
+      %Category{envelopes: [...]}
+
+      iex> get_by_external_id_and_book_id("non-existent-id", 1, preload: [:envelopes])
+      nil
+
+  """
+  @spec get_by_external_id_and_book_id(Ecto.UUID.t(), integer(), get_options()) :: Category.t() | nil
+  def get_by_external_id_and_book_id(external_id, book_id, opts \\ []) do
+    external_id
+    |> CategoryQueries.by_external_id()
+    |> CategoryQueries.by_book_id(book_id)
+    |> Repo.one()
+    |> case do
+      nil ->
+        nil
+
+      category ->
+        preloads = Keyword.get(opts, :preload, [])
+        if preloads == [], do: category, else: Repo.preload(category, preloads)
+    end
   end
 
   @doc """

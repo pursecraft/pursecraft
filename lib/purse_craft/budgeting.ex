@@ -14,6 +14,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Books.UpdateBook
   alias PurseCraft.Budgeting.Commands.Categories.CreateCategory
   alias PurseCraft.Budgeting.Commands.Categories.DeleteCategory
+  alias PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalId
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
@@ -41,9 +42,6 @@ defmodule PurseCraft.Budgeting do
   @type change_book_attrs :: %{
           optional(:name) => String.t()
         }
-
-  @type fetch_category_by_external_id_option :: {:preload, preload()}
-  @type fetch_category_by_external_id_options :: [fetch_category_by_external_id_option()]
 
   @type list_categories_option :: {:preload, preload()}
   @type list_categories_options :: [list_categories_option()]
@@ -304,21 +302,11 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
-  @spec fetch_category_by_external_id(Scope.t(), Book.t(), Ecto.UUID.t(), fetch_category_by_external_id_options()) ::
+  @spec fetch_category_by_external_id(Scope.t(), Book.t(), Ecto.UUID.t(), FetchCategoryByExternalId.options()) ::
           {:ok, Category.t()} | {:error, :not_found | :unauthorized}
-  def fetch_category_by_external_id(%Scope{} = scope, %Book{} = book, external_id, opts \\ []) do
-    with :ok <- Policy.authorize(:category_read, scope, %{book: book}) do
-      case Repo.get_by(Category, external_id: external_id, book_id: book.id) do
-        nil ->
-          {:error, :not_found}
-
-        category ->
-          preloads = Keyword.get(opts, :preload, [])
-          category = if preloads == [], do: category, else: Repo.preload(category, preloads)
-          {:ok, category}
-      end
-    end
-  end
+  defdelegate fetch_category_by_external_id(scope, book, external_id, opts \\ []),
+    to: FetchCategoryByExternalId,
+    as: :call
 
   @doc """
   Returns a list of categories for a given book.

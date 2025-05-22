@@ -5,6 +5,60 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.BudgetingFactory
 
+  describe "get_by_external_id_and_book_id/3" do
+    test "returns category when found" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+
+      result = CategoryRepository.get_by_external_id_and_book_id(category.external_id, book.id)
+
+      assert result.id == category.id
+      assert result.name == category.name
+      assert result.book_id == book.id
+    end
+
+    test "returns nil when category not found by external_id" do
+      book = BudgetingFactory.insert(:book)
+
+      result = CategoryRepository.get_by_external_id_and_book_id(Ecto.UUID.generate(), book.id)
+
+      assert result == nil
+    end
+
+    test "returns nil when category not found by book_id" do
+      book1 = BudgetingFactory.insert(:book)
+      book2 = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book1.id)
+
+      result = CategoryRepository.get_by_external_id_and_book_id(category.external_id, book2.id)
+
+      assert result == nil
+    end
+
+    test "with preload option returns category with preloaded associations" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      result = CategoryRepository.get_by_external_id_and_book_id(category.external_id, book.id, preload: [:envelopes])
+
+      assert result.id == category.id
+      assert length(result.envelopes) == 1
+      assert hd(result.envelopes).id == envelope.id
+    end
+
+    test "without preload option returns category without preloaded associations" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      result = CategoryRepository.get_by_external_id_and_book_id(category.external_id, book.id)
+
+      assert result.id == category.id
+      refute Ecto.assoc_loaded?(result.envelopes)
+    end
+  end
+
   describe "delete/1" do
     test "deletes the given category" do
       book = BudgetingFactory.insert(:book)
