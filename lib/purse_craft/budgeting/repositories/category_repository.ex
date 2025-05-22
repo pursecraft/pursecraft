@@ -19,6 +19,13 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
           required(:book_id) => integer()
         }
 
+  @type update_attrs :: %{
+          optional(:name) => String.t()
+        }
+
+  @type update_option :: {:preload, Types.preload()}
+  @type update_options :: [update_option()]
+
   @doc """
   Lists all categories for a given book ID.
 
@@ -100,6 +107,39 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
       category ->
         preloads = Keyword.get(opts, :preload, [])
         if preloads == [], do: category, else: Repo.preload(category, preloads)
+    end
+  end
+
+  @doc """
+  Updates a category with the given attributes.
+
+  ## Options
+
+  The `:preload` option accepts a list of associations to preload. For example:
+
+  - `[preload: [:envelopes]]` - preloads only envelopes
+
+  ## Examples
+
+      iex> update(category, %{name: "Updated Name"})
+      {:ok, %Category{}}
+
+      iex> update(category, %{name: "Updated Name"}, preload: [:envelopes])
+      {:ok, %Category{envelopes: [%Envelope{}, ...]}}
+
+      iex> update(category, %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec update(Category.t(), update_attrs(), update_options()) :: {:ok, Category.t()} | {:error, Ecto.Changeset.t()}
+  def update(category, attrs, opts \\ []) do
+    with {:ok, %Category{} = updated_category} <-
+           category
+           |> Category.changeset(attrs)
+           |> Repo.update() do
+      preloads = Keyword.get(opts, :preload, [])
+      updated_category = if preloads == [], do: updated_category, else: Repo.preload(updated_category, preloads)
+      {:ok, updated_category}
     end
   end
 

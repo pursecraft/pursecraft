@@ -16,6 +16,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Categories.DeleteCategory
   alias PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalId
   alias PurseCraft.Budgeting.Commands.Categories.ListCategories
+  alias PurseCraft.Budgeting.Commands.Categories.UpdateCategory
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
@@ -43,13 +44,6 @@ defmodule PurseCraft.Budgeting do
   @type change_book_attrs :: %{
           optional(:name) => String.t()
         }
-
-  @type update_category_attrs :: %{
-          optional(:name) => String.t()
-        }
-
-  @type update_category_option :: {:preload, preload()}
-  @type update_category_options :: [update_category_option()]
 
   @type create_envelope_attrs :: %{
           optional(:name) => String.t()
@@ -355,23 +349,9 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
-  @spec update_category(Scope.t(), Book.t(), Category.t(), update_category_attrs(), update_category_options()) ::
+  @spec update_category(Scope.t(), Book.t(), Category.t(), UpdateCategory.attrs(), UpdateCategory.options()) ::
           {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def update_category(%Scope{} = scope, %Book{} = book, %Category{} = category, attrs, opts \\ []) do
-    attrs = Utilities.atomize_keys(attrs)
-
-    with :ok <- Policy.authorize(:category_update, scope, %{book: book}),
-         {:ok, %Category{} = category} <-
-           category
-           |> Category.changeset(attrs)
-           |> Repo.update() do
-      preloads = Keyword.get(opts, :preload, [])
-      category = Repo.preload(category, preloads)
-
-      broadcast_book(book, {:category_updated, category})
-      {:ok, category}
-    end
-  end
+  defdelegate update_category(scope, book, category, attrs, opts \\ []), to: UpdateCategory, as: :call
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking category changes.

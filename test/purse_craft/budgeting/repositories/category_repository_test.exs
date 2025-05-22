@@ -119,6 +119,55 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
   end
 
+  describe "update/3" do
+    test "updates the given category with valid attributes" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id, name: "Original Name")
+
+      attrs = %{name: "Updated Name"}
+
+      assert {:ok, %Category{} = updated_category} = CategoryRepository.update(category, attrs)
+      assert updated_category.name == "Updated Name"
+      assert updated_category.id == category.id
+      assert updated_category.book_id == category.book_id
+    end
+
+    test "returns error changeset with invalid attributes" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+
+      attrs = %{name: ""}
+
+      assert {:error, changeset} = CategoryRepository.update(category, attrs)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+
+    test "with preload option returns category with preloaded associations" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id, name: "Original Name")
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      attrs = %{name: "Updated Name"}
+
+      assert {:ok, %Category{} = updated_category} = CategoryRepository.update(category, attrs, preload: [:envelopes])
+      assert updated_category.name == "Updated Name"
+      assert length(updated_category.envelopes) == 1
+      assert hd(updated_category.envelopes).id == envelope.id
+    end
+
+    test "without preload option returns category without preloaded associations" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id, name: "Original Name")
+      BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      attrs = %{name: "Updated Name"}
+
+      assert {:ok, %Category{} = updated_category} = CategoryRepository.update(category, attrs)
+      assert updated_category.name == "Updated Name"
+      refute Ecto.assoc_loaded?(updated_category.envelopes)
+    end
+  end
+
   describe "delete/1" do
     test "deletes the given category" do
       book = BudgetingFactory.insert(:book)
