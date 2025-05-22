@@ -18,6 +18,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalId
   alias PurseCraft.Budgeting.Commands.Categories.ListCategories
   alias PurseCraft.Budgeting.Commands.Categories.UpdateCategory
+  alias PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelope
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
@@ -43,10 +44,6 @@ defmodule PurseCraft.Budgeting do
         }
 
   @type change_book_attrs :: %{
-          optional(:name) => String.t()
-        }
-
-  @type create_envelope_attrs :: %{
           optional(:name) => String.t()
         }
 
@@ -381,28 +378,9 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
-  @spec create_envelope(Scope.t(), Book.t(), Category.t(), create_envelope_attrs()) ::
+  @spec create_envelope(Scope.t(), Book.t(), Category.t(), CreateEnvelope.attrs()) ::
           {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def create_envelope(%Scope{} = scope, %Book{} = book, %Category{} = category, attrs \\ %{}) do
-    with :ok <- Policy.authorize(:envelope_create, scope, %{book: book}) do
-      attrs =
-        attrs
-        |> Utilities.atomize_keys()
-        |> Map.put(:category_id, category.id)
-
-      %Envelope{}
-      |> Envelope.changeset(attrs)
-      |> Repo.insert()
-      |> case do
-        {:ok, envelope} ->
-          broadcast_book(book, {:envelope_created, envelope})
-          {:ok, envelope}
-
-        error ->
-          error
-      end
-    end
-  end
+  defdelegate create_envelope(scope, book, category, attrs \\ %{}), to: CreateEnvelope, as: :call
 
   @doc """
   Deletes an envelope.
