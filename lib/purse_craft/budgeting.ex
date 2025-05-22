@@ -19,6 +19,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Categories.ListCategories
   alias PurseCraft.Budgeting.Commands.Categories.UpdateCategory
   alias PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelope
+  alias PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelope
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
@@ -396,14 +397,7 @@ defmodule PurseCraft.Budgeting do
   """
   @spec delete_envelope(Scope.t(), Book.t(), Envelope.t()) ::
           {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def delete_envelope(%Scope{} = scope, %Book{} = book, %Envelope{} = envelope) do
-    with :ok <- Policy.authorize(:envelope_delete, scope, %{book: book}),
-         {:ok, %Envelope{} = envelope} <-
-           Repo.delete(envelope) do
-      broadcast_book(book, {:envelope_deleted, envelope})
-      {:ok, envelope}
-    end
-  end
+  defdelegate delete_envelope(scope, book, envelope), to: DeleteEnvelope, as: :call
 
   @doc """
   Fetches a single `Envelope` by its `external_id` from a specific book.

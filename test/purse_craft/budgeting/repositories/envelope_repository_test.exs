@@ -22,4 +22,15 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
       assert %{name: ["can't be blank"], category_id: ["can't be blank"]} = errors_on(changeset)
     end
   end
+
+  describe "delete/1" do
+    test "deletes an envelope" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      assert {:ok, deleted_envelope} = EnvelopeRepository.delete(envelope)
+      assert deleted_envelope.id == envelope.id
+    end
+  end
 end

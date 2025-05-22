@@ -29,4 +29,18 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
     |> Envelope.changeset(attrs)
     |> Repo.insert()
   end
+
+  @doc """
+  Deletes an envelope.
+
+  ## Examples
+
+      iex> delete(%Envelope{})
+      {:ok, %Envelope{}}
+
+  """
+  @spec delete(Envelope.t()) :: {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()}
+  def delete(%Envelope{} = envelope) do
+    Repo.delete(envelope)
+  end
 end
