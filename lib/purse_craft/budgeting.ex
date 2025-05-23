@@ -18,6 +18,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalId
   alias PurseCraft.Budgeting.Commands.Categories.ListCategories
   alias PurseCraft.Budgeting.Commands.Categories.UpdateCategory
+  alias PurseCraft.Budgeting.Commands.Envelopes.ChangeEnvelope
   alias PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelope
   alias PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelope
   alias PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalId
@@ -446,8 +447,6 @@ defmodule PurseCraft.Budgeting do
       %Ecto.Changeset{data: %Envelope{}}
 
   """
-  @spec change_envelope(Envelope.t(), map()) :: Ecto.Changeset.t()
-  def change_envelope(%Envelope{} = envelope, attrs \\ %{}) do
-    Envelope.changeset(envelope, attrs)
-  end
+  @spec change_envelope(Envelope.t(), ChangeEnvelope.attrs()) :: Ecto.Changeset.t()
+  defdelegate change_envelope(envelope, attrs \\ %{}), to: ChangeEnvelope, as: :call
 end
