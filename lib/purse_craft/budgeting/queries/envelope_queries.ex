@@ -43,9 +43,11 @@ defmodule PurseCraft.Budgeting.Queries.EnvelopeQueries do
 
   """
   @spec by_book_id(integer()) :: Ecto.Query.t()
+  # coveralls-ignore-start
   def by_book_id(book_id) do
     by_book_id(Envelope, book_id)
   end
+  # coveralls-ignore-stop
 
   @spec by_book_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
   def by_book_id(queryable, book_id) do

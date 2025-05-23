@@ -21,18 +21,16 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelope
   alias PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelope
   alias PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalId
+  alias PurseCraft.Budgeting.Commands.Envelopes.UpdateEnvelope
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooks
-  alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.BookRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
-  alias PurseCraft.Repo
-  alias PurseCraft.Utilities
 
   @type preload_item :: atom() | {atom(), preload_item()} | [preload_item()]
   @type preload :: preload_item() | [preload_item()]
@@ -46,10 +44,6 @@ defmodule PurseCraft.Budgeting do
         }
 
   @type change_book_attrs :: %{
-          optional(:name) => String.t()
-        }
-
-  @type update_envelope_attrs :: %{
           optional(:name) => String.t()
         }
 
@@ -439,20 +433,9 @@ defmodule PurseCraft.Budgeting do
       {:error, :unauthorized}
 
   """
-  @spec update_envelope(Scope.t(), Book.t(), Envelope.t(), update_envelope_attrs()) ::
+  @spec update_envelope(Scope.t(), Book.t(), Envelope.t(), UpdateEnvelope.attrs()) ::
           {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def update_envelope(%Scope{} = scope, %Book{} = book, %Envelope{} = envelope, attrs) do
-    attrs = Utilities.atomize_keys(attrs)
-
-    with :ok <- Policy.authorize(:envelope_update, scope, %{book: book}),
-         {:ok, %Envelope{} = envelope} <-
-           envelope
-           |> Envelope.changeset(attrs)
-           |> Repo.update() do
-      broadcast_book(book, {:envelope_updated, envelope})
-      {:ok, envelope}
-    end
-  end
+  defdelegate update_envelope(scope, book, envelope, attrs), to: UpdateEnvelope, as: :call
 
   @doc """
   Returns a changeset for tracking envelope changes.

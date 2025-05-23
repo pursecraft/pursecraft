@@ -67,6 +67,30 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
   end
 
+  describe "update/2" do
+    test "with valid data updates an envelope" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id, name: "Original Name")
+      attrs = %{name: "Updated Name"}
+
+      assert {:ok, updated_envelope} = EnvelopeRepository.update(envelope, attrs)
+      assert updated_envelope.id == envelope.id
+      assert updated_envelope.name == "Updated Name"
+      assert updated_envelope.category_id == category.id
+    end
+
+    test "with invalid data returns error changeset" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+      attrs = %{name: ""}
+
+      assert {:error, changeset} = EnvelopeRepository.update(envelope, attrs)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+  end
+
   describe "delete/1" do
     test "deletes an envelope" do
       book = BudgetingFactory.insert(:book)

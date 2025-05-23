@@ -16,6 +16,10 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
           required(:category_id) => integer()
         }
 
+  @type update_attrs :: %{
+          optional(:name) => String.t()
+        }
+
   @doc """
   Creates an envelope for a category.
 
@@ -69,6 +73,25 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
         preloads = Keyword.get(opts, :preload, [])
         if preloads == [], do: envelope, else: Repo.preload(envelope, preloads)
     end
+  end
+
+  @doc """
+  Updates an envelope with the given attributes.
+
+  ## Examples
+
+      iex> update(envelope, %{name: "Updated Name"})
+      {:ok, %Envelope{}}
+
+      iex> update(envelope, %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec update(Envelope.t(), update_attrs()) :: {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()}
+  def update(envelope, attrs) do
+    envelope
+    |> Envelope.changeset(attrs)
+    |> Repo.update()
   end
 
   @doc """
