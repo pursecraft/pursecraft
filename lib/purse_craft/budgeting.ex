@@ -20,6 +20,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Categories.UpdateCategory
   alias PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelope
   alias PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelope
+  alias PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalId
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
@@ -51,9 +52,6 @@ defmodule PurseCraft.Budgeting do
   @type update_envelope_attrs :: %{
           optional(:name) => String.t()
         }
-
-  @type fetch_envelope_by_external_id_option :: {:preload, preload()}
-  @type fetch_envelope_by_external_id_options :: [fetch_envelope_by_external_id_option()]
 
   @doc """
   Subscribes to notifications about any book changes associated with the scoped user.
@@ -420,25 +418,11 @@ defmodule PurseCraft.Budgeting do
       {:ok, %Envelope{category: %Category{}}}
 
   """
-  @spec fetch_envelope_by_external_id(Scope.t(), Book.t(), Ecto.UUID.t(), fetch_envelope_by_external_id_options()) ::
+  @spec fetch_envelope_by_external_id(Scope.t(), Book.t(), Ecto.UUID.t(), FetchEnvelopeByExternalId.options()) ::
           {:ok, Envelope.t()} | {:error, :not_found | :unauthorized}
-  def fetch_envelope_by_external_id(%Scope{} = scope, %Book{} = book, external_id, opts \\ []) do
-    with :ok <- Policy.authorize(:envelope_read, scope, %{book: book}) do
-      Envelope
-      |> join(:inner, [e], c in Category, on: e.category_id == c.id)
-      |> where([e, c], e.external_id == ^external_id and c.book_id == ^book.id)
-      |> Repo.one()
-      |> case do
-        nil ->
-          {:error, :not_found}
-
-        envelope ->
-          preloads = Keyword.get(opts, :preload, [])
-          envelope = if preloads == [], do: envelope, else: Repo.preload(envelope, preloads)
-          {:ok, envelope}
-      end
-    end
-  end
+  defdelegate fetch_envelope_by_external_id(scope, book, external_id, opts \\ []),
+    to: FetchEnvelopeByExternalId,
+    as: :call
 
   @doc """
   Updates an envelope.

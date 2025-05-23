@@ -23,6 +23,50 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
   end
 
+  describe "get_by_external_id_and_book_id/3" do
+    test "returns envelope when found" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      result = EnvelopeRepository.get_by_external_id_and_book_id(envelope.external_id, book.id)
+
+      assert result.id == envelope.id
+      assert result.name == envelope.name
+    end
+
+    test "returns nil when envelope not found" do
+      book = BudgetingFactory.insert(:book)
+
+      result = EnvelopeRepository.get_by_external_id_and_book_id(Ecto.UUID.generate(), book.id)
+
+      assert result == nil
+    end
+
+    test "returns nil when envelope exists but in different book" do
+      book1 = BudgetingFactory.insert(:book)
+      book2 = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book1.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      result = EnvelopeRepository.get_by_external_id_and_book_id(envelope.external_id, book2.id)
+
+      assert result == nil
+    end
+
+    test "with preload option returns envelope with preloaded associations" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      result = EnvelopeRepository.get_by_external_id_and_book_id(envelope.external_id, book.id, preload: [:category])
+
+      assert result.id == envelope.id
+      assert result.category.id == category.id
+      assert result.category.name == category.name
+    end
+  end
+
   describe "delete/1" do
     test "deletes an envelope" do
       book = BudgetingFactory.insert(:book)
