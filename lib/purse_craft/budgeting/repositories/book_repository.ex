@@ -119,16 +119,16 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
 
   ## Examples
 
-      iex> create_with_owner(%{name: "Household"}, user_id)
+      iex> create(%{name: "Household"}, user_id)
       {:ok, %Book{}}
 
-      iex> create_with_owner(%{name: ""}, user_id)
+      iex> create(%{name: ""}, user_id)
       {:error, %Ecto.Changeset{}}
 
   """
 
-  @spec create_with_owner(create_attrs(), integer()) :: {:ok, Book.t()} | {:error, Ecto.Changeset.t()}
-  def create_with_owner(attrs, user_id) do
+  @spec create(create_attrs(), integer()) :: {:ok, Book.t()} | {:error, Ecto.Changeset.t()}
+  def create(attrs, user_id) do
     Multi.new()
     |> Multi.insert(:book, Book.changeset(%Book{}, attrs))
     |> Multi.insert(:book_user, fn %{book: book} ->

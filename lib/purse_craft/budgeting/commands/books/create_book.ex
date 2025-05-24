@@ -28,7 +28,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.CreateBook do
           {:ok, Book.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
   def call(%Scope{} = scope, attrs \\ %{}) do
     with :ok <- Policy.authorize(:book_create, scope),
-         {:ok, book} <- BookRepository.create_with_owner(attrs, scope.user.id) do
+         {:ok, book} <- BookRepository.create(attrs, scope.user.id) do
       BroadcastUserBook.call(scope, {:created, book})
       {:ok, book}
     end
