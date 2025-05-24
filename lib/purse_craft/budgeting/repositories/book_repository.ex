@@ -4,7 +4,7 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
   """
 
   alias Ecto.Multi
-  alias PurseCraft.Budgeting.Queries.BookQueries
+  alias PurseCraft.Budgeting.Queries.BookQuery
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Repo
@@ -35,7 +35,7 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
   @spec list_by_user(integer()) :: list(Book.t())
   def list_by_user(user_id) do
     user_id
-    |> BookQueries.by_user()
+    |> BookQuery.by_user()
     |> Repo.all()
   end
 
@@ -56,7 +56,7 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
   @spec get_by_external_id!(Ecto.UUID.t()) :: Book.t()
   def get_by_external_id!(external_id) do
     external_id
-    |> BookQueries.by_external_id()
+    |> BookQuery.by_external_id()
     |> Repo.one!()
   end
 
@@ -77,7 +77,7 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
   @spec get_by_external_id(Ecto.UUID.t()) :: Book.t() | nil
   def get_by_external_id(external_id) do
     external_id
-    |> BookQueries.by_external_id()
+    |> BookQuery.by_external_id()
     |> Repo.one()
   end
 
@@ -179,7 +179,7 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
   @spec delete(Book.t()) :: {:ok, Book.t()} | {:error, Ecto.Changeset.t()}
   def delete(%Book{} = book) do
     Multi.new()
-    |> Multi.delete_all(:delete_book_users, BookQueries.book_users_by_book_id(book.id))
+    |> Multi.delete_all(:delete_book_users, BookQuery.book_users_by_book_id(book.id))
     |> Multi.delete(:delete_book, book)
     |> Repo.transaction()
     |> case do

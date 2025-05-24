@@ -3,7 +3,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   Repository for `Category`.
   """
 
-  alias PurseCraft.Budgeting.Queries.CategoryQueries
+  alias PurseCraft.Budgeting.Queries.CategoryQuery
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Repo
   alias PurseCraft.Types
@@ -48,7 +48,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   def list_by_book_id(book_id, opts \\ []) do
     categories =
       book_id
-      |> CategoryQueries.by_book_id()
+      |> CategoryQuery.by_book_id()
       |> Repo.all()
 
     preloads = Keyword.get(opts, :preload, [])
@@ -97,8 +97,8 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   @spec get_by_external_id_and_book_id(Ecto.UUID.t(), integer(), get_options()) :: Category.t() | nil
   def get_by_external_id_and_book_id(external_id, book_id, opts \\ []) do
     external_id
-    |> CategoryQueries.by_external_id()
-    |> CategoryQueries.by_book_id(book_id)
+    |> CategoryQuery.by_external_id()
+    |> CategoryQuery.by_book_id(book_id)
     |> Repo.one()
     |> case do
       nil ->

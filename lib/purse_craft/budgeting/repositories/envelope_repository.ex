@@ -3,7 +3,7 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
   Repository for `Envelope`.
   """
 
-  alias PurseCraft.Budgeting.Queries.EnvelopeQueries
+  alias PurseCraft.Budgeting.Queries.EnvelopeQuery
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Repo
   alias PurseCraft.Types
@@ -62,8 +62,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
   @spec get_by_external_id_and_book_id(Ecto.UUID.t(), integer(), get_options()) :: Envelope.t() | nil
   def get_by_external_id_and_book_id(external_id, book_id, opts \\ []) do
     external_id
-    |> EnvelopeQueries.by_external_id()
-    |> EnvelopeQueries.by_book_id(book_id)
+    |> EnvelopeQuery.by_external_id()
+    |> EnvelopeQuery.by_book_id(book_id)
     |> Repo.one()
     |> case do
       nil ->
