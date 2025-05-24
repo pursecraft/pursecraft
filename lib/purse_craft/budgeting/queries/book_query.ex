@@ -1,4 +1,4 @@
-defmodule PurseCraft.Budgeting.Queries.BookQueries do
+defmodule PurseCraft.Budgeting.Queries.BookQuery do
   @moduledoc """
   Query functions for `Book`.
   """

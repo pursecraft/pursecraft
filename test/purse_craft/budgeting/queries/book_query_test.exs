@@ -1,7 +1,7 @@
-defmodule PurseCraft.Budgeting.Queries.BookQueriesTest do
+defmodule PurseCraft.Budgeting.Queries.BookQueryTest do
   use PurseCraft.DataCase, async: true
 
-  alias PurseCraft.Budgeting.Queries.BookQueries
+  alias PurseCraft.Budgeting.Queries.BookQuery
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.Repo
@@ -17,11 +17,11 @@ defmodule PurseCraft.Budgeting.Queries.BookQueriesTest do
       BudgetingFactory.insert(:book_user, book_id: other_book.id, user_id: other_user.id)
 
       assert user.id
-             |> BookQueries.by_user()
+             |> BookQuery.by_user()
              |> Repo.all() == [book]
 
       assert other_user.id
-             |> BookQueries.by_user()
+             |> BookQuery.by_user()
              |> Repo.all() == [other_book]
     end
 
@@ -29,7 +29,7 @@ defmodule PurseCraft.Budgeting.Queries.BookQueriesTest do
       user = IdentityFactory.insert(:user)
 
       assert user.id
-             |> BookQueries.by_user()
+             |> BookQuery.by_user()
              |> Repo.all() == []
     end
   end
