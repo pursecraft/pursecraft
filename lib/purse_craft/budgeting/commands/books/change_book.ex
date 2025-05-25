@@ -5,6 +5,10 @@ defmodule PurseCraft.Budgeting.Commands.Books.ChangeBook do
 
   alias PurseCraft.Budgeting.Schemas.Book
 
+  @type attrs :: %{
+          optional(:name) => String.t()
+        }
+
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking book changes.
 
@@ -17,7 +21,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.ChangeBook do
       %Ecto.Changeset{data: %Book{}, changes: %{name: "New Name"}}
 
   """
-  @spec call(Book.t(), map()) :: Ecto.Changeset.t()
+  @spec call(Book.t(), attrs()) :: Ecto.Changeset.t()
   def call(%Book{} = book, attrs \\ %{}) do
     Book.changeset(book, attrs)
   end

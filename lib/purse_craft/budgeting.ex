@@ -33,21 +33,6 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
 
-  @type preload_item :: atom() | {atom(), preload_item()} | [preload_item()]
-  @type preload :: preload_item() | [preload_item()]
-
-  @type create_book_attrs :: %{
-          optional(:name) => String.t()
-        }
-
-  @type update_book_attrs :: %{
-          optional(:name) => String.t()
-        }
-
-  @type change_book_attrs :: %{
-          optional(:name) => String.t()
-        }
-
   @doc """
   Subscribes to notifications about any book changes associated with the scoped user.
 
@@ -224,7 +209,7 @@ defmodule PurseCraft.Budgeting do
       %Ecto.Changeset{data: %Book{}}
 
   """
-  @spec change_book(Book.t(), change_book_attrs()) :: Ecto.Changeset.t()
+  @spec change_book(Book.t(), ChangeBook.attrs()) :: Ecto.Changeset.t()
   defdelegate change_book(book, attrs \\ %{}), to: ChangeBook, as: :call
 
   @doc """
