@@ -31,7 +31,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
           <%= if Enum.empty?(@category.envelopes) do %>
             <button
               class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity text-error"
-              phx-click="open_delete_modal"
+              phx-click="delete_category_confirm"
               phx-value-id={@category.external_id}
             >
               <Icon.icon name="trash" class="h-4 w-4" />
@@ -39,7 +39,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
           <% end %>
           <button
             class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity text-success"
-            phx-click="open_envelope_modal"
+            phx-click="new_envelope"
             phx-value-id={@category.external_id}
           >
             <Icon.icon name="plus" class="h-4 w-4" />

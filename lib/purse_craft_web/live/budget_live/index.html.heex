@@ -3,7 +3,7 @@
     <BudgetHeader.budget_header
       book_name={@book.name}
       current_month="May 2025"
-      on_add_category="open_category_modal"
+      on_add_category="new_category"
       on_auto_assign="auto_assign"
     />
 
@@ -12,13 +12,13 @@
       id="category-modal"
       show={@category_modal_open}
       title={@modal_title}
-      on_close="close_category_modal"
+      on_close="cancel_category"
     >
       <.form for={@category_form} id="category-form" phx-submit={@modal_action}>
         <Form.input field={@category_form[:name]} type="text" label="Category Name" />
       </.form>
       <:actions>
-        <Button.secondary phx-click="reset-category-form">Cancel</Button.secondary>
+        <Button.secondary phx-click="cancel_category_form">Cancel</Button.secondary>
         <Button.primary type="submit" form="category-form" phx-disable-with="Saving...">
           {@modal_button}
         </Button.primary>
@@ -30,7 +30,7 @@
       id="delete-category-modal"
       show={@delete_modal_open}
       title="Delete Category"
-      on_close="close_delete_modal"
+      on_close="cancel_delete"
       on_confirm="delete_category"
       confirm_value={@category_to_delete.external_id}
       confirm_text="Delete"
@@ -46,7 +46,7 @@
       id="delete-envelope-modal"
       show={@envelope_modal_open && @envelope_modal_action == "delete-envelope"}
       title="Delete Envelope"
-      on_close="close_envelope_modal"
+      on_close="cancel_envelope"
       on_confirm="delete_envelope"
       confirm_value={@envelope_to_delete.external_id}
       confirm_text="Delete"
@@ -62,13 +62,13 @@
       id="envelope-modal"
       show={@envelope_modal_open && @envelope_modal_action != "delete-envelope"}
       title={@envelope_modal_title}
-      on_close="close_envelope_modal"
+      on_close="cancel_envelope"
     >
       <.form for={@envelope_form} id="envelope-form" phx-submit={@envelope_modal_action}>
         <Form.input field={@envelope_form[:name]} type="text" label="Envelope Name" />
       </.form>
       <:actions>
-        <Button.secondary phx-click="reset-envelope-form">Cancel</Button.secondary>
+        <Button.secondary phx-click="cancel_envelope_form">Cancel</Button.secondary>
         <Button.primary type="submit" form="envelope-form" phx-disable-with="Saving...">
           {@envelope_modal_button}
         </Button.primary>

@@ -44,7 +44,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.EnvelopeRow do
         </button>
         <button
           class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity text-error"
-          phx-click="open_delete_envelope_modal"
+          phx-click="delete_envelope_confirm"
           phx-value-id={@id}
         >
           <Icon.icon name="trash" class="h-4 w-4" />
