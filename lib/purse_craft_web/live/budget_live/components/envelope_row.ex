@@ -5,7 +5,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.EnvelopeRow do
 
   use Phoenix.Component
 
-  alias PurseCraftWeb.CoreComponents
+  alias PurseCraftWeb.Components.UI.Budgeting.Icon
 
   attr :id, :string, required: true
   attr :name, :string, required: true
@@ -40,14 +40,14 @@ defmodule PurseCraftWeb.BudgetLive.Components.EnvelopeRow do
           phx-click="edit_envelope"
           phx-value-id={@id}
         >
-          <CoreComponents.icon name="hero-pencil-square" class="h-4 w-4" />
+          <Icon.icon name="pencil-square" class="h-4 w-4" />
         </button>
         <button
           class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity text-error"
           phx-click="open_delete_envelope_modal"
           phx-value-id={@id}
         >
-          <CoreComponents.icon name="hero-trash" class="h-4 w-4" />
+          <Icon.icon name="trash" class="h-4 w-4" />
         </button>
       </div>
       <div class="flex justify-end w-1/2 text-xs sm:text-sm">

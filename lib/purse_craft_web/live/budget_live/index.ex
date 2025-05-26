@@ -6,7 +6,13 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
+  alias PurseCraftWeb.BudgetLive.Components.BudgetHeader
+  alias PurseCraftWeb.BudgetLive.Components.CategorySection
   alias PurseCraftWeb.BudgetLive.Components.EnvelopeRow
+  alias PurseCraftWeb.Components.UI.Budgeting.Button
+  alias PurseCraftWeb.Components.UI.Budgeting.Card
+  alias PurseCraftWeb.Components.UI.Budgeting.Form
+  alias PurseCraftWeb.Components.UI.Budgeting.Modal
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
