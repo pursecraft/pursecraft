@@ -3,7 +3,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
   Component for displaying a category section with its envelopes.
   """
 
-  use Phoenix.Component
+  use PurseCraftWeb, :html
 
   alias PurseCraftWeb.Components.UI.Budgeting.Icon
 

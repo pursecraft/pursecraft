@@ -4,12 +4,13 @@ defmodule PurseCraftWeb.UserLive.Registration do
 
   alias PurseCraft.Identity
   alias PurseCraft.Identity.Schemas.User
+  alias PurseCraftWeb.CoreComponents
 
   def render(assigns) do
     ~H"""
     <Layouts.marketing flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto max-w-sm">
-        <.header class="text-center">
+        <CoreComponents.header class="text-center">
           Register for an account
           <:subtitle>
             Already registered?
@@ -18,10 +19,10 @@ defmodule PurseCraftWeb.UserLive.Registration do
             </.link>
             to your account now.
           </:subtitle>
-        </.header>
+        </CoreComponents.header>
 
         <.form for={@form} id="registration_form" phx-submit="save" phx-change="validate">
-          <.input
+          <CoreComponents.input
             field={@form[:email]}
             type="email"
             label="Email"
@@ -30,9 +31,13 @@ defmodule PurseCraftWeb.UserLive.Registration do
             phx-mounted={JS.focus()}
           />
 
-          <.button variant="primary" phx-disable-with="Creating account..." class="w-full">
+          <CoreComponents.button
+            variant="primary"
+            phx-disable-with="Creating account..."
+            class="w-full"
+          >
             Create an account
-          </.button>
+          </CoreComponents.button>
         </.form>
       </div>
     </Layouts.marketing>

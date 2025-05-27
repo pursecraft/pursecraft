@@ -11,6 +11,7 @@ defmodule PurseCraftWeb.Layouts do
 
   alias PurseCraftWeb.Components.UI.Budgeting
   alias PurseCraftWeb.Components.UI.Marketing
+  alias PurseCraftWeb.CoreComponents
 
   embed_templates "layouts/*"
 
@@ -101,32 +102,36 @@ defmodule PurseCraftWeb.Layouts do
   def flash_group(assigns) do
     ~H"""
     <div id={@id} aria-live="polite">
-      <.flash kind={:info} flash={@flash} />
-      <.flash kind={:error} flash={@flash} />
+      <CoreComponents.flash kind={:info} flash={@flash} />
+      <CoreComponents.flash kind={:error} flash={@flash} />
 
-      <.flash
+      <CoreComponents.flash
         id="client-error"
         kind={:error}
         title={gettext("We can't find the internet")}
-        phx-disconnected={show(".phx-client-error #client-error") |> JS.remove_attribute("hidden")}
-        phx-connected={hide("#client-error") |> JS.set_attribute({"hidden", ""})}
+        phx-disconnected={
+          CoreComponents.show(".phx-client-error #client-error") |> JS.remove_attribute("hidden")
+        }
+        phx-connected={CoreComponents.hide("#client-error") |> JS.set_attribute({"hidden", ""})}
         hidden
       >
         {gettext("Attempting to reconnect")}
-        <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 motion-safe:animate-spin" />
-      </.flash>
+        <CoreComponents.icon name="hero-arrow-path" class="ml-1 h-3 w-3 motion-safe:animate-spin" />
+      </CoreComponents.flash>
 
-      <.flash
+      <CoreComponents.flash
         id="server-error"
         kind={:error}
         title={gettext("Something went wrong!")}
-        phx-disconnected={show(".phx-client-error #client-error") |> JS.remove_attribute("hidden")}
-        phx-connected={hide("#client-error") |> JS.set_attribute({"hidden", ""})}
+        phx-disconnected={
+          CoreComponents.show(".phx-client-error #client-error") |> JS.remove_attribute("hidden")
+        }
+        phx-connected={CoreComponents.hide("#client-error") |> JS.set_attribute({"hidden", ""})}
         hidden
       >
         {gettext("Hang in there while we get back on track")}
-        <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 motion-safe:animate-spin" />
-      </.flash>
+        <CoreComponents.icon name="hero-arrow-path" class="ml-1 h-3 w-3 motion-safe:animate-spin" />
+      </CoreComponents.flash>
     </div>
     """
   end
@@ -142,15 +147,18 @@ defmodule PurseCraftWeb.Layouts do
       <div class="absolute w-[33%] h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-[33%] [[data-theme=dark]_&]:left-[66%] transition-[left]" />
 
       <button phx-click={JS.dispatch("phx:set-theme", detail: %{theme: "system"})} class="flex p-2">
-        <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <CoreComponents.icon
+          name="hero-computer-desktop-micro"
+          class="size-4 opacity-75 hover:opacity-100"
+        />
       </button>
 
       <button phx-click={JS.dispatch("phx:set-theme", detail: %{theme: "light"})} class="flex p-2">
-        <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <CoreComponents.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
       </button>
 
       <button phx-click={JS.dispatch("phx:set-theme", detail: %{theme: "dark"})} class="flex p-2">
-        <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <CoreComponents.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
       </button>
     </div>
     """

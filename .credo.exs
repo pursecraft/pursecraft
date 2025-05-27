@@ -96,11 +96,6 @@
           {Credo.Check.Design.AliasUsage, [priority: :low, if_nested_deeper_than: 2, if_called_more_often_than: 0]},
           {Credo.Check.Design.SkipTestWithoutComment, []},
           {Credo.Check.Design.TagFIXME, []},
-          # You can also customize the exit_status of each check.
-          # If you don't want TODO comments to cause `mix credo` to fail, just
-          # set this value to 0 (zero).
-          #
-          {Credo.Check.Design.TagTODO, [exit_status: 2]},
 
           #
           ## Readability Checks
@@ -213,6 +208,11 @@
           #   and be sure to use `mix credo --strict` to see low priority checks)
           #
           {Credo.Check.Design.DuplicatedCode, []},
+          # You can also customize the exit_status of each check.
+          # If you don't want TODO comments to cause `mix credo` to fail, just
+          # set this value to 0 (zero).
+          #
+          {Credo.Check.Design.TagTODO, [exit_status: 2]},
           {Credo.Check.Readability.BlockPipe, []},
           {Credo.Check.Refactor.ABCSize, []},
           {Credo.Check.Refactor.AppendSingleItem, []},

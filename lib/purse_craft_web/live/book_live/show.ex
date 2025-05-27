@@ -4,27 +4,31 @@ defmodule PurseCraftWeb.BookLive.Show do
 
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraftWeb.CoreComponents
 
   @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <.header>
+      <CoreComponents.header>
         Book {@book.id}
         <:subtitle>This is a book record from your database.</:subtitle>
         <:actions>
-          <.button navigate={~p"/books"}>
-            <.icon name="hero-arrow-left" />
-          </.button>
-          <.button variant="primary" navigate={~p"/books/#{@book.external_id}/edit?return_to=show"}>
-            <.icon name="hero-pencil-square" /> Edit book
-          </.button>
+          <CoreComponents.button navigate={~p"/books"}>
+            <CoreComponents.icon name="hero-arrow-left" />
+          </CoreComponents.button>
+          <CoreComponents.button
+            variant="primary"
+            navigate={~p"/books/#{@book.external_id}/edit?return_to=show"}
+          >
+            <CoreComponents.icon name="hero-pencil-square" /> Edit book
+          </CoreComponents.button>
         </:actions>
-      </.header>
+      </CoreComponents.header>
 
-      <.list>
+      <CoreComponents.list>
         <:item title="Name">{@book.name}</:item>
-      </.list>
+      </CoreComponents.list>
     </Layouts.app>
     """
   end

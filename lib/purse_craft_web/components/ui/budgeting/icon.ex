@@ -4,7 +4,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Icon do
   Uses Heroicons.
   """
 
-  use Phoenix.Component
+  use PurseCraftWeb, :html
 
   attr :name, :string, required: true
   attr :class, :string, default: ""

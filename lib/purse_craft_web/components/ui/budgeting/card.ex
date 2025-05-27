@@ -4,7 +4,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Card do
   Uses DaisyUI 5 card classes.
   """
 
-  use Phoenix.Component
+  use PurseCraftWeb, :html
 
   attr :title, :string, required: true
   attr :class, :string, default: ""
@@ -33,23 +33,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Card do
   attr :class, :string, default: ""
 
   def summary_card(assigns) do
-    variant_class =
-      case assigns.variant do
-        "success" -> "bg-success/10 border border-success/20"
-        "info" -> "bg-info/10 border border-info/20"
-        "warning" -> "bg-warning/10 border border-warning/20"
-        "error" -> "bg-error/10 border border-error/20"
-        _ -> "bg-base-200"
-      end
-
-    title_class =
-      case assigns.variant do
-        "success" -> "text-success"
-        "info" -> "text-info"
-        "warning" -> "text-warning"
-        "error" -> "text-error"
-        _ -> ""
-      end
+    variant_class = get_variant_class(assigns.variant)
+    title_class = get_title_class(assigns.variant)
 
     assigns =
       assigns
@@ -67,4 +52,16 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Card do
     </div>
     """
   end
+
+  defp get_variant_class("success"), do: "bg-success/10 border border-success/20"
+  defp get_variant_class("info"), do: "bg-info/10 border border-info/20"
+  defp get_variant_class("warning"), do: "bg-warning/10 border border-warning/20"
+  defp get_variant_class("error"), do: "bg-error/10 border border-error/20"
+  defp get_variant_class(_variant), do: "bg-base-200"
+
+  defp get_title_class("success"), do: "text-success"
+  defp get_title_class("info"), do: "text-info"
+  defp get_title_class("warning"), do: "text-warning"
+  defp get_title_class("error"), do: "text-error"
+  defp get_title_class(_variant), do: ""
 end

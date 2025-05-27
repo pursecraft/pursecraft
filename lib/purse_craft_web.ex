@@ -83,8 +83,6 @@ defmodule PurseCraftWeb do
 
       # HTML escaping functionality
       import Phoenix.HTML
-      # Core UI components
-      import PurseCraftWeb.CoreComponents
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS

@@ -3,26 +3,29 @@ defmodule PurseCraftWeb.UserLive.Settings do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Identity
+  alias PurseCraftWeb.CoreComponents
 
   on_mount {PurseCraftWeb.UserAuth, :require_sudo_mode}
 
   def render(assigns) do
     ~H"""
     <Layouts.marketing flash={@flash} current_scope={@current_scope}>
-      <.header class="text-center">
+      <CoreComponents.header class="text-center">
         Account Settings
         <:subtitle>Manage your account email address and password settings</:subtitle>
-      </.header>
+      </CoreComponents.header>
 
       <.form for={@email_form} id="email_form" phx-submit="update_email" phx-change="validate_email">
-        <.input
+        <CoreComponents.input
           field={@email_form[:email]}
           type="email"
           label="Email"
           autocomplete="username"
           required
         />
-        <.button variant="primary" phx-disable-with="Changing...">Change Email</.button>
+        <CoreComponents.button variant="primary" phx-disable-with="Changing...">
+          Change Email
+        </CoreComponents.button>
       </.form>
 
       <div class="divider" />
@@ -43,22 +46,22 @@ defmodule PurseCraftWeb.UserLive.Settings do
           autocomplete="username"
           value={@current_email}
         />
-        <.input
+        <CoreComponents.input
           field={@password_form[:password]}
           type="password"
           label="New password"
           autocomplete="new-password"
           required
         />
-        <.input
+        <CoreComponents.input
           field={@password_form[:password_confirmation]}
           type="password"
           label="Confirm new password"
           autocomplete="new-password"
         />
-        <.button variant="primary" phx-disable-with="Saving...">
+        <CoreComponents.button variant="primary" phx-disable-with="Saving...">
           Save Password
-        </.button>
+        </CoreComponents.button>
       </.form>
     </Layouts.marketing>
     """

@@ -3,7 +3,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.BudgetHeader do
   Component for displaying the budget header with month navigation.
   """
 
-  use Phoenix.Component
+  use PurseCraftWeb, :html
 
   alias PurseCraftWeb.Components.UI.Budgeting.Icon
 

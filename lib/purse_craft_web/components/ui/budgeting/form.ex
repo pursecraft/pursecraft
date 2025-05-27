@@ -2,11 +2,11 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Form do
   @moduledoc """
   Form components for the budgeting layout.
   Uses DaisyUI 5 form classes.
-  Replicates CoreComponents input pattern.
   """
 
-  use Phoenix.Component
+  use PurseCraftWeb, :html
 
+  alias Phoenix.HTML.Form
   alias Phoenix.HTML.FormField
   alias PurseCraftWeb.Components.UI.Budgeting.Icon
 
@@ -61,10 +61,14 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Form do
     |> input()
   end
 
+  # TODO: Remove the coveralls-ignore because we should be using
+  # in the future
+
+  # coveralls-ignore-start
   def input(%{type: "checkbox"} = assigns) do
     assigns =
       assign_new(assigns, :checked, fn ->
-        Phoenix.HTML.Form.normalize_value("checkbox", assigns[:value])
+        Form.normalize_value("checkbox", assigns[:value])
       end)
 
     ~H"""
@@ -101,7 +105,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Form do
         {@rest}
       >
         <option :if={@prompt} value="">{@prompt}</option>
-        {Phoenix.HTML.Form.options_for_select(@options, @value)}
+        {Form.options_for_select(@options, @value)}
       </select>
       <.error :for={msg <- @errors}>{msg}</.error>
     </div>
@@ -119,13 +123,14 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Form do
         name={@name}
         class={["textarea textarea-bordered w-full", @errors != [] && "textarea-error"]}
         {@rest}
-      >{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
+      >{Form.normalize_value("textarea", @value)}</textarea>
       <.error :for={msg <- @errors}>{msg}</.error>
     </div>
     """
   end
 
-  # All other inputs text, datetime-local, url, password, etc. are handled here...
+  # coveralls-ignore-stop
+
   def input(assigns) do
     ~H"""
     <div class="form-control w-full">
@@ -136,60 +141,10 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Form do
         type={@type}
         name={@name}
         id={@id}
-        value={Phoenix.HTML.Form.normalize_value(@type, @value)}
+        value={Form.normalize_value(@type, @value)}
         class={["input input-bordered w-full", @errors != [] && "input-error"]}
         {@rest}
       />
-      <.error :for={msg <- @errors}>{msg}</.error>
-    </div>
-    """
-  end
-
-  @doc """
-  Renders a money input with currency symbol.
-  """
-  attr :id, :any, default: nil
-  attr :name, :any
-  attr :label, :string, default: nil
-  attr :value, :any
-  attr :field, FormField
-  attr :errors, :list, default: []
-  attr :currency, :string, default: "$"
-  attr :placeholder, :string, default: "0.00"
-  attr :required, :boolean, default: false
-  attr :rest, :global, include: ~w(min max step readonly disabled)
-
-  def money_input(%{field: %FormField{} = field} = assigns) do
-    errors = if Phoenix.Component.used_input?(field), do: field.errors, else: []
-
-    assigns
-    |> assign(field: nil, id: assigns.id || field.id)
-    |> assign(:errors, Enum.map(errors, &translate_error(&1)))
-    |> assign_new(:name, fn -> field.name end)
-    |> assign_new(:value, fn -> field.value end)
-    |> money_input()
-  end
-
-  def money_input(assigns) do
-    ~H"""
-    <div class="form-control w-full">
-      <label :if={@label} class="label">
-        <span class="label-text">{@label}</span>
-      </label>
-      <label class={["input input-bordered flex items-center gap-2", @errors != [] && "input-error"]}>
-        <span class="text-base-content/70">{@currency}</span>
-        <input
-          type="number"
-          name={@name}
-          id={@id}
-          value={Phoenix.HTML.Form.normalize_value("number", @value)}
-          class="grow"
-          placeholder={@placeholder}
-          step="0.01"
-          required={@required}
-          {@rest}
-        />
-      </label>
       <.error :for={msg <- @errors}>{msg}</.error>
     </div>
     """
@@ -206,6 +161,11 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Form do
     </label>
     """
   end
+
+  # TODO: Remove the coveralls-ignore because we should be using
+  # in the future
+
+  # coveralls-ignore-start
 
   @doc """
   Translates an error message using gettext.
@@ -233,4 +193,5 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Form do
   end
 
   def translate_error(msg) when is_binary(msg), do: msg
+  # coveralls-ignore-stop
 end

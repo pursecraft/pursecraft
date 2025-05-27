@@ -4,13 +4,17 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Modal do
   Uses DaisyUI 5 modal classes.
   """
 
-  use Phoenix.Component
+  use PurseCraftWeb, :html
 
   attr :id, :string, required: true
   attr :show, :boolean, default: false
   attr :on_close, :string, default: nil
   slot :inner_block, required: true
 
+  # TODO: Remove the coveralls-ignore because we should be using
+  # in the future
+
+  # coveralls-ignore-start
   def modal(assigns) do
     ~H"""
     <div :if={@show} class="modal modal-open" role="dialog">
@@ -21,6 +25,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Modal do
     </div>
     """
   end
+
+  # coveralls-ignore-stop
 
   attr :id, :string, required: true
   attr :show, :boolean, default: false

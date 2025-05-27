@@ -3,12 +3,13 @@ defmodule PurseCraftWeb.UserLive.Login do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Identity
+  alias PurseCraftWeb.CoreComponents
 
   def render(assigns) do
     ~H"""
     <Layouts.marketing flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto max-w-sm">
-        <.header class="text-center">
+        <CoreComponents.header class="text-center">
           <p>Log in</p>
           <:subtitle>
             <%= if @current_scope do %>
@@ -21,7 +22,7 @@ defmodule PurseCraftWeb.UserLive.Login do
               >Sign up</.link> for an account now.
             <% end %>
           </:subtitle>
-        </.header>
+        </CoreComponents.header>
 
         <.form
           :let={f}
@@ -30,7 +31,7 @@ defmodule PurseCraftWeb.UserLive.Login do
           action={~p"/users/log-in"}
           phx-submit="submit_magic"
         >
-          <.input
+          <CoreComponents.input
             readonly={!!@current_scope}
             field={f[:email]}
             type="email"
@@ -39,9 +40,9 @@ defmodule PurseCraftWeb.UserLive.Login do
             required
             phx-mounted={JS.focus()}
           />
-          <.button class="w-full" variant="primary">
+          <CoreComponents.button class="w-full" variant="primary">
             Log in with email <span aria-hidden="true">→</span>
-          </.button>
+          </CoreComponents.button>
         </.form>
 
         <div class="divider">or</div>
@@ -54,7 +55,7 @@ defmodule PurseCraftWeb.UserLive.Login do
           phx-submit="submit_password"
           phx-trigger-action={@trigger_submit}
         >
-          <.input
+          <CoreComponents.input
             readonly={!!@current_scope}
             field={f[:email]}
             type="email"
@@ -62,21 +63,21 @@ defmodule PurseCraftWeb.UserLive.Login do
             autocomplete="username"
             required
           />
-          <.input
+          <CoreComponents.input
             field={@form[:password]}
             type="password"
             label="Password"
             autocomplete="current-password"
           />
-          <.input
+          <CoreComponents.input
             :if={!@current_scope}
             field={f[:remember_me]}
             type="checkbox"
             label="Keep me logged in"
           />
-          <.button class="w-full" variant="primary">
+          <CoreComponents.button class="w-full" variant="primary">
             Log in <span aria-hidden="true">→</span>
-          </.button>
+          </CoreComponents.button>
         </.form>
 
         <div :if={local_mail_adapter?()} class="alert alert-outline mt-8">

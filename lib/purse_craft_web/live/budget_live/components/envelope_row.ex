@@ -3,7 +3,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.EnvelopeRow do
   Component for displaying an envelope row in the budget view.
   """
 
-  use Phoenix.Component
+  use PurseCraftWeb, :html
 
   alias PurseCraftWeb.Components.UI.Budgeting.Icon
 
