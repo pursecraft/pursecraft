@@ -4,21 +4,22 @@ defmodule PurseCraftWeb.BookLive.Index do
 
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraftWeb.CoreComponents
 
   @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <.header>
+      <CoreComponents.header>
         Listing Books
         <:actions>
-          <.button variant="primary" navigate={~p"/books/new"}>
-            <.icon name="hero-plus" /> New Book
-          </.button>
+          <CoreComponents.button variant="primary" navigate={~p"/books/new"}>
+            <CoreComponents.icon name="hero-plus" /> New Book
+          </CoreComponents.button>
         </:actions>
-      </.header>
+      </CoreComponents.header>
 
-      <.table
+      <CoreComponents.table
         id="books"
         rows={@streams.books}
         row_id={fn {_id, book} -> "books-#{book.external_id}" end}
@@ -38,14 +39,14 @@ defmodule PurseCraftWeb.BookLive.Index do
           <.link
             phx-click={
               JS.push("delete", value: %{external_id: book.external_id})
-              |> hide("#books-#{book.external_id}")
+              |> CoreComponents.hide("#books-#{book.external_id}")
             }
             data-confirm="Are you sure?"
           >
             Delete
           </.link>
         </:action>
-      </.table>
+      </CoreComponents.table>
     </Layouts.app>
     """
   end

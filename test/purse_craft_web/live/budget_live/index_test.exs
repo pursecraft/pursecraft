@@ -178,7 +178,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".modal-open")
       assert has_element?(view, "h3", "Edit Category")
       assert has_element?(view, "input[value='Housing']")
-      assert has_element?(view, "form[phx-submit='update-category']")
+      assert has_element?(view, "form[phx-submit='save_category']")
       assert has_element?(view, "button[type='submit']", "Update")
     end
 
@@ -250,7 +250,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
       assert has_element?(view, "h3", "Add New Category")
       assert has_element?(view, "button[type='submit']", "Create")
-      assert has_element?(view, "form[phx-submit='create-category']")
+      assert has_element?(view, "form[phx-submit='save_category']")
     end
 
     test "shows error when category is not found during edit", %{conn: conn, book: book} do
@@ -296,12 +296,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
       refute has_element?(
                view,
-               "button[phx-click='open_delete_modal'][phx-value-id='#{category_with_envelope.external_id}']"
+               "button[phx-click='delete_category_confirm'][phx-value-id='#{category_with_envelope.external_id}']"
              )
 
       assert has_element?(
                view,
-               "button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']"
+               "button[phx-click='delete_category_confirm'][phx-value-id='#{empty_category.external_id}']"
              )
     end
 
@@ -313,7 +313,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']")
+      |> element("button[phx-click='delete_category_confirm'][phx-value-id='#{empty_category.external_id}']")
       |> render_click()
 
       assert has_element?(view, ".modal-open")
@@ -331,7 +331,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']")
+      |> element("button[phx-click='delete_category_confirm'][phx-value-id='#{empty_category.external_id}']")
       |> render_click()
 
       assert has_element?(view, ".modal-open")
@@ -351,7 +351,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']")
+      |> element("button[phx-click='delete_category_confirm'][phx-value-id='#{empty_category.external_id}']")
       |> render_click()
 
       view
@@ -370,7 +370,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']")
+      |> element("button[phx-click='delete_category_confirm'][phx-value-id='#{empty_category.external_id}']")
       |> render_click()
 
       stub(Budgeting, :delete_category, fn _scope, _book, _category ->
@@ -392,7 +392,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_delete_modal'][phx-value-id='#{empty_category.external_id}']")
+      |> element("button[phx-click='delete_category_confirm'][phx-value-id='#{empty_category.external_id}']")
       |> render_click()
 
       stub(Budgeting, :delete_category, fn _scope, _book, _category ->
@@ -406,7 +406,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".alert-error", "Error deleting category")
     end
 
-    test "shows error when category is not found during open_delete_modal", %{conn: conn, book: book} do
+    test "shows error when category is not found during delete_category_confirm", %{conn: conn, book: book} do
       non_existent_id = Ecto.UUID.generate()
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
@@ -414,7 +414,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
         {:error, :not_found}
       end)
 
-      render_click(view, "open_delete_modal", %{"id" => non_existent_id})
+      render_click(view, "delete_category_confirm", %{"id" => non_existent_id})
 
       assert has_element?(view, ".alert-error", "Category not found")
     end
@@ -426,7 +426,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
         {:error, :unauthorized}
       end)
 
-      render_click(view, "open_delete_modal", %{"id" => empty_category.external_id})
+      render_click(view, "delete_category_confirm", %{"id" => empty_category.external_id})
 
       assert has_element?(view, ".alert-error", "You don't have permission to delete this category")
     end
@@ -450,7 +450,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       end)
 
       view
-      |> element("button[phx-click='open_delete_envelope_modal'][phx-value-id='#{envelope.external_id}']")
+      |> element("button[phx-click='delete_envelope_confirm'][phx-value-id='#{envelope.external_id}']")
       |> render_click()
 
       assert has_element?(view, ".modal-open")
@@ -477,7 +477,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       end)
 
       view
-      |> element("button[phx-click='open_delete_envelope_modal'][phx-value-id='#{envelope.external_id}']")
+      |> element("button[phx-click='delete_envelope_confirm'][phx-value-id='#{envelope.external_id}']")
       |> render_click()
 
       assert has_element?(view, ".modal-open")
@@ -506,7 +506,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       end)
 
       view
-      |> element("button[phx-click='open_delete_envelope_modal'][phx-value-id='#{envelope.external_id}']")
+      |> element("button[phx-click='delete_envelope_confirm'][phx-value-id='#{envelope.external_id}']")
       |> render_click()
 
       stub(Budgeting, :delete_envelope, fn _scope, _book, _envelope ->
@@ -539,7 +539,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       end)
 
       view
-      |> element("button[phx-click='open_delete_envelope_modal'][phx-value-id='#{envelope.external_id}']")
+      |> element("button[phx-click='delete_envelope_confirm'][phx-value-id='#{envelope.external_id}']")
       |> render_click()
 
       stub(Budgeting, :delete_envelope, fn _scope, _book, _envelope ->
@@ -570,7 +570,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       end)
 
       view
-      |> element("button[phx-click='open_delete_envelope_modal'][phx-value-id='#{envelope.external_id}']")
+      |> element("button[phx-click='delete_envelope_confirm'][phx-value-id='#{envelope.external_id}']")
       |> render_click()
 
       stub(Budgeting, :delete_envelope, fn _scope, _book, _envelope ->
@@ -584,7 +584,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".alert-error", "Error deleting envelope")
     end
 
-    test "shows error when envelope is not found during open_delete_envelope_modal", %{
+    test "shows error when envelope is not found during delete_envelope_confirm", %{
       conn: conn,
       book: book
     } do
@@ -595,7 +595,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
         {:error, :not_found}
       end)
 
-      render_click(view, "open_delete_envelope_modal", %{"id" => non_existent_id})
+      render_click(view, "delete_envelope_confirm", %{"id" => non_existent_id})
 
       assert has_element?(view, ".alert-error", "Envelope not found")
     end
@@ -611,7 +611,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
         {:error, :unauthorized}
       end)
 
-      render_click(view, "open_delete_envelope_modal", %{"id" => envelope.external_id})
+      render_click(view, "delete_envelope_confirm", %{"id" => envelope.external_id})
 
       assert has_element?(view, ".alert-error", "You don't have permission to delete this envelope")
     end
@@ -641,7 +641,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".modal-open")
       assert has_element?(view, "h3", "Edit Envelope")
       assert has_element?(view, "input[value='Rent']")
-      assert has_element?(view, "form[phx-submit='update-envelope']")
+      assert has_element?(view, "form[phx-submit='save_envelope']")
       assert has_element?(view, "button[type='submit']", "Update")
     end
 
@@ -803,12 +803,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       refute has_element?(view, ".modal-open")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
+      |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       assert has_element?(view, "h3", "Add New Envelope")
       assert has_element?(view, "button[type='submit']", "Create")
-      assert has_element?(view, "form[phx-submit='create-envelope']")
+      assert has_element?(view, "form[phx-submit='save_envelope']")
     end
   end
 
@@ -821,12 +821,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
+      |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       assert has_element?(view, ".modal-open")
       assert has_element?(view, "h3", "Add New Envelope")
-      assert has_element?(view, "form[phx-submit='create-envelope']")
+      assert has_element?(view, "form[phx-submit='save_envelope']")
       assert has_element?(view, "label", "Envelope Name")
     end
 
@@ -838,7 +838,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
+      |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       assert has_element?(view, ".modal-open")
@@ -858,7 +858,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
+      |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       assert has_element?(view, ".modal-open")
@@ -874,7 +874,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
+      |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       view
@@ -894,7 +894,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
+      |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       view
@@ -912,7 +912,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
-      |> element("button[phx-click='open_envelope_modal'][phx-value-id='#{category.external_id}']")
+      |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
       |> render_click()
 
       stub(Policy, :authorize, fn :envelope_create, _scope, _resource ->
@@ -927,7 +927,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       refute has_element?(view, ".modal-open")
     end
 
-    test "shows error when category is not found during open_envelope_modal", %{conn: conn, book: book} do
+    test "shows error when category is not found during new_envelope", %{conn: conn, book: book} do
       non_existent_id = Ecto.UUID.generate()
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
@@ -935,7 +935,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
         {:error, :not_found}
       end)
 
-      render_click(view, "open_envelope_modal", %{"id" => non_existent_id})
+      render_click(view, "new_envelope", %{"id" => non_existent_id})
 
       assert has_element?(view, ".alert-error", "Category not found")
     end
@@ -951,7 +951,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
         {:error, :unauthorized}
       end)
 
-      render_click(view, "open_envelope_modal", %{"id" => category.external_id})
+      render_click(view, "new_envelope", %{"id" => category.external_id})
 
       assert has_element?(view, ".alert-error", "You don't have permission to access this category")
     end

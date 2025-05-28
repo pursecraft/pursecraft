@@ -4,21 +4,26 @@ defmodule PurseCraftWeb.BookLive.Form do
 
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraftWeb.CoreComponents
 
   @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <.header>
+      <CoreComponents.header>
         {@page_title}
         <:subtitle>Use this form to manage book records in your database.</:subtitle>
-      </.header>
+      </CoreComponents.header>
 
       <.form for={@form} id="book-form" phx-change="validate" phx-submit="save">
-        <.input field={@form[:name]} type="text" label="Name" />
+        <CoreComponents.input field={@form[:name]} type="text" label="Name" />
         <footer>
-          <.button phx-disable-with="Saving..." variant="primary">Save Book</.button>
-          <.button navigate={return_path(@current_scope, @return_to, @book)}>Cancel</.button>
+          <CoreComponents.button phx-disable-with="Saving..." variant="primary">
+            Save Book
+          </CoreComponents.button>
+          <CoreComponents.button navigate={return_path(@current_scope, @return_to, @book)}>
+            Cancel
+          </CoreComponents.button>
         </footer>
       </.form>
     </Layouts.app>

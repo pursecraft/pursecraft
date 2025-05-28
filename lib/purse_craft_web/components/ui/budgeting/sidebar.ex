@@ -5,6 +5,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
   use PurseCraftWeb, :live_component
 
   alias Phoenix.LiveView.JS
+  alias PurseCraftWeb.Components.UI.Budgeting.Icon
 
   @impl Phoenix.LiveComponent
   def mount(socket) do
@@ -133,7 +134,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
                 href={get_book_path(@current_path, "accounts/new")}
                 class="text-xs flex items-center gap-1 text-base-content/70 hover:text-base-content"
               >
-                <.icon name="hero-plus-small" class="h-3 w-3" />
+                <Icon.icon name="plus-small" class="h-3 w-3" />
                 <span>Add Account</span>
               </.link>
             </div>
@@ -164,7 +165,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
               class="btn btn-ghost btn-sm"
               aria-label="Log out"
             >
-              <.icon name="hero-arrow-right-on-rectangle" class="h-5 w-5" />
+              <Icon.icon name="arrow-right-on-rectangle" class="h-5 w-5" />
             </.link>
           </div>
 
@@ -180,7 +181,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
           phx-click={JS.push("toggle", target: @myself)}
           aria-label="Toggle menu"
         >
-          <.icon name="hero-bars-3" class="h-6 w-6" />
+          <Icon.icon name="bars-3" class="h-6 w-6" />
         </button>
       </div>
     </div>
@@ -206,7 +207,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
       href={@path}
       class={"flex items-center px-3 py-2 text-sm rounded-lg #{if @active, do: "bg-primary text-primary-content", else: "text-base-content hover:bg-base-300"}"}
     >
-      <.icon name={@icon} class="mr-3 h-5 w-5" />
+      <Icon.icon name={String.replace(@icon, "hero-", "")} class="mr-3 h-5 w-5" />
       {@label}
     </.link>
     """

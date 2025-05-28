@@ -3,12 +3,13 @@ defmodule PurseCraftWeb.UserLive.Confirmation do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Identity
+  alias PurseCraftWeb.CoreComponents
 
   def render(assigns) do
     ~H"""
     <Layouts.marketing flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto max-w-sm">
-        <.header class="text-center">Welcome {@user.email}</.header>
+        <CoreComponents.header class="text-center">Welcome {@user.email}</CoreComponents.header>
 
         <.form
           :if={!@user.confirmed_at}
@@ -19,15 +20,15 @@ defmodule PurseCraftWeb.UserLive.Confirmation do
           phx-trigger-action={@trigger_submit}
         >
           <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
-          <.input
+          <CoreComponents.input
             :if={!@current_scope}
             field={@form[:remember_me]}
             type="checkbox"
             label="Keep me logged in"
           />
-          <.button variant="primary" phx-disable-with="Confirming..." class="w-full">
+          <CoreComponents.button variant="primary" phx-disable-with="Confirming..." class="w-full">
             Confirm my account
-          </.button>
+          </CoreComponents.button>
         </.form>
 
         <.form
@@ -39,13 +40,15 @@ defmodule PurseCraftWeb.UserLive.Confirmation do
           phx-trigger-action={@trigger_submit}
         >
           <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
-          <.input
+          <CoreComponents.input
             :if={!@current_scope}
             field={@form[:remember_me]}
             type="checkbox"
             label="Keep me logged in"
           />
-          <.button variant="primary" phx-disable-with="Logging in..." class="w-full">Log in</.button>
+          <CoreComponents.button variant="primary" phx-disable-with="Logging in..." class="w-full">
+            Log in
+          </CoreComponents.button>
         </.form>
 
         <p :if={!@user.confirmed_at} class="alert alert-outline mt-8">
