@@ -8,10 +8,11 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Icon do
 
   attr :name, :string, required: true
   attr :class, :string, default: ""
+  attr :id, :string, default: nil
 
   def icon(assigns) do
     ~H"""
-    <span class={["hero-#{@name}", @class]} />
+    <span id={@id} class={["hero-#{@name}", @class]} />
     """
   end
 end
