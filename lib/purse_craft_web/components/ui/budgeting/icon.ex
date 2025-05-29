@@ -12,7 +12,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Icon do
 
   def icon(assigns) do
     ~H"""
-    <span id={@id} class={["hero-#{@name}", @class]}></span>
+    <span id={@id} class={["hero-#{@name}", @class]} />
     """
   end
 end
