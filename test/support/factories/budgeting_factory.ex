@@ -23,7 +23,8 @@ defmodule PurseCraft.BudgetingFactory do
 
   def category_factory do
     %Category{
-      name: Faker.Industry.industry()
+      name: Faker.Industry.industry(),
+      position: sequence(:category_position, &generate_lowercase_position/1)
     }
   end
 
@@ -37,5 +38,16 @@ defmodule PurseCraft.BudgetingFactory do
     %User{
       email: valid_email()
     }
+  end
+
+  defp generate_lowercase_position(n) when n <= 26 do
+    <<?a + n - 1>>
+  end
+
+  defp generate_lowercase_position(n) do
+    # For n > 26, generate aa, ab, ac, etc.
+    first = div(n - 27, 26)
+    second = rem(n - 27, 26)
+    <<?a + first, ?a + second>>
   end
 end
