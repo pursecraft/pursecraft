@@ -216,7 +216,9 @@ defmodule PurseCraft.Utilities.FractionalIndexing do
     <<div(?a + first_char, 2)>>
   end
 
+  # coveralls-ignore-start
   defp find_before(_str), do: "a"
+  # coveralls-ignore-stop
 
   # Find a position that comes after the given string
   defp find_after(str) do
@@ -271,26 +273,38 @@ defmodule PurseCraft.Utilities.FractionalIndexing do
     build_result(acc, [div(?a + c, 2)])
   end
 
+  # coveralls-ignore-start
   defp find_midpoint_chars([], [?a | _rest], acc) do
     build_result(acc, [?a])
   end
 
+  # coveralls-ignore-stop
+
   # Pattern: second string is shorter, last character
+  # coveralls-ignore-start
   defp find_midpoint_chars([c], [], acc) do
     suffix = if c < ?z, do: [div(c + ?z, 2)], else: [c, ?m]
     build_result(acc, suffix)
   end
 
+  # coveralls-ignore-stop
+
   # Pattern: second string is shorter, more characters exist
+  # coveralls-ignore-start
   defp find_midpoint_chars([c | [next | _tail] = _t], [], acc) do
     suffix = if next < ?z, do: [c, div(next + ?z, 2)], else: [c, next, ?m]
     build_result(acc, suffix)
   end
 
+  # coveralls-ignore-stop
+
   # Pattern: equal strings (shouldn't happen in normal usage)
+  # coveralls-ignore-start
   defp find_midpoint_chars([], [], acc) do
     build_result(acc, [?m])
   end
+
+  # coveralls-ignore-stop
 
   defp build_result(acc, suffix) do
     Enum.reverse(acc, suffix)

@@ -88,6 +88,14 @@ defmodule PurseCraft.Utilities.FractionalIndexingTest do
       assert {:error, :invalid_position} = FractionalIndexing.between("a😀", "b😀")
     end
 
+    test "returns error for non-string arguments" do
+      assert {:error, :invalid_position} = FractionalIndexing.between(123, 456)
+      assert {:error, :invalid_position} = FractionalIndexing.between(:atom, :other)
+      assert {:error, :invalid_position} = FractionalIndexing.between(%{}, [])
+      assert {:error, :invalid_position} = FractionalIndexing.between(123, "abc")
+      assert {:error, :invalid_position} = FractionalIndexing.between("abc", 456)
+    end
+
     test "supports category repositioning workflow" do
       assert {:ok, categories} = FractionalIndexing.initial_positions(5)
       [cat1, cat2, _cat3, _cat4, cat5] = categories
@@ -307,6 +315,18 @@ defmodule PurseCraft.Utilities.FractionalIndexingTest do
         assert length(Enum.uniq(results)) == 1
       end
     end
+
+    test "handles complex midpoint finding scenarios" do
+      assert {:ok, position} = FractionalIndexing.between("ba", "bab")
+      assert position > "ba"
+      assert position < "bab"
+      assert FractionalIndexing.valid_position?(position)
+
+      assert {:ok, position} = FractionalIndexing.between("bab", "bb")
+      assert position > "bab"
+      assert position < "bb"
+      assert FractionalIndexing.valid_position?(position)
+    end
   end
 
   describe "initial_positions/1" do
@@ -346,6 +366,10 @@ defmodule PurseCraft.Utilities.FractionalIndexingTest do
 
     test "handles single item" do
       assert {:ok, ["m"]} = FractionalIndexing.initial_positions(1)
+    end
+
+    test "generates specific positions for count 4" do
+      assert {:ok, ["f", "k", "p", "u"]} = FractionalIndexing.initial_positions(4)
     end
 
     test "handles empty list" do
