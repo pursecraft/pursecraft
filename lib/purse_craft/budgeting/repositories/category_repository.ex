@@ -159,4 +159,28 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   def delete(category) do
     Repo.delete(category)
   end
+
+  @doc """
+  Gets the position of the first category in a book (ordered by position).
+
+  Returns the position as a string, or nil if no categories exist.
+
+  ## Examples
+
+      iex> get_first_position(1)
+      "g"
+
+      iex> get_first_position(999)
+      nil
+
+  """
+  @spec get_first_position(integer()) :: String.t() | nil
+  def get_first_position(book_id) do
+    book_id
+    |> CategoryQuery.by_book_id()
+    |> CategoryQuery.order_by_position()
+    |> CategoryQuery.limit(1)
+    |> CategoryQuery.select_position()
+    |> Repo.one()
+  end
 end

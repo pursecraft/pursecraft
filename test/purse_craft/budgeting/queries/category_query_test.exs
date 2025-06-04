@@ -84,4 +84,67 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQueryTest do
       assert hd(query.wheres).params == [{book_id, {0, :book_id}}]
     end
   end
+
+  describe "order_by_position/0" do
+    test "creates a query ordered by position in ascending order" do
+      query = CategoryQuery.order_by_position()
+
+      assert query.from.source == {"categories", Category}
+      assert length(query.order_bys) == 1
+
+      [order_by] = query.order_bys
+      assert order_by.expr == [asc: {{:., [], [{:&, [], [0]}, :position]}, [], []}]
+    end
+  end
+
+  describe "order_by_position/1" do
+    test "adds position ordering to existing query" do
+      base_query = from(c in Category, where: c.book_id == 1)
+      query = CategoryQuery.order_by_position(base_query)
+
+      assert length(query.order_bys) == 1
+      [order_by] = query.order_bys
+      assert order_by.expr == [asc: {{:., [], [{:&, [], [0]}, :position]}, [], []}]
+    end
+  end
+
+  describe "limit/1" do
+    test "creates a query with limit" do
+      count = 5
+      query = CategoryQuery.limit(count)
+
+      assert query.from.source == {"categories", Category}
+      assert query.limit.expr == {:^, [], [0]}
+      assert query.limit.params == [{5, :integer}]
+    end
+  end
+
+  describe "limit/2" do
+    test "adds limit to existing query" do
+      base_query = from(c in Category, where: c.book_id == 1)
+      count = 10
+      query = CategoryQuery.limit(base_query, count)
+
+      assert query.limit.expr == {:^, [], [0]}
+      assert query.limit.params == [{10, :integer}]
+    end
+  end
+
+  describe "select_position/0" do
+    test "creates a query selecting only position field" do
+      query = CategoryQuery.select_position()
+
+      assert query.from.source == {"categories", Category}
+      assert query.select.expr == {{:., [], [{:&, [], [0]}, :position]}, [], []}
+    end
+  end
+
+  describe "select_position/1" do
+    test "adds position selection to existing query" do
+      base_query = from(c in Category, where: c.book_id == 1)
+      query = CategoryQuery.select_position(base_query)
+
+      assert query.select.expr == {{:., [], [{:&, [], [0]}, :position]}, [], []}
+    end
+  end
 end

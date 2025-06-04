@@ -177,4 +177,25 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
       assert_raise Ecto.NoResultsError, fn -> Repo.get!(Category, category.id) end
     end
   end
+
+  describe "get_first_position/1" do
+    test "returns the position of the first category when categories exist" do
+      book = BudgetingFactory.insert(:book)
+      BudgetingFactory.insert(:category, book: book, position: "m")
+      BudgetingFactory.insert(:category, book: book, position: "g")
+      BudgetingFactory.insert(:category, book: book, position: "t")
+
+      result = CategoryRepository.get_first_position(book.id)
+
+      assert result == "g"
+    end
+
+    test "returns nil when no categories exist for the book" do
+      book = BudgetingFactory.insert(:book)
+
+      result = CategoryRepository.get_first_position(book.id)
+
+      assert result == nil
+    end
+  end
 end
