@@ -228,7 +228,7 @@ defmodule PurseCraft.Budgeting do
 
   """
   @spec create_category(Scope.t(), Book.t(), CreateCategory.create_attrs()) ::
-          {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
+          {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized} | {:error, :cannot_place_at_top}
   defdelegate create_category(scope, book, attrs \\ %{}), to: CreateCategory, as: :call
 
   @doc """

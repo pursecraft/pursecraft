@@ -16,7 +16,8 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
 
   @type create_attrs :: %{
           optional(:name) => String.t(),
-          required(:book_id) => integer()
+          required(:book_id) => integer(),
+          required(:position) => String.t()
         }
 
   @type update_attrs :: %{
