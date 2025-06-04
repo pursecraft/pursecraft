@@ -50,4 +50,14 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
     |> cast(attrs, [:name, :position, :book_id])
     |> validate_required([:name, :position, :book_id])
   end
+
+  @doc false
+  @spec position_changeset(t(), %{position: String.t()}) :: Ecto.Changeset.t()
+  def position_changeset(category, attrs) do
+    category
+    |> cast(attrs, [:position])
+    |> validate_required([:position])
+    |> validate_format(:position, ~r/^[a-z]+$/, message: "must contain only lowercase letters")
+    |> unique_constraint(:position, name: :categories_book_id_position_index)
+  end
 end

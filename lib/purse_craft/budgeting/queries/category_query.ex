@@ -116,4 +116,26 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQuery do
   def select_position(queryable) do
     from(c in queryable, select: c.position)
   end
+
+  @doc """
+  Returns a query for finding categories by a list of external IDs.
+
+  ## Examples
+
+      iex> by_external_ids(["id1", "id2", "id3"])
+      #Ecto.Query<...>
+
+      iex> Category |> by_external_ids(["id1", "id2"])
+      #Ecto.Query<...>
+
+  """
+  @spec by_external_ids([Ecto.UUID.t()]) :: Ecto.Query.t()
+  def by_external_ids(external_ids) do
+    by_external_ids(Category, external_ids)
+  end
+
+  @spec by_external_ids(Ecto.Queryable.t(), [Ecto.UUID.t()]) :: Ecto.Query.t()
+  def by_external_ids(queryable, external_ids) do
+    from(c in queryable, where: c.external_id in ^external_ids)
+  end
 end

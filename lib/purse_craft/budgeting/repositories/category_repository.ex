@@ -162,6 +162,25 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   end
 
   @doc """
+  Updates the position of a category.
+
+  ## Examples
+
+      iex> update_position(category, "m")
+      {:ok, %Category{position: "m"}}
+
+      iex> update_position(category, "ABC")
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec update_position(Category.t(), String.t()) :: {:ok, Category.t()} | {:error, Ecto.Changeset.t()}
+  def update_position(category, new_position) do
+    category
+    |> Category.position_changeset(%{position: new_position})
+    |> Repo.update()
+  end
+
+  @doc """
   Gets the position of the first category in a book (ordered by position).
 
   Returns the position as a string, or nil if no categories exist.
@@ -183,5 +202,34 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
     |> CategoryQuery.limit(1)
     |> CategoryQuery.select_position()
     |> Repo.one()
+  end
+
+  @doc """
+  Gets multiple categories by their external IDs.
+
+  Returns a list of categories that match the given external IDs.
+
+  ## Options
+
+  The `:preload` option accepts a list of associations to preload.
+
+  ## Examples
+
+      iex> list_by_external_ids(["id1", "id2", "id3"])
+      [%Category{}, %Category{}]
+
+      iex> list_by_external_ids(["id1", "id2"], preload: [:book])
+      [%Category{book: %Book{}}, %Category{book: %Book{}}]
+
+  """
+  @spec list_by_external_ids([Ecto.UUID.t()], list_options()) :: [Category.t()]
+  def list_by_external_ids(external_ids, opts \\ []) when is_list(external_ids) do
+    categories =
+      external_ids
+      |> CategoryQuery.by_external_ids()
+      |> Repo.all()
+
+    preloads = Keyword.get(opts, :preload, [])
+    if preloads == [], do: categories, else: Repo.preload(categories, preloads)
   end
 end
