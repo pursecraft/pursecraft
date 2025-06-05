@@ -14,9 +14,12 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
 
   def category_section(assigns) do
     ~H"""
-    <div id={@id} class="mb-4">
-      <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1 group">
+    <div id={@id} data-category-id={@category.external_id} class="mb-4 group">
+      <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1">
         <div class="flex items-center gap-2 w-1/2">
+          <button class="drag-handle cursor-move btn btn-ghost btn-xs hidden group-hover:inline-flex touch:inline-flex">
+            <Icon.icon name="bars-3" class="w-4 h-4" />
+          </button>
           <button class="btn btn-ghost btn-xs" phx-click={toggle_category(@category.external_id)}>
             <Icon.icon
               name="chevron-down"

@@ -84,7 +84,18 @@
     <div class="space-y-2">
       <div class="overflow-x-auto">
         <div class="min-w-[600px]">
-          <div id="budget-categories" phx-update="stream" class="space-y-4">
+          <div
+            id="categories"
+            phx-hook="DragDrop"
+            phx-update="stream"
+            class="space-y-4"
+            data-item-id-attribute="categoryId"
+            data-reposition-event="reposition_category"
+            data-deletion-event="category_deleted"
+            data-id-field="category_id"
+            data-prev-id-field="prev_category_id"
+            data-next-id-field="next_category_id"
+          >
             <CategorySection.category_section
               :for={{dom_id, category} <- @streams.categories}
               id={dom_id}

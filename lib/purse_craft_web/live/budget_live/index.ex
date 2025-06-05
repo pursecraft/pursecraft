@@ -349,7 +349,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
     categories =
       Budgeting.list_categories(socket.assigns.current_scope, socket.assigns.book, preload: [:envelopes])
 
-    {:noreply, stream(:categories, categories, reset: true)}
+    {:noreply, stream(socket, :categories, categories, reset: true)}
   end
 
   @impl Phoenix.LiveView

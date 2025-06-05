@@ -40,14 +40,32 @@ defmodule PurseCraft.BudgetingFactory do
     }
   end
 
+  defp generate_lowercase_position(1), do: "m"
+
   defp generate_lowercase_position(n) when n <= 26 do
-    <<?a + n - 1>>
+    if rem(n, 2) == 1 do
+      offset = div(n - 1, 2)
+      char_code = ?m + offset
+
+      if char_code <= ?z do
+        <<char_code>>
+      else
+        "ma"
+      end
+    else
+      offset = div(n, 2)
+      char_code = ?m - offset
+
+      if char_code >= ?a do
+        <<char_code>>
+      else
+        "mb"
+      end
+    end
   end
 
   defp generate_lowercase_position(n) do
-    # For n > 26, generate aa, ab, ac, etc.
-    first = div(n - 27, 26)
-    second = rem(n - 27, 26)
-    <<?a + first, ?a + second>>
+    second_offset = rem(n - 27, 26)
+    "m" <> <<?a + second_offset>>
   end
 end
