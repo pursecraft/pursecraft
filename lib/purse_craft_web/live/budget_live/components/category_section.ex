@@ -18,11 +18,11 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
       <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1">
         <div class="flex items-center gap-2 w-1/2">
           <button class="drag-handle cursor-move btn btn-ghost btn-xs hidden group-hover:inline-flex touch:inline-flex">
-            <Icon.icon name="bars-3" class="w-4 h-4" />
+            <Icon.icon name="hero-bars-3" class="w-4 h-4" />
           </button>
           <button class="btn btn-ghost btn-xs" phx-click={toggle_category(@category.external_id)}>
             <Icon.icon
-              name="chevron-down"
+              name="hero-chevron-down"
               class="h-4 w-4 transition-transform"
               id={"toggle-icon-#{@category.external_id}"}
             />
@@ -33,7 +33,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
             phx-click="edit_category"
             phx-value-id={@category.external_id}
           >
-            <Icon.icon name="pencil-square" class="h-4 w-4" />
+            <Icon.icon name="hero-pencil-square" class="h-4 w-4" />
           </button>
           <%= if Enum.empty?(@category.envelopes) do %>
             <button
@@ -41,7 +41,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
               phx-click="delete_category_confirm"
               phx-value-id={@category.external_id}
             >
-              <Icon.icon name="trash" class="h-4 w-4" />
+              <Icon.icon name="hero-trash" class="h-4 w-4" />
             </button>
           <% end %>
           <button
@@ -49,7 +49,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
             phx-click="new_envelope"
             phx-value-id={@category.external_id}
           >
-            <Icon.icon name="plus" class="h-4 w-4" />
+            <Icon.icon name="hero-plus" class="h-4 w-4" />
           </button>
         </div>
         <div class="flex justify-end w-1/2 text-xs sm:text-sm font-medium">

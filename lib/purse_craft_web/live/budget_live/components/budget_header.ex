@@ -19,11 +19,11 @@ defmodule PurseCraftWeb.BudgetLive.Components.BudgetHeader do
         <h1 class="text-2xl font-bold">Budget - {@book_name}</h1>
         <div class="flex items-center">
           <button class="btn btn-ghost btn-sm">
-            <Icon.icon name="chevron-left" class="h-4 w-4" />
+            <Icon.icon name="hero-chevron-left" class="h-4 w-4" />
           </button>
           <span class="font-medium mx-2">{@current_month}</span>
           <button class="btn btn-ghost btn-sm">
-            <Icon.icon name="chevron-right" class="h-4 w-4" />
+            <Icon.icon name="hero-chevron-right" class="h-4 w-4" />
           </button>
         </div>
       </div>
