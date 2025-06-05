@@ -17,7 +17,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
     <div id={@id} data-category-id={@category.external_id} class="mb-4">
       <div class="flex items-center justify-between py-2 border-b border-base-300 mb-1 group">
         <div class="flex items-center gap-2 w-1/2">
-          <button class="drag-handle cursor-move btn btn-ghost btn-xs hidden group-hover:inline-flex touch:inline-flex">
+          <button class="drag-handle cursor-move btn btn-ghost btn-xs hidden sm:group-hover:inline-flex">
             <Icon.icon name="hero-bars-3" class="w-4 h-4" />
           </button>
           <button class="btn btn-ghost btn-xs" phx-click={toggle_category(@category.external_id)}>
@@ -29,7 +29,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
           </button>
           <h3 class="font-bold">{@category.name}</h3>
           <button
-            class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity"
+            class="btn btn-ghost btn-xs opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
             phx-click="edit_category"
             phx-value-id={@category.external_id}
           >
@@ -37,7 +37,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
           </button>
           <%= if Enum.empty?(@category.envelopes) do %>
             <button
-              class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity text-error"
+              class="btn btn-ghost btn-xs opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-error"
               phx-click="delete_category_confirm"
               phx-value-id={@category.external_id}
             >
@@ -45,7 +45,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
             </button>
           <% end %>
           <button
-            class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity text-success"
+            class="btn btn-ghost btn-xs opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-success"
             phx-click="new_envelope"
             phx-value-id={@category.external_id}
           >

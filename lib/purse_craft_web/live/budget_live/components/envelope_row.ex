@@ -36,14 +36,14 @@ defmodule PurseCraftWeb.BudgetLive.Components.EnvelopeRow do
       <div class="flex items-center w-1/2">
         <span class="font-medium truncate pl-6 sm:pl-8">{@name}</span>
         <button
-          class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity ml-2"
+          class="btn btn-ghost btn-xs opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ml-2"
           phx-click="edit_envelope"
           phx-value-id={@id}
         >
           <Icon.icon name="hero-pencil-square" class="h-4 w-4" />
         </button>
         <button
-          class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity text-error"
+          class="btn btn-ghost btn-xs opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-error"
           phx-click="delete_envelope_confirm"
           phx-value-id={@id}
         >
