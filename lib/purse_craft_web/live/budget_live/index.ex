@@ -4,6 +4,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Budgeting
+  alias PurseCraft.Budgeting.Commands.Categories.RepositionCategory
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraftWeb.BudgetLive.Components.BudgetHeader
@@ -26,6 +27,8 @@ defmodule PurseCraftWeb.BudgetLive.Index do
              |> push_navigate(to: ~p"/books")}
 
           categories ->
+            Budgeting.subscribe_book(book)
+
             socket =
               socket
               |> assign(:page_title, "Budget - #{book.name}")
@@ -311,6 +314,47 @@ defmodule PurseCraftWeb.BudgetLive.Index do
          |> hide_envelope_modal()
          |> hide_delete_modal()}
     end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("reposition_category", params, socket) do
+    category_id = params["category_id"]
+    prev_category_id = params["prev_category_id"]
+    next_category_id = params["next_category_id"]
+
+    case RepositionCategory.call(
+           socket.assigns.current_scope,
+           category_id,
+           prev_category_id,
+           next_category_id
+         ) do
+      {:ok, _updated_category} ->
+        {:reply, %{success: true}, socket}
+
+      {:error, :unauthorized} ->
+        {:reply, %{error: "You don't have permission to reposition categories"},
+         put_flash(socket, :error, "You don't have permission to reposition categories")}
+
+      {:error, :not_found} ->
+        {:reply, %{error: "Category not found"}, put_flash(socket, :error, "Category not found")}
+
+      {:error, _reason} ->
+        {:reply, %{error: "Failed to save position"},
+         put_flash(socket, :error, "Failed to save category position. Please try again.")}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:category_repositioned, _category}, socket) do
+    categories =
+      Budgeting.list_categories(socket.assigns.current_scope, socket.assigns.book, preload: [:envelopes])
+
+    {:noreply, stream(:categories, categories, reset: true)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({_event, _data}, socket) do
+    {:noreply, socket}
   end
 
   defp handle_successful_envelope_update(socket, category, updated_envelope) do
