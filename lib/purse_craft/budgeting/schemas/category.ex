@@ -17,6 +17,7 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
           __meta__: Ecto.Schema.Metadata.t(),
           id: integer() | nil,
           name: String.t() | nil,
+          position: String.t() | nil,
           external_id: Ecto.UUID.t() | nil,
           book: Book.t() | NotLoaded.t() | nil,
           book_id: integer() | nil,
@@ -27,11 +28,13 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
 
   @type changeset_attrs :: %{
           optional(:name) => String.t(),
+          optional(:position) => String.t(),
           optional(:book_id) => integer()
         }
 
   schema "categories" do
     field :name, :string
+    field :position, :string
     field :external_id, Ecto.UUID, autogenerate: true
 
     belongs_to :book, Book
@@ -44,7 +47,17 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
   @spec changeset(t(), changeset_attrs()) :: Ecto.Changeset.t()
   def changeset(category, attrs) do
     category
-    |> cast(attrs, [:name, :book_id])
-    |> validate_required([:name, :book_id])
+    |> cast(attrs, [:name, :position, :book_id])
+    |> validate_required([:name, :position, :book_id])
+  end
+
+  @doc false
+  @spec position_changeset(t(), %{position: String.t()}) :: Ecto.Changeset.t()
+  def position_changeset(category, attrs) do
+    category
+    |> cast(attrs, [:position])
+    |> validate_required([:position])
+    |> validate_format(:position, ~r/^[a-z]+$/, message: "must contain only lowercase letters")
+    |> unique_constraint(:position, name: :categories_book_id_position_index)
   end
 end

@@ -155,7 +155,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Form do
     ~H"""
     <label class="label">
       <span class="label-text-alt text-error flex items-center gap-1">
-        <Icon.icon name="exclamation-circle-mini" class="size-4" />
+        <Icon.icon name="hero-exclamation-circle-mini" class="size-4" />
         {render_slot(@inner_block)}
       </span>
     </label>

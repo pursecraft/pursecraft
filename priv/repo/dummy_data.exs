@@ -16,6 +16,7 @@ alias PurseCraft.Budgeting.Schemas.BookUser
 alias PurseCraft.Budgeting.Schemas.Category
 alias PurseCraft.Budgeting.Schemas.Envelope
 alias PurseCraft.Identity.Schemas.User
+alias PurseCraft.Utilities.FractionalIndexing
 
 IO.puts("--------------------------------")
 IO.puts("|     CREATING DUMMY DATA      |")
@@ -139,10 +140,15 @@ envelope_names = %{
   ]
 }
 
-Enum.each(category_names, fn category_name ->
+{:ok, positions} = FractionalIndexing.initial_positions(length(category_names))
+
+category_names
+|> Enum.zip(positions)
+|> Enum.each(fn {category_name, position} ->
   category = Repo.insert!(%Category{
     name: category_name,
-    book_id: dummy_book.id
+    book_id: dummy_book.id,
+    position: position
   })
 
   Enum.each(envelope_names[category_name], fn envelope_name ->

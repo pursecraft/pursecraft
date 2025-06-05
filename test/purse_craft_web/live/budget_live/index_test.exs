@@ -5,6 +5,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   import Phoenix.LiveViewTest
 
   alias PurseCraft.Budgeting
+  alias PurseCraft.Budgeting.Commands.Categories.RepositionCategory
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.BudgetingFactory
 
@@ -123,21 +124,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, "h3", "Test Category")
     end
 
-    test "handles form validation errors for empty name", %{conn: conn, book: book, user: user} do
+    test "handles form validation errors for empty name", %{conn: conn, book: book} do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
       view
       |> element("button", "Add Category")
       |> render_click()
-
-      {:error, changeset} =
-        Budgeting.create_category(
-          %PurseCraft.Identity.Schemas.Scope{user: user},
-          book,
-          %{name: ""}
-        )
-
-      assert changeset.errors[:name]
 
       view
       |> form("#category-form", %{category: %{name: ""}})
@@ -653,7 +645,6 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     } do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
-      # Mock the necessary functions for fetching and preloading
       stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
         if external_id == envelope.external_id do
           {:ok, %{envelope | category: category}}
@@ -954,6 +945,152 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       render_click(view, "new_envelope", %{"id" => category.external_id})
 
       assert has_element?(view, ".alert-error", "You don't have permission to access this category")
+    end
+  end
+
+  describe "Category Repositioning" do
+    setup %{book: book} do
+      cat1 = BudgetingFactory.insert(:category, name: "Category 1", book_id: book.id, position: "d")
+      cat2 = BudgetingFactory.insert(:category, name: "Category 2", book_id: book.id, position: "h")
+      cat3 = BudgetingFactory.insert(:category, name: "Category 3", book_id: book.id, position: "p")
+
+      %{cat1: cat1, cat2: cat2, cat3: cat3}
+    end
+
+    test "successfully repositions category between two others", %{
+      conn: conn,
+      book: book,
+      cat1: cat1,
+      cat2: cat2,
+      cat3: cat3
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
+        {:ok, cat3}
+      end)
+
+      # Move cat3 between cat1 and cat2
+      result =
+        view
+        |> element("#categories")
+        |> render_hook("reposition_category", %{
+          "category_id" => cat3.external_id,
+          "prev_category_id" => cat1.external_id,
+          "next_category_id" => cat2.external_id
+        })
+
+      assert result =~ "success"
+    end
+
+    test "successfully repositions category to the beginning", %{conn: conn, book: book, cat2: cat2, cat3: cat3} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
+        {:ok, cat3}
+      end)
+
+      # Move cat3 to the beginning
+      result =
+        view
+        |> element("#categories")
+        |> render_hook("reposition_category", %{
+          "category_id" => cat3.external_id,
+          "prev_category_id" => nil,
+          "next_category_id" => cat2.external_id
+        })
+
+      assert result =~ "success"
+    end
+
+    test "successfully repositions category to the end", %{conn: conn, book: book, cat1: cat1, cat3: cat3} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
+        {:ok, cat1}
+      end)
+
+      # Move cat1 to the end
+      result =
+        view
+        |> element("#categories")
+        |> render_hook("reposition_category", %{
+          "category_id" => cat1.external_id,
+          "prev_category_id" => cat3.external_id,
+          "next_category_id" => nil
+        })
+
+      assert result =~ "success"
+    end
+
+    test "handles unauthorized category repositioning", %{conn: conn, book: book, cat1: cat1, cat2: cat2} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
+        {:error, :unauthorized}
+      end)
+
+      view
+      |> element("#categories")
+      |> render_hook("reposition_category", %{
+        "category_id" => cat1.external_id,
+        "prev_category_id" => nil,
+        "next_category_id" => cat2.external_id
+      })
+
+      assert has_element?(view, ".alert-error", "You don't have permission to reposition categories")
+    end
+
+    test "handles category not found error", %{conn: conn, book: book} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      non_existent_id = Ecto.UUID.generate()
+
+      stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
+        {:error, :not_found}
+      end)
+
+      view
+      |> element("#categories")
+      |> render_hook("reposition_category", %{
+        "category_id" => non_existent_id,
+        "prev_category_id" => nil,
+        "next_category_id" => nil
+      })
+
+      assert has_element?(view, ".alert-error", "Category not found")
+    end
+
+    test "handles general repositioning error", %{conn: conn, book: book, cat1: cat1} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
+        {:error, :database_error}
+      end)
+
+      view
+      |> element("#categories")
+      |> render_hook("reposition_category", %{
+        "category_id" => cat1.external_id,
+        "prev_category_id" => nil,
+        "next_category_id" => nil
+      })
+
+      assert has_element?(view, ".alert-error", "Failed to save category position. Please try again.")
+    end
+
+    test "refreshes categories on category_repositioned event", %{conn: conn, book: book, cat1: cat1} do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      new_category = BudgetingFactory.insert(:category, name: "New Category", book_id: book.id, position: "z")
+      new_category_with_envelopes = %{new_category | envelopes: []}
+
+      stub(Budgeting, :list_categories, fn _scope, _book, _opts ->
+        [new_category_with_envelopes]
+      end)
+
+      send(view.pid, {:category_repositioned, cat1})
+
+      assert has_element?(view, "h3", "New Category")
     end
   end
 

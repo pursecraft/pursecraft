@@ -50,4 +50,92 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQuery do
   def by_book_id(queryable, book_id) do
     from(c in queryable, where: c.book_id == ^book_id)
   end
+
+  @doc """
+  Orders categories by position in ascending order.
+
+  ## Examples
+
+      iex> order_by_position()
+      #Ecto.Query<...>
+
+      iex> Category |> by_book_id(1) |> order_by_position()
+      #Ecto.Query<...>
+
+  """
+  @spec order_by_position() :: Ecto.Query.t()
+  def order_by_position do
+    order_by_position(Category)
+  end
+
+  @spec order_by_position(Ecto.Queryable.t()) :: Ecto.Query.t()
+  def order_by_position(queryable) do
+    from(c in queryable, order_by: [asc: c.position])
+  end
+
+  @doc """
+  Limits the query to a specific number of results.
+
+  ## Examples
+
+      iex> limit(1)
+      #Ecto.Query<...>
+
+      iex> Category |> by_book_id(1) |> limit(5)
+      #Ecto.Query<...>
+
+  """
+  @spec limit(integer()) :: Ecto.Query.t()
+  def limit(count) do
+    from(Category, limit: ^count)
+  end
+
+  @spec limit(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
+  def limit(queryable, count) do
+    from(queryable, limit: ^count)
+  end
+
+  @doc """
+  Selects only the position field.
+
+  ## Examples
+
+      iex> select_position()
+      #Ecto.Query<...>
+
+      iex> Category |> by_book_id(1) |> select_position()
+      #Ecto.Query<...>
+
+  """
+  @spec select_position() :: Ecto.Query.t()
+  def select_position do
+    select_position(Category)
+  end
+
+  @spec select_position(Ecto.Queryable.t()) :: Ecto.Query.t()
+  def select_position(queryable) do
+    from(c in queryable, select: c.position)
+  end
+
+  @doc """
+  Returns a query for finding categories by a list of external IDs.
+
+  ## Examples
+
+      iex> by_external_ids(["id1", "id2", "id3"])
+      #Ecto.Query<...>
+
+      iex> Category |> by_external_ids(["id1", "id2"])
+      #Ecto.Query<...>
+
+  """
+  @spec by_external_ids([Ecto.UUID.t()]) :: Ecto.Query.t()
+  def by_external_ids(external_ids) do
+    by_external_ids(Category, external_ids)
+  end
+
+  @spec by_external_ids(Ecto.Queryable.t(), [Ecto.UUID.t()]) :: Ecto.Query.t()
+  def by_external_ids(queryable, external_ids) do
+    from(c in queryable, where: c.external_id in ^external_ids)
+  end
 end

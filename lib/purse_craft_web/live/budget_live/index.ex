@@ -4,6 +4,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Budgeting
+  alias PurseCraft.Budgeting.Commands.Categories.RepositionCategory
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraftWeb.BudgetLive.Components.BudgetHeader
@@ -26,6 +27,8 @@ defmodule PurseCraftWeb.BudgetLive.Index do
              |> push_navigate(to: ~p"/books")}
 
           categories ->
+            Budgeting.subscribe_book(book)
+
             socket =
               socket
               |> assign(:page_title, "Budget - #{book.name}")
@@ -106,51 +109,9 @@ defmodule PurseCraftWeb.BudgetLive.Index do
     category = socket.assigns.editing_category
 
     if category && category.id do
-      socket.assigns.current_scope
-      |> Budgeting.update_category(socket.assigns.book, category, category_params, preload: [:envelopes])
-      |> case do
-        {:ok, updated_category} ->
-          socket =
-            socket
-            |> stream_insert(:categories, updated_category)
-            |> hide_category_modal()
-            |> put_flash(:info, "Category updated successfully")
-
-          {:noreply, socket}
-
-        {:error, %Ecto.Changeset{} = changeset} ->
-          {:noreply, assign(socket, :category_form, to_form(changeset))}
-
-        {:error, :unauthorized} ->
-          {:noreply,
-           socket
-           |> put_flash(:error, "You don't have permission to update categories")
-           |> hide_category_modal()}
-      end
+      handle_category_update(socket, category, category_params)
     else
-      socket.assigns.current_scope
-      |> Budgeting.create_category(socket.assigns.book, category_params)
-      |> case do
-        {:ok, category} ->
-          category = %{category | envelopes: []}
-
-          socket =
-            socket
-            |> stream_insert(:categories, category, at: 0)
-            |> hide_category_modal()
-            |> put_flash(:info, "Category created successfully")
-
-          {:noreply, socket}
-
-        {:error, %Ecto.Changeset{} = changeset} ->
-          {:noreply, assign(socket, :category_form, to_form(changeset))}
-
-        {:error, :unauthorized} ->
-          {:noreply,
-           socket
-           |> put_flash(:error, "You don't have permission to create categories")
-           |> hide_category_modal()}
-      end
+      handle_category_create(socket, category_params)
     end
   end
 
@@ -355,6 +316,47 @@ defmodule PurseCraftWeb.BudgetLive.Index do
     end
   end
 
+  @impl Phoenix.LiveView
+  def handle_event("reposition_category", params, socket) do
+    category_id = params["category_id"]
+    prev_category_id = params["prev_category_id"]
+    next_category_id = params["next_category_id"]
+
+    case RepositionCategory.call(
+           socket.assigns.current_scope,
+           category_id,
+           prev_category_id,
+           next_category_id
+         ) do
+      {:ok, _updated_category} ->
+        {:reply, %{success: true}, socket}
+
+      {:error, :unauthorized} ->
+        {:reply, %{error: "You don't have permission to reposition categories"},
+         put_flash(socket, :error, "You don't have permission to reposition categories")}
+
+      {:error, :not_found} ->
+        {:reply, %{error: "Category not found"}, put_flash(socket, :error, "Category not found")}
+
+      {:error, _reason} ->
+        {:reply, %{error: "Failed to save position"},
+         put_flash(socket, :error, "Failed to save category position. Please try again.")}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:category_repositioned, _category}, socket) do
+    categories =
+      Budgeting.list_categories(socket.assigns.current_scope, socket.assigns.book, preload: [:envelopes])
+
+    {:noreply, stream(socket, :categories, categories, reset: true)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({_event, _data}, socket) do
+    {:noreply, socket}
+  end
+
   defp handle_successful_envelope_update(socket, category, updated_envelope) do
     updated_envelopes =
       Enum.map(category.envelopes, fn e ->
@@ -452,4 +454,59 @@ defmodule PurseCraftWeb.BudgetLive.Index do
     |> assign(:envelope_to_delete, nil)
     |> assign(:selected_category_for_envelope, nil)
   end
+
+  defp handle_category_update(socket, category, category_params) do
+    socket.assigns.current_scope
+    |> Budgeting.update_category(socket.assigns.book, category, category_params, preload: [:envelopes])
+    |> handle_category_result(socket, "Category updated successfully")
+  end
+
+  defp handle_category_create(socket, category_params) do
+    socket.assigns.current_scope
+    |> Budgeting.create_category(socket.assigns.book, category_params)
+    |> handle_category_result(socket, "Category created successfully", at: 0)
+  end
+
+  defp handle_category_result(result, socket, success_message, opts \\ [])
+
+  defp handle_category_result({:ok, category}, socket, success_message, opts) do
+    category = if opts[:at] == 0, do: %{category | envelopes: []}, else: category
+    stream_opts = if opts[:at], do: [at: opts[:at]], else: []
+
+    socket =
+      socket
+      |> stream_insert(:categories, category, stream_opts)
+      |> hide_category_modal()
+      |> put_flash(:info, success_message)
+
+    {:noreply, socket}
+  end
+
+  defp handle_category_result({:error, %Ecto.Changeset{} = changeset}, socket, _success_message, _opts) do
+    {:noreply, assign(socket, :category_form, to_form(changeset))}
+  end
+
+  defp handle_category_result({:error, :unauthorized}, socket, _success_message, _opts) do
+    error_message =
+      if socket.assigns.editing_category && socket.assigns.editing_category.id do
+        "You don't have permission to update categories"
+      else
+        "You don't have permission to create categories"
+      end
+
+    {:noreply,
+     socket
+     |> put_flash(:error, error_message)
+     |> hide_category_modal()}
+  end
+
+  # coveralls-ignore-start
+  defp handle_category_result({:error, _message}, socket, _success_message, _opts) do
+    {:noreply,
+     socket
+     |> put_flash(:error, "Unable to create category")
+     |> hide_category_modal()}
+  end
+
+  # coveralls-ignore-stop
 end

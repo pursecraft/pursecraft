@@ -28,6 +28,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
       assert {:ok, %Category{} = category} = CreateCategory.call(scope, book, attrs)
       assert category.name == "String Key Category"
       assert category.book_id == book.id
+      assert category.position == "m"
     end
 
     test "with invalid data returns error changeset", %{book: book} do
@@ -100,6 +101,62 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
       assert {:ok, %Category{}} = CreateCategory.call(scope, book, attrs)
 
       verify!()
+    end
+
+    test "assigns position 'm' for first category in a book", %{book: book} do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      attrs = %{name: "First Category"}
+
+      assert {:ok, %Category{} = category} = CreateCategory.call(scope, book, attrs)
+      assert category.position == "m"
+    end
+
+    test "assigns position before existing categories", %{book: book} do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      # Create first category
+      BudgetingFactory.insert(:category, book: book, position: "m")
+
+      attrs = %{name: "Second Category"}
+
+      assert {:ok, %Category{} = category} = CreateCategory.call(scope, book, attrs)
+      assert category.position < "m"
+      assert category.position == "g"
+    end
+
+    test "handles multiple categories being added at the top", %{book: book} do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      # Create initial categories
+      BudgetingFactory.insert(:category, book: book, position: "g")
+      BudgetingFactory.insert(:category, book: book, position: "m")
+      BudgetingFactory.insert(:category, book: book, position: "t")
+
+      attrs = %{name: "New Top Category"}
+
+      assert {:ok, %Category{} = category} = CreateCategory.call(scope, book, attrs)
+      assert category.position < "g"
+      assert category.position == "d"
+    end
+
+    test "returns error when first category is already at 'a'", %{book: book} do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      # Create a category at the boundary
+      BudgetingFactory.insert(:category, book: book, position: "a")
+
+      attrs = %{name: "Cannot Place At Top"}
+
+      assert {:error, :cannot_place_at_top} = CreateCategory.call(scope, book, attrs)
     end
   end
 end

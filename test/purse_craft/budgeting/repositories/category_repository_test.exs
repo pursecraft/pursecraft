@@ -177,4 +177,135 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
       assert_raise Ecto.NoResultsError, fn -> Repo.get!(Category, category.id) end
     end
   end
+
+  describe "get_first_position/1" do
+    test "returns the position of the first category when categories exist" do
+      book = BudgetingFactory.insert(:book)
+      BudgetingFactory.insert(:category, book: book, position: "m")
+      BudgetingFactory.insert(:category, book: book, position: "g")
+      BudgetingFactory.insert(:category, book: book, position: "t")
+
+      result = CategoryRepository.get_first_position(book.id)
+
+      assert result == "g"
+    end
+
+    test "returns nil when no categories exist for the book" do
+      book = BudgetingFactory.insert(:book)
+
+      result = CategoryRepository.get_first_position(book.id)
+
+      assert result == nil
+    end
+  end
+
+  describe "list_by_external_ids/2" do
+    test "returns categories matching the given external IDs" do
+      book = BudgetingFactory.insert(:book)
+      cat1 = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
+      cat2 = BudgetingFactory.insert(:category, book_id: book.id, position: "m")
+      cat3 = BudgetingFactory.insert(:category, book_id: book.id, position: "t")
+
+      BudgetingFactory.insert(:category, book_id: book.id, position: "z")
+
+      external_ids = [cat1.external_id, cat2.external_id, cat3.external_id]
+      result = CategoryRepository.list_by_external_ids(external_ids)
+
+      assert length(result) == 3
+      result_external_ids = Enum.map(result, & &1.external_id)
+      assert Enum.all?(external_ids, &(&1 in result_external_ids))
+    end
+
+    test "returns empty list when no categories match the external IDs" do
+      result = CategoryRepository.list_by_external_ids([Ecto.UUID.generate(), Ecto.UUID.generate()])
+
+      assert result == []
+    end
+
+    test "returns subset when only some external IDs match" do
+      book = BudgetingFactory.insert(:book)
+      cat1 = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
+
+      external_ids = [cat1.external_id, Ecto.UUID.generate(), Ecto.UUID.generate()]
+      result = CategoryRepository.list_by_external_ids(external_ids)
+
+      assert length(result) == 1
+      assert hd(result).external_id == cat1.external_id
+    end
+
+    test "with preload option returns categories with preloaded associations" do
+      book = BudgetingFactory.insert(:book)
+      cat1 = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
+      cat2 = BudgetingFactory.insert(:category, book_id: book.id, position: "m")
+
+      envelope1 = BudgetingFactory.insert(:envelope, category_id: cat1.id)
+      envelope2 = BudgetingFactory.insert(:envelope, category_id: cat2.id)
+
+      external_ids = [cat1.external_id, cat2.external_id]
+      result = CategoryRepository.list_by_external_ids(external_ids, preload: [:envelopes])
+
+      assert length(result) == 2
+
+      cat1_result = Enum.find(result, &(&1.external_id == cat1.external_id))
+      cat2_result = Enum.find(result, &(&1.external_id == cat2.external_id))
+
+      assert length(cat1_result.envelopes) == 1
+      assert hd(cat1_result.envelopes).id == envelope1.id
+      assert length(cat2_result.envelopes) == 1
+      assert hd(cat2_result.envelopes).id == envelope2.id
+    end
+
+    test "handles empty list of external IDs" do
+      result = CategoryRepository.list_by_external_ids([])
+
+      assert result == []
+    end
+  end
+
+  describe "update_position/2" do
+    test "updates the position of a category with valid position" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
+
+      assert {:ok, updated_category} = CategoryRepository.update_position(category, "m")
+      assert updated_category.position == "m"
+      assert updated_category.id == category.id
+      assert updated_category.name == category.name
+    end
+
+    test "returns error changeset with invalid position format" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
+
+      assert {:error, changeset} = CategoryRepository.update_position(category, "ABC")
+      assert %{position: ["must contain only lowercase letters"]} = errors_on(changeset)
+    end
+
+    test "returns error changeset with empty position" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
+
+      assert {:error, changeset} = CategoryRepository.update_position(category, "")
+      assert %{position: ["can't be blank"]} = errors_on(changeset)
+    end
+
+    test "returns error changeset when position violates unique constraint" do
+      book = BudgetingFactory.insert(:book)
+      BudgetingFactory.insert(:category, book_id: book.id, position: "g")
+      cat2 = BudgetingFactory.insert(:category, book_id: book.id, position: "m")
+
+      assert {:error, changeset} = CategoryRepository.update_position(cat2, "g")
+      assert %{position: ["has already been taken"]} = errors_on(changeset)
+    end
+
+    test "allows same position in different books" do
+      book1 = BudgetingFactory.insert(:book)
+      book2 = BudgetingFactory.insert(:book)
+      BudgetingFactory.insert(:category, book_id: book1.id, position: "g")
+      cat2 = BudgetingFactory.insert(:category, book_id: book2.id, position: "m")
+
+      assert {:ok, updated_category} = CategoryRepository.update_position(cat2, "g")
+      assert updated_category.position == "g"
+    end
+  end
 end
