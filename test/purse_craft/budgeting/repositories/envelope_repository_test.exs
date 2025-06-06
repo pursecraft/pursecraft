@@ -8,18 +8,45 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     test "with valid data creates an envelope" do
       book = BudgetingFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
-      attrs = %{name: "Test Envelope", category_id: category.id}
+      attrs = %{name: "Test Envelope", category_id: category.id, position: "m"}
 
       assert {:ok, envelope} = EnvelopeRepository.create(attrs)
       assert envelope.name == "Test Envelope"
       assert envelope.category_id == category.id
+      assert envelope.position == "m"
     end
 
     test "with invalid data returns error changeset" do
       attrs = %{name: ""}
 
       assert {:error, changeset} = EnvelopeRepository.create(attrs)
-      assert %{name: ["can't be blank"], category_id: ["can't be blank"]} = errors_on(changeset)
+
+      assert %{name: ["can't be blank"], category_id: ["can't be blank"], position: ["can't be blank"]} =
+               errors_on(changeset)
+    end
+
+    test "with duplicate position within same category returns error" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
+
+      attrs = %{name: "Duplicate Position", category_id: category.id, position: "m"}
+
+      assert {:error, changeset} = EnvelopeRepository.create(attrs)
+      assert %{position: ["has already been taken"]} = errors_on(changeset)
+    end
+
+    test "allows same position in different categories" do
+      book = BudgetingFactory.insert(:book)
+      category1 = BudgetingFactory.insert(:category, book_id: book.id)
+      category2 = BudgetingFactory.insert(:category, book_id: book.id)
+      BudgetingFactory.insert(:envelope, category_id: category1.id, position: "m")
+
+      attrs = %{name: "Same Position Different Category", category_id: category2.id, position: "m"}
+
+      assert {:ok, envelope} = EnvelopeRepository.create(attrs)
+      assert envelope.position == "m"
+      assert envelope.category_id == category2.id
     end
   end
 
