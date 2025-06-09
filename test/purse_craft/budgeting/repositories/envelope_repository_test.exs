@@ -128,4 +128,50 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
       assert deleted_envelope.id == envelope.id
     end
   end
+
+  describe "get_first_position/1" do
+    test "returns the position of the first envelope in a category" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "s")
+
+      result = EnvelopeRepository.get_first_position(category.id)
+
+      assert result == "g"
+    end
+
+    test "returns nil when category has no envelopes" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+
+      result = EnvelopeRepository.get_first_position(category.id)
+
+      assert result == nil
+    end
+
+    test "returns correct position when only one envelope exists" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
+
+      result = EnvelopeRepository.get_first_position(category.id)
+
+      assert result == "m"
+    end
+
+    test "returns correct position with complex ordering" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "mm")
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "ma")
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "s")
+
+      result = EnvelopeRepository.get_first_position(category.id)
+
+      assert result == "m"
+    end
+  end
 end

@@ -24,14 +24,14 @@ defmodule PurseCraft.BudgetingFactory do
   def category_factory do
     %Category{
       name: Faker.Industry.industry(),
-      position: sequence(:position, &generate_lowercase_position/1)
+      position: sequence(:category_position, &generate_lowercase_position/1)
     }
   end
 
   def envelope_factory do
     %Envelope{
       name: Faker.Commerce.product_name(),
-      position: sequence(:position, &generate_lowercase_position/1)
+      position: sequence(:envelope_position, &generate_lowercase_position/1)
     }
   end
 

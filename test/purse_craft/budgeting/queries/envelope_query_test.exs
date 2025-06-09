@@ -90,4 +90,93 @@ defmodule PurseCraft.Budgeting.Queries.EnvelopeQueryTest do
       assert hd(query.wheres).params == [{book_id, {1, :book_id}}]
     end
   end
+
+  describe "by_category_id/1" do
+    test "creates a query filtered by category_id" do
+      category_id = 123
+      query = EnvelopeQuery.by_category_id(category_id)
+
+      assert query.from.source == {"envelopes", Envelope}
+      assert length(query.wheres) == 1
+
+      [where_clause] = query.wheres
+      assert where_clause.params == [{category_id, {0, :category_id}}]
+    end
+  end
+
+  describe "by_category_id/2" do
+    test "adds category_id filter to existing query" do
+      base_query = from(e in Envelope, where: e.name == "Test")
+      query = EnvelopeQuery.by_category_id(base_query, 456)
+
+      assert length(query.wheres) == 2
+      param_values = Enum.flat_map(query.wheres, & &1.params)
+      assert {456, {0, :category_id}} in param_values
+    end
+  end
+
+  describe "order_by_position/0" do
+    test "creates a query ordered by position ascending" do
+      query = EnvelopeQuery.order_by_position()
+
+      assert query.from.source == {"envelopes", Envelope}
+      assert length(query.order_bys) == 1
+
+      [order_by] = query.order_bys
+      assert order_by.expr == [asc: {{:., [], [{:&, [], [0]}, :position]}, [], []}]
+    end
+  end
+
+  describe "order_by_position/1" do
+    test "adds position ordering to existing query" do
+      base_query = from(e in Envelope, where: e.category_id == 1)
+      query = EnvelopeQuery.order_by_position(base_query)
+
+      assert length(query.order_bys) == 1
+      assert length(query.wheres) == 1
+
+      [order_by] = query.order_bys
+      assert order_by.expr == [asc: {{:., [], [{:&, [], [0]}, :position]}, [], []}]
+    end
+  end
+
+  describe "limit/1" do
+    test "creates a query with limit" do
+      query = EnvelopeQuery.limit(5)
+
+      assert query.from.source == {"envelopes", Envelope}
+      assert query.limit.expr == {:^, [], [0]}
+      assert query.limit.params == [{5, :integer}]
+    end
+  end
+
+  describe "limit/2" do
+    test "adds limit to existing query" do
+      base_query = from(e in Envelope, where: e.category_id == 1)
+      query = EnvelopeQuery.limit(base_query, 10)
+
+      assert query.limit.expr == {:^, [], [0]}
+      assert query.limit.params == [{10, :integer}]
+      assert length(query.wheres) == 1
+    end
+  end
+
+  describe "select_position/0" do
+    test "creates a query selecting only position" do
+      query = EnvelopeQuery.select_position()
+
+      assert query.from.source == {"envelopes", Envelope}
+      assert query.select.expr == {{:., [], [{:&, [], [0]}, :position]}, [], []}
+    end
+  end
+
+  describe "select_position/1" do
+    test "adds position selection to existing query" do
+      base_query = from(e in Envelope, where: e.category_id == 1)
+      query = EnvelopeQuery.select_position(base_query)
+
+      assert query.select.expr == {{:., [], [{:&, [], [0]}, :position]}, [], []}
+      assert length(query.wheres) == 1
+    end
+  end
 end

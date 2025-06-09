@@ -13,7 +13,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
 
   @type create_attrs :: %{
           optional(:name) => String.t(),
-          required(:category_id) => integer()
+          required(:category_id) => integer(),
+          required(:position) => String.t()
         }
 
   @type update_attrs :: %{
@@ -106,5 +107,29 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
   @spec delete(Envelope.t()) :: {:ok, Envelope.t()} | {:error, Ecto.Changeset.t()}
   def delete(%Envelope{} = envelope) do
     Repo.delete(envelope)
+  end
+
+  @doc """
+  Gets the first position in a category for positioning new envelopes.
+
+  Returns the position of the first envelope in the category, or `nil` if the category has no envelopes.
+
+  ## Examples
+
+      iex> get_first_position(1)
+      "m"
+
+      iex> get_first_position(999)
+      nil
+
+  """
+  @spec get_first_position(integer()) :: String.t() | nil
+  def get_first_position(category_id) do
+    category_id
+    |> EnvelopeQuery.by_category_id()
+    |> EnvelopeQuery.order_by_position()
+    |> EnvelopeQuery.limit(1)
+    |> EnvelopeQuery.select_position()
+    |> Repo.one()
   end
 end
