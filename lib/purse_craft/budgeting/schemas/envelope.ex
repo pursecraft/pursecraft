@@ -54,6 +54,7 @@ defmodule PurseCraft.Budgeting.Schemas.Envelope do
     envelope
     |> cast(attrs, [:position, :category_id])
     |> validate_required([:position, :category_id])
+    |> validate_format(:position, ~r/^[a-z]+$/, message: "must contain only lowercase letters")
     |> unique_constraint(:position, name: :envelopes_category_id_position_index)
   end
 end

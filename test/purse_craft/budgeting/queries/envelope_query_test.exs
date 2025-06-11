@@ -179,4 +179,61 @@ defmodule PurseCraft.Budgeting.Queries.EnvelopeQueryTest do
       assert length(query.wheres) == 1
     end
   end
+
+  describe "by_external_ids/1" do
+    test "creates a query filtered by list of external_ids" do
+      external_ids = ["id1", "id2", "id3"]
+      query = EnvelopeQuery.by_external_ids(external_ids)
+
+      assert query.from.source == {"envelopes", Envelope}
+      assert length(query.wheres) == 1
+
+      [where_clause] = query.wheres
+      assert where_clause.params == [{external_ids, {:in, {0, :external_id}}}]
+    end
+
+    test "handles empty list of external_ids" do
+      external_ids = []
+      query = EnvelopeQuery.by_external_ids(external_ids)
+
+      assert query.from.source == {"envelopes", Envelope}
+      assert length(query.wheres) == 1
+
+      [where_clause] = query.wheres
+      assert where_clause.params == [{[], {:in, {0, :external_id}}}]
+    end
+  end
+
+  describe "by_external_ids/2" do
+    test "adds external_ids filter to existing query" do
+      base_query = from(e in Envelope, where: e.category_id == 123)
+      external_ids = ["id1", "id2"]
+
+      query = EnvelopeQuery.by_external_ids(base_query, external_ids)
+
+      assert length(query.wheres) == 2
+
+      external_ids_where =
+        Enum.find(query.wheres, fn where ->
+          {external_ids, {:in, {0, :external_id}}} in where.params
+        end)
+
+      assert external_ids_where != nil
+    end
+
+    test "preserves other query attributes" do
+      base_query =
+        from(e in Envelope,
+          where: e.name == "Test",
+          order_by: e.inserted_at,
+          limit: 5
+        )
+
+      query = EnvelopeQuery.by_external_ids(base_query, ["id1"])
+
+      assert query.limit.expr == 5
+      assert length(query.order_bys) == 1
+      assert length(query.wheres) == 2
+    end
+  end
 end

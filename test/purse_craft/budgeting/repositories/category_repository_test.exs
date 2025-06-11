@@ -308,4 +308,41 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
       assert updated_category.position == "g"
     end
   end
+
+  describe "fetch/2" do
+    test "returns {:ok, category} when found" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+
+      assert {:ok, result} = CategoryRepository.fetch(category.id)
+      assert result.id == category.id
+      assert result.name == category.name
+      assert result.book_id == book.id
+    end
+
+    test "returns {:error, :not_found} when category not found" do
+      assert {:error, :not_found} = CategoryRepository.fetch(999)
+    end
+
+    test "with preload option returns category with preloaded associations" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      assert {:ok, result} = CategoryRepository.fetch(category.id, preload: [:envelopes])
+      assert result.id == category.id
+      assert length(result.envelopes) == 1
+      assert hd(result.envelopes).id == envelope.id
+    end
+
+    test "without preload option returns category without preloaded associations" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      assert {:ok, result} = CategoryRepository.fetch(category.id)
+      assert result.id == category.id
+      refute Ecto.assoc_loaded?(result.envelopes)
+    end
+  end
 end

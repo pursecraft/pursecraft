@@ -205,6 +205,43 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   end
 
   @doc """
+  Gets a category by its ID.
+
+  Returns the category if it exists, or an error tuple if not found.
+
+  ## Options
+
+  The `:preload` option accepts a list of associations to preload.
+
+  ## Examples
+
+      iex> fetch(1)
+      {:ok, %Category{}}
+
+      iex> fetch(1, preload: [:book])
+      {:ok, %Category{book: %Book{}}}
+
+      iex> fetch(999)
+      {:error, :not_found}
+
+  """
+  @spec fetch(integer(), get_options()) :: {:ok, Category.t()} | {:error, :not_found}
+  def fetch(id, opts \\ []) do
+    id
+    |> CategoryQuery.by_id()
+    |> Repo.one()
+    |> case do
+      nil ->
+        {:error, :not_found}
+
+      category ->
+        preloads = Keyword.get(opts, :preload, [])
+        category = if preloads == [], do: category, else: Repo.preload(category, preloads)
+        {:ok, category}
+    end
+  end
+
+  @doc """
   Gets multiple categories by their external IDs.
 
   Returns a list of categories that match the given external IDs.
