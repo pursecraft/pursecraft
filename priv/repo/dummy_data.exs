@@ -151,10 +151,16 @@ category_names
     position: position
   })
 
-  Enum.each(envelope_names[category_name], fn envelope_name ->
+  envelope_list = envelope_names[category_name]
+  {:ok, envelope_positions} = FractionalIndexing.initial_positions(length(envelope_list))
+
+  envelope_list
+  |> Enum.zip(envelope_positions)
+  |> Enum.each(fn {envelope_name, envelope_position} ->
     Repo.insert!(%Envelope{
       name: envelope_name,
-      category_id: category.id
+      category_id: category.id,
+      position: envelope_position
     })
   end)
 end)
