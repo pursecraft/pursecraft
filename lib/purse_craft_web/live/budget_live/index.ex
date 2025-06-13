@@ -5,6 +5,8 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Commands.Categories.RepositionCategory
+  alias PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope
+  alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraftWeb.BudgetLive.Components.BudgetHeader
@@ -28,6 +30,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
           categories ->
             Budgeting.subscribe_book(book)
+            subscribe_to_categories(categories)
 
             socket =
               socket
@@ -317,6 +320,36 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   end
 
   @impl Phoenix.LiveView
+  def handle_event("reposition_envelope", params, socket) do
+    envelope_id = params["envelope_id"]
+    target_category_id = params["target_category_id"]
+    prev_envelope_id = params["prev_envelope_id"]
+    next_envelope_id = params["next_envelope_id"]
+
+    case RepositionEnvelope.call(
+           socket.assigns.current_scope,
+           envelope_id,
+           target_category_id,
+           prev_envelope_id,
+           next_envelope_id
+         ) do
+      {:ok, _updated_envelope} ->
+        {:reply, %{success: true}, socket}
+
+      {:error, :unauthorized} ->
+        {:reply, %{error: "You don't have permission to reposition envelopes"},
+         put_flash(socket, :error, "You don't have permission to reposition envelopes")}
+
+      {:error, :not_found} ->
+        {:reply, %{error: "Envelope or category not found"}, put_flash(socket, :error, "Envelope or category not found")}
+
+      {:error, _reason} ->
+        {:reply, %{error: "Failed to save position"},
+         put_flash(socket, :error, "Failed to save envelope position. Please try again.")}
+    end
+  end
+
+  @impl Phoenix.LiveView
   def handle_event("reposition_category", params, socket) do
     category_id = params["category_id"]
     prev_category_id = params["prev_category_id"]
@@ -350,6 +383,28 @@ defmodule PurseCraftWeb.BudgetLive.Index do
       Budgeting.list_categories(socket.assigns.current_scope, socket.assigns.book, preload: [:envelopes])
 
     {:noreply, stream(socket, :categories, categories, reset: true)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:envelope_repositioned, %{category_id: category_id}}, socket) do
+    case CategoryRepository.fetch(category_id, preload: [:envelopes]) do
+      {:ok, updated_category} ->
+        {:noreply, stream_insert(socket, :categories, updated_category)}
+
+      {:error, :not_found} ->
+        {:noreply, socket}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:envelope_removed, %{category_id: category_id}}, socket) do
+    case CategoryRepository.fetch(category_id, preload: [:envelopes]) do
+      {:ok, updated_category} ->
+        {:noreply, stream_insert(socket, :categories, updated_category)}
+
+      {:error, :not_found} ->
+        {:noreply, socket}
+    end
   end
 
   @impl Phoenix.LiveView
@@ -509,4 +564,10 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   end
 
   # coveralls-ignore-stop
+
+  defp subscribe_to_categories(categories) do
+    Enum.each(categories, fn category ->
+      Budgeting.subscribe_category(category.external_id)
+    end)
+  end
 end
