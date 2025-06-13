@@ -20,13 +20,10 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ListCategoriesTest do
 
   describe "call/3" do
     setup %{book: book} do
-      categories =
-        for _index <- 1..3 do
-          BudgetingFactory.insert(:category, book_id: book.id)
-        end
+      categories = Enum.map(["a", "b", "c"], &BudgetingFactory.insert(:category, book_id: book.id, position: &1))
 
       other_book = BudgetingFactory.insert(:book)
-      other_category = BudgetingFactory.insert(:category, book_id: other_book.id)
+      other_category = BudgetingFactory.insert(:category, book_id: other_book.id, position: "d")
 
       %{categories: categories, other_book: other_book, other_category: other_category}
     end
