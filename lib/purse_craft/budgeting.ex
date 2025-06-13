@@ -26,6 +26,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
+  alias PurseCraft.Budgeting.Commands.PubSub.SubscribeCategory
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooks
   alias PurseCraft.Budgeting.Repositories.BookRepository
   alias PurseCraft.Budgeting.Schemas.Book
@@ -82,6 +83,18 @@ defmodule PurseCraft.Budgeting do
   """
   @spec broadcast_book(Book.t(), tuple()) :: :ok | {:error, term()}
   defdelegate broadcast_book(book, message), to: BroadcastBook, as: :call
+
+  @doc """
+  Subscribes to notifications about changes for a specific category.
+
+  The broadcasted messages match the pattern:
+
+    * {:envelope_repositioned, %Envelope{}}
+    * {:envelope_removed, %Envelope{}}
+
+  """
+  @spec subscribe_category(Ecto.UUID.t()) :: :ok | {:error, term()}
+  defdelegate subscribe_category(category_external_id), to: SubscribeCategory, as: :call
 
   @doc """
   Returns the list of books.
