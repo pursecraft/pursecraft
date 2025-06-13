@@ -27,10 +27,12 @@ import topbar from "../vendor/topbar"
 // Import hooks
 import DragDrop from "./hooks/drag_drop.js"
 import CategoryDragDrop from "./hooks/category_drag_drop.js"
+import EnvelopeDragDrop from "./hooks/envelope_drag_drop.js"
 
 const Hooks = {
   DragDrop,
-  CategoryDragDrop
+  CategoryDragDrop,
+  EnvelopeDragDrop
 }
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")

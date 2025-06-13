@@ -32,9 +32,16 @@ defmodule PurseCraftWeb.BudgetLive.Components.EnvelopeRow do
     assigns = assign(assigns, :available_class, available_class)
 
     ~H"""
-    <div class="flex items-center justify-between py-1 hover:bg-base-200 rounded-lg cursor-pointer group">
+    <div
+      data-envelope-id={@id}
+      class="flex items-center justify-between py-1 hover:bg-base-200 rounded-lg cursor-pointer group relative"
+    >
+      <button class="drag-handle absolute left-1 top-1/2 -translate-y-1/2 cursor-move btn btn-ghost btn-xs hidden sm:group-hover:inline-flex">
+        <Icon.icon name="hero-bars-3" class="w-4 h-4" />
+      </button>
+
       <div class="flex items-center w-1/2">
-        <span class="font-medium truncate pl-6 sm:pl-8">{@name}</span>
+        <span class="font-medium truncate pl-8 sm:pl-10">{@name}</span>
         <button
           class="btn btn-ghost btn-xs opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ml-2"
           phx-click="edit_envelope"

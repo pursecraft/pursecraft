@@ -65,7 +65,14 @@ defmodule PurseCraftWeb.BudgetLive.Components.CategorySection do
             No envelopes in this category yet
           </div>
         <% else %>
-          {render_slot(@inner_block)}
+          <div
+            id={"envelope-list-#{@category.external_id}"}
+            data-category-id={@category.external_id}
+            phx-hook="EnvelopeDragDrop"
+            class="space-y-1"
+          >
+            {render_slot(@inner_block)}
+          </div>
         <% end %>
       </div>
     </div>
