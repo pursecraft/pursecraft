@@ -38,7 +38,7 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
     field :external_id, Ecto.UUID, autogenerate: true
 
     belongs_to :book, Book
-    has_many :envelopes, Envelope
+    has_many :envelopes, Envelope, preload_order: [asc: :position]
 
     timestamps(type: :utc_datetime)
   end

@@ -204,4 +204,46 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQueryTest do
       assert length(query.wheres) == 2
     end
   end
+
+  describe "by_id/1" do
+    test "creates a query filtered by id" do
+      id = 123
+      query = CategoryQuery.by_id(id)
+
+      assert query.from.source == {"categories", Category}
+
+      assert length(query.wheres) == 1
+
+      [where_clause] = query.wheres
+      assert where_clause.params == [{id, {0, :id}}]
+    end
+  end
+
+  describe "by_id/2" do
+    test "adds id filter to existing query" do
+      base_query = from(c in Category, where: c.name == "Test")
+
+      query = CategoryQuery.by_id(base_query, 456)
+
+      assert length(query.wheres) == 2
+
+      param_values = Enum.flat_map(query.wheres, & &1.params)
+      assert {456, {0, :id}} in param_values
+    end
+
+    test "preserves other query attributes" do
+      base_query =
+        from(c in Category,
+          where: c.name == "Test",
+          order_by: c.inserted_at,
+          limit: 10
+        )
+
+      query = CategoryQuery.by_id(base_query, 789)
+
+      assert query.limit.expr == 10
+      assert length(query.order_bys) == 1
+      assert length(query.wheres) == 2
+    end
+  end
 end

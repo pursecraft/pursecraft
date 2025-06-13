@@ -28,9 +28,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
       envelope = %Envelope{id: 1, name: "String Key Envelope", category_id: category.id}
 
+      stub(EnvelopeRepository, :get_first_position, fn _category_id -> nil end)
+
       stub(EnvelopeRepository, :create, fn attrs ->
         assert attrs.name == "String Key Envelope"
         assert attrs.category_id == category.id
+        assert attrs.position == "m"
         {:ok, envelope}
       end)
 
@@ -45,6 +48,8 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
       scope = IdentityFactory.build(:scope, user: user)
 
       changeset = %Ecto.Changeset{valid?: false}
+
+      stub(EnvelopeRepository, :get_first_position, fn _category_id -> nil end)
 
       stub(EnvelopeRepository, :create, fn _attrs ->
         {:error, changeset}
@@ -62,9 +67,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
       envelope = %Envelope{id: 1, name: "Owner Envelope", category_id: category.id}
 
+      stub(EnvelopeRepository, :get_first_position, fn _category_id -> nil end)
+
       stub(EnvelopeRepository, :create, fn attrs ->
         assert attrs.name == "Owner Envelope"
         assert attrs.category_id == category.id
+        assert attrs.position == "m"
         {:ok, envelope}
       end)
 
@@ -80,9 +88,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
       envelope = %Envelope{id: 1, name: "Editor Envelope", category_id: category.id}
 
+      stub(EnvelopeRepository, :get_first_position, fn _category_id -> nil end)
+
       stub(EnvelopeRepository, :create, fn attrs ->
         assert attrs.name == "Editor Envelope"
         assert attrs.category_id == category.id
+        assert attrs.position == "m"
         {:ok, envelope}
       end)
 
@@ -117,6 +128,8 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
       envelope = %Envelope{id: 1, name: "Broadcast Test Envelope", category_id: category.id}
 
+      stub(EnvelopeRepository, :get_first_position, fn _category_id -> nil end)
+
       stub(EnvelopeRepository, :create, fn _attrs -> {:ok, envelope} end)
 
       expect(BroadcastBook, :call, fn ^book, {:envelope_created, ^envelope} -> :ok end)
@@ -126,6 +139,37 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
       assert {:ok, ^envelope} = CreateEnvelope.call(scope, book, category, attrs)
 
       verify!()
+    end
+
+    test "assigns position before existing envelope", %{book: book, category: category} do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      envelope = %Envelope{id: 1, name: "New Envelope", category_id: category.id}
+
+      stub(EnvelopeRepository, :get_first_position, fn _category_id -> "m" end)
+
+      stub(EnvelopeRepository, :create, fn attrs ->
+        assert attrs.position == "g"
+        {:ok, envelope}
+      end)
+
+      attrs = %{name: "New Envelope"}
+
+      assert {:ok, ^envelope} = CreateEnvelope.call(scope, book, category, attrs)
+    end
+
+    test "returns error when cannot place at top", %{book: book, category: category} do
+      user = IdentityFactory.insert(:user)
+      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      stub(EnvelopeRepository, :get_first_position, fn _category_id -> "a" end)
+
+      attrs = %{name: "New Envelope"}
+
+      assert {:error, :cannot_place_at_top} = CreateEnvelope.call(scope, book, category, attrs)
     end
   end
 end

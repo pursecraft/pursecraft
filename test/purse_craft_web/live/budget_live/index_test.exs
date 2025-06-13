@@ -6,7 +6,9 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Commands.Categories.RepositionCategory
+  alias PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope
   alias PurseCraft.Budgeting.Policy
+  alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.BudgetingFactory
 
   setup :register_and_log_in_user
@@ -950,9 +952,9 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
   describe "Category Repositioning" do
     setup %{book: book} do
-      cat1 = BudgetingFactory.insert(:category, name: "Category 1", book_id: book.id, position: "d")
-      cat2 = BudgetingFactory.insert(:category, name: "Category 2", book_id: book.id, position: "h")
-      cat3 = BudgetingFactory.insert(:category, name: "Category 3", book_id: book.id, position: "p")
+      cat1 = BudgetingFactory.insert(:category, name: "Category 1", book_id: book.id, position: "ca")
+      cat2 = BudgetingFactory.insert(:category, name: "Category 2", book_id: book.id, position: "cb")
+      cat3 = BudgetingFactory.insert(:category, name: "Category 3", book_id: book.id, position: "cc")
 
       %{cat1: cat1, cat2: cat2, cat3: cat3}
     end
@@ -1081,7 +1083,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     test "refreshes categories on category_repositioned event", %{conn: conn, book: book, cat1: cat1} do
       {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
 
-      new_category = BudgetingFactory.insert(:category, name: "New Category", book_id: book.id, position: "z")
+      new_category = BudgetingFactory.insert(:category, name: "New Category", book_id: book.id, position: "zz")
       new_category_with_envelopes = %{new_category | envelopes: []}
 
       stub(Budgeting, :list_categories, fn _scope, _book, _opts ->
@@ -1132,6 +1134,266 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert {:error,
               {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book's categories"}}}} =
                live(conn, ~p"/books/#{book.external_id}/budget")
+    end
+  end
+
+  describe "Envelope Repositioning" do
+    setup %{book: book} do
+      category1 = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id, position: "ea")
+      category2 = BudgetingFactory.insert(:category, name: "Transportation", book_id: book.id, position: "eb")
+
+      env1 = BudgetingFactory.insert(:envelope, name: "Rent", category_id: category1.id, position: "ed")
+      env2 = BudgetingFactory.insert(:envelope, name: "Utilities", category_id: category1.id, position: "eh")
+      env3 = BudgetingFactory.insert(:envelope, name: "Insurance", category_id: category1.id, position: "ep")
+
+      %{
+        category1: %{category1 | envelopes: [env1, env2, env3]},
+        category2: %{category2 | envelopes: []},
+        env1: env1,
+        env2: env2,
+        env3: env3
+      }
+    end
+
+    test "successfully repositions envelope within same category", %{
+      conn: conn,
+      book: book,
+      category1: category1,
+      env1: env1,
+      env2: env2,
+      env3: env3
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(RepositionEnvelope, :call, fn _scope, _envelope_id, _target_category_id, _prev_id, _next_id ->
+        {:ok, env3}
+      end)
+
+      # Move env3 between env1 and env2
+      result =
+        view
+        |> element("#categories")
+        |> render_hook("reposition_envelope", %{
+          "envelope_id" => env3.external_id,
+          "target_category_id" => category1.external_id,
+          "prev_envelope_id" => env1.external_id,
+          "next_envelope_id" => env2.external_id
+        })
+
+      assert result =~ "success"
+    end
+
+    test "successfully repositions envelope to different category", %{
+      conn: conn,
+      book: book,
+      category2: category2,
+      env1: env1
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(RepositionEnvelope, :call, fn _scope, _envelope_id, _target_category_id, _prev_id, _next_id ->
+        {:ok, env1}
+      end)
+
+      # Move env1 to category2
+      result =
+        view
+        |> element("#categories")
+        |> render_hook("reposition_envelope", %{
+          "envelope_id" => env1.external_id,
+          "target_category_id" => category2.external_id,
+          "prev_envelope_id" => nil,
+          "next_envelope_id" => nil
+        })
+
+      assert result =~ "success"
+    end
+
+    test "handles unauthorized envelope repositioning", %{
+      conn: conn,
+      book: book,
+      category1: category1,
+      env1: env1,
+      env2: env2
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(RepositionEnvelope, :call, fn _scope, _envelope_id, _target_category_id, _prev_id, _next_id ->
+        {:error, :unauthorized}
+      end)
+
+      view
+      |> element("#categories")
+      |> render_hook("reposition_envelope", %{
+        "envelope_id" => env1.external_id,
+        "target_category_id" => category1.external_id,
+        "prev_envelope_id" => nil,
+        "next_envelope_id" => env2.external_id
+      })
+
+      assert has_element?(view, ".alert-error", "You don't have permission to reposition envelopes")
+    end
+
+    test "handles envelope not found error", %{
+      conn: conn,
+      book: book,
+      category1: category1
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      non_existent_id = Ecto.UUID.generate()
+
+      stub(RepositionEnvelope, :call, fn _scope, _envelope_id, _target_category_id, _prev_id, _next_id ->
+        {:error, :not_found}
+      end)
+
+      view
+      |> element("#categories")
+      |> render_hook("reposition_envelope", %{
+        "envelope_id" => non_existent_id,
+        "target_category_id" => category1.external_id,
+        "prev_envelope_id" => nil,
+        "next_envelope_id" => nil
+      })
+
+      assert has_element?(view, ".alert-error", "Envelope or category not found")
+    end
+
+    test "handles general repositioning error", %{
+      conn: conn,
+      book: book,
+      category1: category1,
+      env1: env1
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      stub(RepositionEnvelope, :call, fn _scope, _envelope_id, _target_category_id, _prev_id, _next_id ->
+        {:error, :database_error}
+      end)
+
+      view
+      |> element("#categories")
+      |> render_hook("reposition_envelope", %{
+        "envelope_id" => env1.external_id,
+        "target_category_id" => category1.external_id,
+        "prev_envelope_id" => nil,
+        "next_envelope_id" => nil
+      })
+
+      assert has_element?(view, ".alert-error", "Failed to save envelope position. Please try again.")
+    end
+  end
+
+  describe "Envelope PubSub Events" do
+    test "handles envelope_repositioned message with successful category fetch", %{
+      conn: conn,
+      book: book
+    } do
+      category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id, position: "aa")
+      envelope1 = BudgetingFactory.insert(:envelope, name: "Rent", category_id: category.id, position: "a")
+      envelope2 = BudgetingFactory.insert(:envelope, name: "Utilities", category_id: category.id, position: "b")
+
+      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      assert html =~ "Housing"
+      assert html =~ "Rent"
+      assert html =~ "Utilities"
+
+      updated_envelope1 = %{envelope1 | position: "b"}
+      updated_envelope2 = %{envelope2 | position: "a"}
+      updated_category = %{category | envelopes: [updated_envelope2, updated_envelope1]}
+
+      stub(CategoryRepository, :fetch, fn category_id, _opts ->
+        if category_id == category.id do
+          {:ok, updated_category}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      send(view.pid, {:envelope_repositioned, %{category_id: category.id}})
+
+      updated_html = render(view)
+      assert updated_html =~ "Housing"
+      assert updated_html =~ "Rent"
+      assert updated_html =~ "Utilities"
+    end
+
+    test "handles envelope_repositioned message with category not found", %{
+      conn: conn,
+      book: book
+    } do
+      category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id, position: "ab")
+      BudgetingFactory.insert(:envelope, name: "Rent", category_id: category.id)
+
+      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      assert html =~ "Housing"
+      assert html =~ "Rent"
+
+      stub(CategoryRepository, :fetch, fn _category_id, _opts ->
+        {:error, :not_found}
+      end)
+
+      send(view.pid, {:envelope_repositioned, %{category_id: category.id}})
+
+      updated_html = render(view)
+      assert updated_html =~ "Housing"
+      assert updated_html =~ "Rent"
+    end
+
+    test "handles envelope_removed message with successful category fetch", %{
+      conn: conn,
+      book: book
+    } do
+      category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id, position: "ac")
+      envelope1 = BudgetingFactory.insert(:envelope, name: "Rent", category_id: category.id)
+      BudgetingFactory.insert(:envelope, name: "Utilities", category_id: category.id)
+
+      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      assert html =~ "Housing"
+      assert html =~ "Rent"
+      assert html =~ "Utilities"
+
+      updated_category = %{category | envelopes: [envelope1]}
+
+      stub(CategoryRepository, :fetch, fn category_id, _opts ->
+        if category_id == category.id do
+          {:ok, updated_category}
+        else
+          {:error, :not_found}
+        end
+      end)
+
+      send(view.pid, {:envelope_removed, %{category_id: category.id}})
+
+      updated_html = render(view)
+      assert updated_html =~ "Housing"
+      assert updated_html =~ "Rent"
+      refute updated_html =~ "Utilities"
+    end
+
+    test "handles envelope_removed message with category not found", %{
+      conn: conn,
+      book: book
+    } do
+      category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id, position: "ad")
+      BudgetingFactory.insert(:envelope, name: "Rent", category_id: category.id)
+
+      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      assert html =~ "Housing"
+      assert html =~ "Rent"
+
+      stub(CategoryRepository, :fetch, fn _category_id, _opts ->
+        {:error, :not_found}
+      end)
+
+      send(view.pid, {:envelope_removed, %{category_id: category.id}})
+
+      updated_html = render(view)
+      assert updated_html =~ "Housing"
+      assert updated_html =~ "Rent"
     end
   end
 end

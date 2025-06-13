@@ -30,7 +30,8 @@ defmodule PurseCraft.BudgetingFactory do
 
   def envelope_factory do
     %Envelope{
-      name: Faker.Commerce.product_name()
+      name: Faker.Commerce.product_name(),
+      position: sequence(:envelope_position, &generate_lowercase_position/1)
     }
   end
 

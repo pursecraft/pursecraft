@@ -118,6 +118,28 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQuery do
   end
 
   @doc """
+  Returns a query for finding a category by its ID.
+
+  ## Examples
+
+      iex> by_id(1)
+      #Ecto.Query<...>
+
+      iex> Category |> by_id(1)
+      #Ecto.Query<...>
+
+  """
+  @spec by_id(integer()) :: Ecto.Query.t()
+  def by_id(id) do
+    by_id(Category, id)
+  end
+
+  @spec by_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
+  def by_id(queryable, id) do
+    from(c in queryable, where: c.id == ^id)
+  end
+
+  @doc """
   Returns a query for finding categories by a list of external IDs.
 
   ## Examples

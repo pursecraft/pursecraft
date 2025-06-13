@@ -52,6 +52,27 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
       assert hd(category_result.envelopes).id == envelope.id
     end
 
+    test "with preload option returns envelopes ordered by position" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+
+      env1 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "s")
+      env2 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "a")
+      env3 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "z")
+
+      result = CategoryRepository.list_by_book_id(book.id, preload: [:envelopes])
+
+      assert length(result) == 1
+      category_result = hd(result)
+      assert length(category_result.envelopes) == 3
+
+      envelope_positions = Enum.map(category_result.envelopes, & &1.position)
+      assert envelope_positions == ["a", "s", "z"]
+
+      envelope_ids = Enum.map(category_result.envelopes, & &1.id)
+      assert envelope_ids == [env2.id, env1.id, env3.id]
+    end
+
     test "without preload option returns categories without preloaded associations" do
       book = BudgetingFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
@@ -105,6 +126,26 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
       assert result.id == category.id
       assert length(result.envelopes) == 1
       assert hd(result.envelopes).id == envelope.id
+    end
+
+    test "with preload option returns envelopes ordered by position" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+
+      env1 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
+      env2 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "b")
+      env3 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "x")
+
+      result = CategoryRepository.get_by_external_id_and_book_id(category.external_id, book.id, preload: [:envelopes])
+
+      assert result.id == category.id
+      assert length(result.envelopes) == 3
+
+      envelope_positions = Enum.map(result.envelopes, & &1.position)
+      assert envelope_positions == ["b", "m", "x"]
+
+      envelope_ids = Enum.map(result.envelopes, & &1.id)
+      assert envelope_ids == [env2.id, env1.id, env3.id]
     end
 
     test "without preload option returns category without preloaded associations" do
@@ -306,6 +347,43 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
 
       assert {:ok, updated_category} = CategoryRepository.update_position(cat2, "g")
       assert updated_category.position == "g"
+    end
+  end
+
+  describe "fetch/2" do
+    test "returns {:ok, category} when found" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+
+      assert {:ok, result} = CategoryRepository.fetch(category.id)
+      assert result.id == category.id
+      assert result.name == category.name
+      assert result.book_id == book.id
+    end
+
+    test "returns {:error, :not_found} when category not found" do
+      assert {:error, :not_found} = CategoryRepository.fetch(999)
+    end
+
+    test "with preload option returns category with preloaded associations" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      assert {:ok, result} = CategoryRepository.fetch(category.id, preload: [:envelopes])
+      assert result.id == category.id
+      assert length(result.envelopes) == 1
+      assert hd(result.envelopes).id == envelope.id
+    end
+
+    test "without preload option returns category without preloaded associations" do
+      book = BudgetingFactory.insert(:book)
+      category = BudgetingFactory.insert(:category, book_id: book.id)
+      BudgetingFactory.insert(:envelope, category_id: category.id)
+
+      assert {:ok, result} = CategoryRepository.fetch(category.id)
+      assert result.id == category.id
+      refute Ecto.assoc_loaded?(result.envelopes)
     end
   end
 end
