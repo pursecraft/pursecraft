@@ -19,6 +19,7 @@ defmodule PurseCraft.Utilities.HashedHMAC do
   defp decode_env!(var) do
     case System.get_env(var) do
       nil ->
+        # coveralls-ignore-next-line
         raise "Environment variable #{var} is missing. Generate with: 32 |> :crypto.strong_rand_bytes() |> Base.encode64()"
 
       key ->

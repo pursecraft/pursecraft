@@ -79,12 +79,12 @@ defmodule PurseCraft.IdentityTest do
     test "validates email uniqueness" do
       %{email: email} = IdentityFactory.insert(:user)
       {:error, changeset} = Identity.register_user(%{email: email})
-      assert "has already been taken" in errors_on(changeset).email
+      assert "has already been taken" in errors_on(changeset).email_hash
 
       # Now try with the upper cased email too, to check that email case is ignored.
       attrs = %{email: String.upcase(email)}
       {:error, changeset2} = Identity.register_user(attrs)
-      assert "has already been taken" in errors_on(changeset2).email
+      assert "has already been taken" in errors_on(changeset2).email_hash
     end
 
     test "registers users without password" do
@@ -336,7 +336,9 @@ defmodule PurseCraft.IdentityTest do
       user = IdentityFactory.insert(:user)
       assert user.confirmed_at
       {encoded_token, _hashed_token} = IdentityHelper.generate_user_magic_link_token(user)
-      assert {:ok, ^user, []} = Identity.login_user_by_magic_link(encoded_token)
+      assert {:ok, returned_user, []} = Identity.login_user_by_magic_link(encoded_token)
+      assert returned_user.id == user.id
+      assert returned_user.email == user.email
       # one time use only
       assert {:error, :not_found} = Identity.login_user_by_magic_link(encoded_token)
     end

@@ -12,9 +12,11 @@ erDiagram
     
     User {
         integer id PK
-        citext email UK "not null"
+        binary email "encrypted, not null"
+        binary email_hash UK "searchable hash, not null"
         string hashed_password
         datetime confirmed_at
+        datetime authenticated_at
         datetime inserted_at
         datetime updated_at
     }
@@ -70,7 +72,11 @@ erDiagram
 
 #### User
 
-The central entity for authentication and user management. Stores essential user information including email and hashed password. The system uses a confirmation mechanism for email verification.
+The central entity for authentication and user management. Stores essential user information with encrypted email storage and hashed password. The system uses a confirmation mechanism for email verification.
+
+**Encryption**: Email addresses are stored using a dual-column approach:
+- `email`: AES-GCM encrypted binary field for secure storage
+- `email_hash`: HMAC-SHA256 hash for searchable indexing and case-insensitive lookups
 
 #### UserToken
 

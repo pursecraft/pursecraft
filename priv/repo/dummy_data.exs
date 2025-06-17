@@ -18,6 +18,8 @@ alias PurseCraft.Budgeting.Schemas.Envelope
 alias PurseCraft.Identity.Schemas.User
 alias PurseCraft.Utilities.FractionalIndexing
 
+import Ecto.Changeset
+
 IO.puts("--------------------------------")
 IO.puts("|     CREATING DUMMY DATA      |")
 IO.puts("--------------------------------")
@@ -30,26 +32,29 @@ dummy_book = Repo.insert!(%Book{
   name: "Dummy Book"
 })
 
-dummy_book_owner = Repo.insert!(%User{
-  email: "owner@example.com",
-  hashed_password: hashed_password,
-  confirmed_at: now,
-  authenticated_at: now
-})
+dummy_book_owner = 
+  %User{}
+  |> User.email_changeset(%{email: "owner@example.com"})
+  |> put_change(:hashed_password, hashed_password)
+  |> put_change(:confirmed_at, now)
+  |> put_change(:authenticated_at, now)
+  |> Repo.insert!()
 
-dummy_book_editor = Repo.insert!(%User{
-  email: "editor@example.com",
-  hashed_password: hashed_password,
-  confirmed_at: now,
-  authenticated_at: now
-})
+dummy_book_editor = 
+  %User{}
+  |> User.email_changeset(%{email: "editor@example.com"})
+  |> put_change(:hashed_password, hashed_password)
+  |> put_change(:confirmed_at, now)
+  |> put_change(:authenticated_at, now)
+  |> Repo.insert!()
 
-dummy_book_commenter = Repo.insert!(%User{
-  email: "commenter@example.com",
-  hashed_password: hashed_password,
-  confirmed_at: now,
-  authenticated_at: now
-})
+dummy_book_commenter = 
+  %User{}
+  |> User.email_changeset(%{email: "commenter@example.com"})
+  |> put_change(:hashed_password, hashed_password)
+  |> put_change(:confirmed_at, now)
+  |> put_change(:authenticated_at, now)
+  |> Repo.insert!()
 
 Repo.insert!(%BookUser{
   book_id: dummy_book.id,

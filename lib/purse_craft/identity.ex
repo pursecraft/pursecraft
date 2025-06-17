@@ -48,7 +48,7 @@ defmodule PurseCraft.Identity do
   """
   @spec get_user_by_email(String.t()) :: User.t() | nil
   def get_user_by_email(email) when is_binary(email) do
-    Repo.get_by(User, email: email)
+    Repo.get_by(User, email_hash: String.downcase(email))
   end
 
   @doc """
@@ -65,7 +65,7 @@ defmodule PurseCraft.Identity do
   """
   @spec get_user_by_email_and_password(String.t(), String.t()) :: User.t() | nil
   def get_user_by_email_and_password(email, password) when is_binary(email) and is_binary(password) do
-    user = Repo.get_by(User, email: email)
+    user = Repo.get_by(User, email_hash: String.downcase(email))
     if User.valid_password?(user, password), do: user
   end
 
@@ -244,7 +244,8 @@ defmodule PurseCraft.Identity do
   @spec get_user_by_magic_link_token(binary()) :: User.t() | nil
   def get_user_by_magic_link_token(token) do
     with {:ok, query} <- UserToken.verify_magic_link_token_query(token),
-         {user, _token} <- Repo.one(query) do
+         {user, user_token} <- Repo.one(query),
+         true <- user_token.sent_to_hash == user.email_hash do
       user
     else
       _any -> nil
@@ -275,26 +276,10 @@ defmodule PurseCraft.Identity do
     {:ok, query} = UserToken.verify_magic_link_token_query(token)
 
     case Repo.one(query) do
-      # Prevent session fixation attacks by disallowing magic links for unconfirmed users with password
-      {%User{confirmed_at: nil, hashed_password: hash}, _token} when not is_nil(hash) ->
-        raise """
-        magic link log in is not allowed for unconfirmed users with a password set!
+      {user, user_token} ->
+        process_magic_link_token(user, user_token)
 
-        This cannot happen with the default implementation, which indicates that you
-        might have adapted the code to a different use case. Please make sure to read the
-        "Mixing magic link and password registration" section of `mix help phx.gen.auth`.
-        """
-
-      {%User{confirmed_at: nil} = user, _token} ->
-        user
-        |> User.confirm_changeset()
-        |> update_user_and_delete_all_tokens()
-
-      {user, token} ->
-        Repo.delete!(token)
-        {:ok, user, []}
-
-      nil ->
+      _any ->
         {:error, :not_found}
     end
   end
@@ -313,8 +298,9 @@ defmodule PurseCraft.Identity do
   def deliver_user_update_email_instructions(%User{} = user, current_email, update_email_url_fun)
       when is_function(update_email_url_fun, 1) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "change:#{current_email}")
+    updated_user_token = UserToken.put_hashed_fields(%{user_token | sent_to: user.email})
 
-    Repo.insert!(user_token)
+    Repo.insert!(updated_user_token)
     UserNotifier.deliver_update_email_instructions(user, update_email_url_fun.(encoded_token))
   end
 
@@ -325,7 +311,8 @@ defmodule PurseCraft.Identity do
           {:ok, Swoosh.Email.t()} | {:error, atom()}
   def deliver_login_instructions(%User{} = user, magic_link_url_fun) when is_function(magic_link_url_fun, 1) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "login")
-    Repo.insert!(user_token)
+    updated_user_token = UserToken.put_hashed_fields(%{user_token | sent_to: user.email})
+    Repo.insert!(updated_user_token)
     UserNotifier.deliver_login_instructions(user, magic_link_url_fun.(encoded_token))
   end
 
@@ -342,6 +329,33 @@ defmodule PurseCraft.Identity do
   end
 
   ## Token helper
+
+  defp process_magic_link_token(user, user_token) do
+    if user_token.sent_to_hash == user.email_hash do
+      case user do
+        # Prevent session fixation attacks by disallowing magic links for unconfirmed users with password
+        %User{confirmed_at: nil, hashed_password: hash} when not is_nil(hash) ->
+          raise """
+          magic link log in is not allowed for unconfirmed users with a password set!
+
+          This cannot happen with the default implementation, which indicates that you
+          might have adapted the code to a different use case. Please make sure to read the
+          "Mixing magic link and password registration" section of `mix help phx.gen.auth`.
+          """
+
+        %User{confirmed_at: nil} = user ->
+          user
+          |> User.confirm_changeset()
+          |> update_user_and_delete_all_tokens()
+
+        user ->
+          Repo.delete!(user_token)
+          {:ok, user, []}
+      end
+    else
+      {:error, :not_found}
+    end
+  end
 
   defp update_user_and_delete_all_tokens(changeset) do
     %{data: %User{} = user} = changeset

@@ -7,6 +7,8 @@ defmodule PurseCraft.Identity.Schemas.UserToken do
 
   alias __MODULE__
   alias PurseCraft.Identity.Schemas.User
+  alias PurseCraft.Utilities.EncryptedBinary
+  alias PurseCraft.Utilities.HashedHMAC
 
   @hash_algorithm :sha256
   @rand_size 32
@@ -23,6 +25,7 @@ defmodule PurseCraft.Identity.Schemas.UserToken do
           token: binary() | nil,
           context: String.t() | nil,
           sent_to: String.t() | nil,
+          sent_to_hash: binary() | nil,
           user_id: integer() | nil,
           inserted_at: DateTime.t() | nil
         }
@@ -30,7 +33,8 @@ defmodule PurseCraft.Identity.Schemas.UserToken do
   schema "users_tokens" do
     field :token, :binary
     field :context, :string
-    field :sent_to, :string
+    field :sent_to, EncryptedBinary
+    field :sent_to_hash, HashedHMAC
     belongs_to :user, User
 
     timestamps(type: :utc_datetime, updated_at: false)
@@ -106,14 +110,23 @@ defmodule PurseCraft.Identity.Schemas.UserToken do
     token = :crypto.strong_rand_bytes(rand_size())
     hashed_token = :crypto.hash(@hash_algorithm, token)
 
-    {Base.url_encode64(token, padding: false),
-     %UserToken{
-       token: hashed_token,
-       context: context,
-       sent_to: sent_to,
-       user_id: user.id
-     }}
+    user_token = put_hashed_fields(%UserToken{token: hashed_token, context: context, sent_to: sent_to, user_id: user.id})
+
+    {Base.url_encode64(token, padding: false), user_token}
   end
+
+  @doc """
+  Sets the sent_to_hash field based on the sent_to field.
+  """
+  @spec put_hashed_fields(t()) :: t()
+  def put_hashed_fields(%UserToken{sent_to: nil} = user_token), do: user_token
+
+  def put_hashed_fields(%UserToken{sent_to: sent_to} = user_token) when is_binary(sent_to) do
+    %{user_token | sent_to_hash: String.downcase(sent_to)}
+  end
+
+  # coveralls-ignore-next-line
+  def put_hashed_fields(user_token), do: user_token
 
   @doc """
   Checks if the token is valid and returns its underlying lookup query.
@@ -134,7 +147,6 @@ defmodule PurseCraft.Identity.Schemas.UserToken do
           from token in by_token_and_context_query(hashed_token, "login"),
             join: user in assoc(token, :user),
             where: token.inserted_at > ago(^@magic_link_validity_in_minutes, "minute"),
-            where: token.sent_to == user.email,
             select: {user, token}
 
         {:ok, query}

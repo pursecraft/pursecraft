@@ -10,8 +10,14 @@ PurseCraft uses server-side encryption for personally identifiable information (
 
 We use [Cloak](https://github.com/danielberkompas/cloak) for field-level encryption:
 
-- **User emails**: Encrypted to protect user identity
-- **User-defined names**: Book names, category names, and envelope names are encrypted as they may contain sensitive personal information
+- **User emails**: Currently encrypted to protect user identity and enable secure authentication
+- **User-defined names**: Planned encryption for book names, category names, and envelope names as they may contain sensitive personal information
+
+#### Current Encryption Status
+- **User emails**: Fully implemented using dual-column encryption pattern
+- **Category/Envelope names**: Planned implementation (high-risk PII due to potential health/personal information)
+- **Book names**: Planned implementation (medium-risk PII)
+- **Financial amounts**: Future consideration with special handling required for calculations
 
 ### Implementation Pattern
 
@@ -44,8 +50,17 @@ When writing tests for features with encrypted fields:
 ### Security Considerations
 
 - Encrypted data appears as random bytes in the database
-- Hash fields enable querying but reveal when identical values exist
+- Hash fields enable querying but reveal when identical values exist (pattern analysis risk)
+- Encrypted field comparisons must happen in application layer, not database layer
+- Case-insensitive searches require normalization before hashing
 - Financial calculations will require special handling when implemented
+
+### Important Implementation Notes
+
+- **Database Queries**: Encrypted binary fields cannot be compared directly in SQL queries due to PostgreSQL type constraints
+- **Token Verification**: Magic link token verification now happens in application layer after query execution
+- **Case Sensitivity**: Email searches are case-insensitive through lowercase normalization before hashing
+- **Factory Testing**: Test factories must use changesets to properly populate encrypted hash fields
 
 ## Environment Variables
 

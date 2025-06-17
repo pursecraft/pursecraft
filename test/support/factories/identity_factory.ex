@@ -10,10 +10,17 @@ defmodule PurseCraft.IdentityFactory do
     %Scope{}
   end
 
-  def unconfirmed_user_factory do
-    %User{
-      email: valid_email()
-    }
+  def unconfirmed_user_factory(attrs) do
+    email = Map.get(attrs, :email, valid_email())
+
+    user =
+      %User{}
+      |> User.email_changeset(%{email: email})
+      |> Ecto.Changeset.apply_changes()
+
+    user
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
   end
 
   def user_factory(attrs) do
@@ -25,17 +32,21 @@ defmodule PurseCraft.IdentityFactory do
       user_id: unconfirmed_user.id
     })
 
-    struct!(
-      unconfirmed_user,
-      %{
-        confirmed_at: DateTime.utc_now(:second)
-      }
-    )
+    user = struct!(unconfirmed_user, %{confirmed_at: DateTime.utc_now(:second)})
+
+    user
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
   end
 
-  def user_token_factory do
+  def user_token_factory(attrs) do
     token = :crypto.strong_rand_bytes(UserToken.rand_size())
 
-    %UserToken{token: token}
+    user_token = %UserToken{token: token}
+
+    user_token
+    |> UserToken.put_hashed_fields()
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
   end
 end
