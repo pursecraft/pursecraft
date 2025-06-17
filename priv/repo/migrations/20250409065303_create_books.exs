@@ -4,7 +4,8 @@ defmodule PurseCraft.Repo.Migrations.CreateBooks do
   def change do
     create table(:books) do
       add :external_id, :uuid, null: false
-      add :name, :string
+      add :name, :binary, null: false
+      add :name_hash, :binary, null: false
 
       timestamps(type: :utc_datetime)
     end

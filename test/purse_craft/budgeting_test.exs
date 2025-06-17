@@ -83,8 +83,17 @@ defmodule PurseCraft.BudgetingTest do
 
       BudgetingFactory.insert(:book_user, book_id: other_book.id, user_id: other_user.id)
 
-      assert Budgeting.list_books(scope) == [book]
-      assert Budgeting.list_books(other_scope) == [other_book]
+      result = Budgeting.list_books(scope)
+      assert [returned_book] = result
+      assert returned_book.id == book.id
+      assert returned_book.external_id == book.external_id
+      assert returned_book.name == book.name
+
+      other_result = Budgeting.list_books(other_scope)
+      assert [returned_other_book] = other_result
+      assert returned_other_book.id == other_book.id
+      assert returned_other_book.external_id == other_book.external_id
+      assert returned_other_book.name == other_book.name
     end
 
     test "with no associated books returns empty list" do
@@ -97,7 +106,10 @@ defmodule PurseCraft.BudgetingTest do
 
   describe "get_book_by_external_id!/2" do
     test "with associated book (authorized scope) returns book", %{scope: scope, book: book} do
-      assert Budgeting.get_book_by_external_id!(scope, book.external_id) == book
+      result = Budgeting.get_book_by_external_id!(scope, book.external_id)
+      assert result.id == book.id
+      assert result.external_id == book.external_id
+      assert result.name == book.name
     end
 
     test "with no associated books (unauthorized scope) raises `LetMe.UnauthorizedError`" do

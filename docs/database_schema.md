@@ -33,7 +33,8 @@ erDiagram
     Book {
         integer id PK
         uuid external_id UK
-        string name
+        binary name "encrypted, not null"
+        binary name_hash "searchable hash, not null"
         datetime inserted_at
         datetime updated_at
     }
@@ -94,6 +95,11 @@ Manages authentication tokens for various purposes like session management, logi
 #### Book
 
 Represents a user's budget - the top-level container in the budgeting system. A user can have multiple books, and books can be shared between users with different permission levels.
+
+**Encryption**: Book names use the same dual-column encryption pattern as other entities:
+- `name`: AES-GCM encrypted binary field for secure storage
+- `name_hash`: HMAC-SHA256 hash for searchable indexing
+- **Security rationale**: Book names can reveal personal circumstances and family situations
 
 #### BookUser
 

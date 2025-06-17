@@ -10,15 +10,15 @@ PurseCraft uses server-side encryption for personally identifiable information (
 
 We use [Cloak](https://github.com/danielberkompas/cloak) for field-level encryption:
 
-- **User emails**: Currently encrypted to protect user identity and enable secure authentication
-- **User-defined names**: Planned encryption for book names, category names, and envelope names as they may contain sensitive personal information
+- **User emails**: Encrypted to protect user identity and enable secure authentication
+- **User-defined names**: Book names, category names, and envelope names are encrypted as they may contain sensitive personal information
 
 #### Current Encryption Status
-- **User emails**:  Fully implemented using dual-column encryption pattern
-- **User tokens**:  Implemented with encrypted sent_to field for magic link security
-- **Category names**:  Fully implemented using dual-column encryption pattern (high-risk PII)
-- **Envelope names**:  Fully implemented using dual-column encryption pattern (high-risk PII)
-- **Book names**: Planned implementation (medium-risk PII)
+- **User emails**: Fully implemented using dual-column encryption pattern
+- **User tokens**: Implemented with encrypted sent_to field for magic link security
+- **Category names**: Fully implemented using dual-column encryption pattern (high-risk PII)
+- **Envelope names**: Fully implemented using dual-column encryption pattern (high-risk PII)
+- **Book names**: Fully implemented using dual-column encryption pattern (medium-risk PII)
 - **Financial amounts**: Future consideration with special handling required for calculations
 
 ### Implementation Pattern

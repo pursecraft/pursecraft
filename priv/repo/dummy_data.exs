@@ -29,9 +29,9 @@ password = "password123!"
 hashed_password = Bcrypt.hash_pwd_salt(password)
 
 dummy_book =
-  Repo.insert!(%Book{
-    name: "Dummy Book"
-  })
+  %Book{}
+  |> Book.changeset(%{name: "Dummy Book"})
+  |> Repo.insert!()
 
 dummy_book_owner =
   %User{}

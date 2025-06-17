@@ -10,9 +10,14 @@ defmodule PurseCraft.BudgetingFactory do
   alias PurseCraft.Budgeting.Schemas.User
 
   def book_factory do
-    %Book{
-      name: Faker.Pokemon.name()
-    }
+    name = Faker.Pokemon.name()
+
+    book =
+      %Book{}
+      |> Book.changeset(%{name: name})
+      |> Ecto.Changeset.apply_changes()
+
+    book
   end
 
   def book_user_factory do
