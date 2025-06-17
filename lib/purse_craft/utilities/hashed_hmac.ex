@@ -1,16 +1,16 @@
-defmodule PurseCraft.Vault do
-  @moduledoc false
+defmodule PurseCraft.Utilities.HashedHMAC do
+  @moduledoc """
+  Local Ecto type used for creating searchable hashes of sensitive columns.
+  """
 
-  use Cloak.Vault, otp_app: :purse_craft
+  use Cloak.Ecto.HMAC, otp_app: :purse_craft
 
-  @impl GenServer
+  @impl Cloak.Ecto.HMAC
   def init(config) do
     config =
-      Keyword.put(config, :ciphers,
-        default: {
-          Cloak.Ciphers.AES.GCM,
-          tag: "AES.GCM.V1", key: decode_env!("PURSECRAFT_CLOAK_KEY"), iv_length: 12
-        }
+      Keyword.merge(config,
+        algorithm: :sha256,
+        secret: decode_env!("PURSECRAFT_HMAC_SECRET")
       )
 
     {:ok, config}
