@@ -12,9 +12,11 @@ erDiagram
     
     User {
         integer id PK
-        citext email UK "not null"
+        binary email "encrypted, not null"
+        binary email_hash UK "searchable hash, not null"
         string hashed_password
         datetime confirmed_at
+        datetime authenticated_at
         datetime inserted_at
         datetime updated_at
     }
@@ -31,7 +33,8 @@ erDiagram
     Book {
         integer id PK
         uuid external_id UK
-        string name
+        binary name "encrypted, not null"
+        binary name_hash "searchable hash, not null"
         datetime inserted_at
         datetime updated_at
     }
@@ -47,7 +50,9 @@ erDiagram
     
     Category {
         integer id PK
-        string name "not null"
+        binary name "encrypted, not null"
+        binary name_hash "searchable hash, not null"
+        string position "fractional indexing, not null"
         uuid external_id UK
         integer book_id FK
         datetime inserted_at
@@ -56,7 +61,9 @@ erDiagram
     
     Envelope {
         integer id PK
-        string name "not null"
+        binary name "encrypted, not null"
+        binary name_hash "searchable hash, not null"
+        string position "fractional indexing, not null"
         uuid external_id UK
         integer category_id FK
         datetime inserted_at
@@ -70,7 +77,11 @@ erDiagram
 
 #### User
 
-The central entity for authentication and user management. Stores essential user information including email and hashed password. The system uses a confirmation mechanism for email verification.
+The central entity for authentication and user management. Stores essential user information with encrypted email storage and hashed password. The system uses a confirmation mechanism for email verification.
+
+**Encryption**: Email addresses are stored using a dual-column approach:
+- `email`: AES-GCM encrypted binary field for secure storage
+- `email_hash`: HMAC-SHA256 hash for searchable indexing and case-insensitive lookups
 
 #### UserToken
 
@@ -85,6 +96,11 @@ Manages authentication tokens for various purposes like session management, logi
 
 Represents a user's budget - the top-level container in the budgeting system. A user can have multiple books, and books can be shared between users with different permission levels.
 
+**Encryption**: Book names use the same dual-column encryption pattern as other entities:
+- `name`: AES-GCM encrypted binary field for secure storage
+- `name_hash`: HMAC-SHA256 hash for searchable indexing
+- **Security rationale**: Book names can reveal personal circumstances and family situations
+
 #### BookUser
 
 Junction table that establishes a many-to-many relationship between users and books. Implements role-based access control with three levels:
@@ -96,6 +112,20 @@ Junction table that establishes a many-to-many relationship between users and bo
 
 Groups related envelopes together within a book. Categories help organize the budget structure and provide a logical separation of budget items.
 
+**Encryption**: Category names use the same dual-column encryption pattern as user emails:
+- `name`: AES-GCM encrypted binary field for secure storage
+- `name_hash`: HMAC-SHA256 hash for searchable indexing
+- **Security rationale**: Category names can reveal sensitive personal information (health conditions, personal struggles, family situations)
+
+**Positioning**: Uses fractional indexing for efficient drag-and-drop reordering without updating all records.
+
 #### Envelope
 
 Represents a specific budget allocation within a category. Envelopes are the basic units of budget management in the envelope budgeting system.
+
+**Encryption**: Envelope names use the same dual-column encryption pattern:
+- `name`: AES-GCM encrypted binary field for secure storage
+- `name_hash`: HMAC-SHA256 hash for searchable indexing
+- **Security rationale**: Envelope names can reveal highly sensitive personal information (private habits, financial struggles, personal circumstances)
+
+**Positioning**: Uses fractional indexing for efficient drag-and-drop reordering within categories.

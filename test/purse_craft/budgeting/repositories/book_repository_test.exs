@@ -18,8 +18,17 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
       other_book = BudgetingFactory.insert(:book)
       BudgetingFactory.insert(:book_user, book_id: other_book.id, user_id: other_user.id)
 
-      assert BookRepository.list_by_user(user.id) == [book]
-      assert BookRepository.list_by_user(other_user.id) == [other_book]
+      result = BookRepository.list_by_user(user.id)
+      assert [returned_book] = result
+      assert returned_book.id == book.id
+      assert returned_book.external_id == book.external_id
+      assert returned_book.name == book.name
+
+      other_result = BookRepository.list_by_user(other_user.id)
+      assert [returned_other_book] = other_result
+      assert returned_other_book.id == other_book.id
+      assert returned_other_book.external_id == other_book.external_id
+      assert returned_other_book.name == other_book.name
     end
 
     test "with no associated books returns empty list" do
@@ -33,7 +42,10 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
     test "with existing book returns the book" do
       book = BudgetingFactory.insert(:book)
 
-      assert BookRepository.get_by_external_id!(book.external_id) == book
+      result = BookRepository.get_by_external_id!(book.external_id)
+      assert result.id == book.id
+      assert result.external_id == book.external_id
+      assert result.name == book.name
     end
 
     test "with non-existent book raises Ecto.NoResultsError" do
@@ -49,7 +61,10 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
     test "with existing book returns the book" do
       book = BudgetingFactory.insert(:book)
 
-      assert BookRepository.get_by_external_id(book.external_id) == book
+      result = BookRepository.get_by_external_id(book.external_id)
+      assert result.id == book.id
+      assert result.external_id == book.external_id
+      assert result.name == book.name
     end
 
     test "with non-existent book returns nil" do
@@ -63,7 +78,10 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
     test "with existing book returns the book" do
       book = BudgetingFactory.insert(:book)
 
-      assert BookRepository.get_by_external_id_with_options(book.external_id) == book
+      result = BookRepository.get_by_external_id_with_options(book.external_id)
+      assert result.id == book.id
+      assert result.external_id == book.external_id
+      assert result.name == book.name
     end
 
     test "with non-existent book returns nil" do

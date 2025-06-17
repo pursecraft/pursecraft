@@ -10,6 +10,8 @@ on:
 
 env:
   MIX_ENV: test
+  PURSECRAFT_CLOAK_KEY: ${{ secrets.PURSECRAFT_CLOAK_KEY }}
+  PURSECRAFT_HMAC_SECRET: ${{ secrets.PURSECRAFT_HMAC_SECRET }}
 
 permissions:
   contents: read

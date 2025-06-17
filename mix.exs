@@ -50,6 +50,8 @@ defmodule PurseCraft.MixProject do
     [
       {:bandit, "1.6.11"},
       {:bcrypt_elixir, "3.2.1"},
+      {:cloak, "1.1.4"},
+      {:cloak_ecto, "1.3.0"},
       {:credo, "1.7.11", only: [:dev, :test], runtime: false},
       {:dialyxir, "1.4.5", only: [:dev, :test], runtime: false},
       {:dns_cluster, "0.1.3"},

@@ -8,11 +8,15 @@ defmodule PurseCraft.Identity.Schemas.User do
   import Ecto.Changeset
 
   alias PurseCraft.Identity.Schemas.User
+  alias PurseCraft.Utilities.ChangesetHelpers
+  alias PurseCraft.Utilities.EncryptedBinary
+  alias PurseCraft.Utilities.HashedHMAC
 
   @type t :: %__MODULE__{
           __meta__: Ecto.Schema.Metadata.t(),
           id: integer() | nil,
           email: String.t() | nil,
+          email_hash: binary() | nil,
           password: String.t() | nil,
           hashed_password: String.t() | nil,
           current_password: String.t() | nil,
@@ -23,7 +27,8 @@ defmodule PurseCraft.Identity.Schemas.User do
         }
 
   schema "users" do
-    field :email, :string
+    field :email, EncryptedBinary
+    field :email_hash, HashedHMAC
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
@@ -63,6 +68,7 @@ defmodule PurseCraft.Identity.Schemas.User do
   def email_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:email])
+    |> put_hashed_fields()
     |> validate_email(opts)
   end
 
@@ -75,8 +81,9 @@ defmodule PurseCraft.Identity.Schemas.User do
 
     if Keyword.get(opts, :validate_email, true) do
       changeset
-      |> unsafe_validate_unique(:email, PurseCraft.Repo)
-      |> unique_constraint(:email)
+      |> unsafe_validate_unique(:email_hash, PurseCraft.Repo)
+      |> unique_constraint(:email_hash)
+      |> ChangesetHelpers.copy_errors(:email_hash, :email)
       |> validate_email_changed()
     else
       changeset
@@ -167,5 +174,20 @@ defmodule PurseCraft.Identity.Schemas.User do
   def valid_password?(_user, _password) do
     Bcrypt.no_user_verify()
     false
+  end
+
+  defp put_hashed_fields(changeset) do
+    case get_field(changeset, :email) do
+      nil ->
+        changeset
+
+      email when is_binary(email) ->
+        normalized_email = String.downcase(email)
+        put_change(changeset, :email_hash, normalized_email)
+
+      _other ->
+        # coveralls-ignore-next-line
+        changeset
+    end
   end
 end

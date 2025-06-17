@@ -11,6 +11,7 @@ defmodule PurseCraft.Application do
       PurseCraft.Cache,
       PurseCraftWeb.Telemetry,
       PurseCraft.Repo,
+      PurseCraft.Vault,
       {DNSCluster, query: Application.get_env(:purse_craft, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: PurseCraft.PubSub},
       # Start a worker by calling: PurseCraft.Worker.start_link(arg)

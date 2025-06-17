@@ -19,7 +19,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.ChangeBookTest do
 
       assert %Ecto.Changeset{} = changeset = ChangeBook.call(book, %{name: new_name})
       assert changeset.data == book
-      assert changeset.changes == %{name: new_name}
+      assert changeset.changes == %{name: new_name, name_hash: new_name}
     end
   end
 end

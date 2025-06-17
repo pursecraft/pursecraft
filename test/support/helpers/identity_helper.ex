@@ -34,6 +34,8 @@ defmodule PurseCraft.TestHelpers.IdentityHelper do
 
   def generate_user_magic_link_token(user) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "login")
+    # Override sent_to with the decrypted email for proper verification
+    user_token = %{user_token | sent_to: String.downcase(user.email)}
     Repo.insert!(user_token)
     {encoded_token, user_token.token}
   end

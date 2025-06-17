@@ -23,7 +23,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.ChangeEnvelopeTest do
 
       assert %Ecto.Changeset{} = changeset = ChangeEnvelope.call(envelope, %{name: new_name})
       assert changeset.data == envelope
-      assert changeset.changes == %{name: new_name}
+      assert changeset.changes == %{name: new_name, name_hash: new_name}
     end
   end
 end
