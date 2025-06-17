@@ -3,7 +3,8 @@ defmodule PurseCraft.Repo.Migrations.CreateCategoriesAndEnvelopes do
 
   def change do
     create table(:categories) do
-      add :name, :string, null: false
+      add :name, :binary, null: false
+      add :name_hash, :binary, null: false
       add :external_id, :uuid, null: false
       add :book_id, references(:books, on_delete: :delete_all), null: false
 
@@ -14,7 +15,8 @@ defmodule PurseCraft.Repo.Migrations.CreateCategoriesAndEnvelopes do
     create unique_index(:categories, [:external_id])
 
     create table(:envelopes) do
-      add :name, :string, null: false
+      add :name, :binary, null: false
+      add :name_hash, :binary, null: false
       add :external_id, :uuid, null: false
       add :category_id, references(:categories, on_delete: :delete_all), null: false
 

@@ -21,7 +21,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ChangeCategoryTest do
 
       assert %Ecto.Changeset{} = changeset = ChangeCategory.call(category, %{name: new_name})
       assert changeset.data == category
-      assert changeset.changes == %{name: new_name}
+      assert changeset.changes == %{name: new_name, name_hash: new_name}
     end
   end
 end

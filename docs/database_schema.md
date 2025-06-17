@@ -49,7 +49,9 @@ erDiagram
     
     Category {
         integer id PK
-        string name "not null"
+        binary name "encrypted, not null"
+        binary name_hash "searchable hash, not null"
+        string position "fractional indexing, not null"
         uuid external_id UK
         integer book_id FK
         datetime inserted_at
@@ -58,7 +60,9 @@ erDiagram
     
     Envelope {
         integer id PK
-        string name "not null"
+        binary name "encrypted, not null"
+        binary name_hash "searchable hash, not null"
+        string position "fractional indexing, not null"
         uuid external_id UK
         integer category_id FK
         datetime inserted_at
@@ -102,6 +106,20 @@ Junction table that establishes a many-to-many relationship between users and bo
 
 Groups related envelopes together within a book. Categories help organize the budget structure and provide a logical separation of budget items.
 
+**Encryption**: Category names use the same dual-column encryption pattern as user emails:
+- `name`: AES-GCM encrypted binary field for secure storage
+- `name_hash`: HMAC-SHA256 hash for searchable indexing
+- **Security rationale**: Category names can reveal sensitive personal information (health conditions, personal struggles, family situations)
+
+**Positioning**: Uses fractional indexing for efficient drag-and-drop reordering without updating all records.
+
 #### Envelope
 
 Represents a specific budget allocation within a category. Envelopes are the basic units of budget management in the envelope budgeting system.
+
+**Encryption**: Envelope names use the same dual-column encryption pattern:
+- `name`: AES-GCM encrypted binary field for secure storage
+- `name_hash`: HMAC-SHA256 hash for searchable indexing
+- **Security rationale**: Envelope names can reveal highly sensitive personal information (private habits, financial struggles, personal circumstances)
+
+**Positioning**: Uses fractional indexing for efficient drag-and-drop reordering within categories.

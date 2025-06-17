@@ -10,15 +10,15 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
-alias PurseCraft.Repo
+import Ecto.Changeset
+
 alias PurseCraft.Budgeting.Schemas.Book
 alias PurseCraft.Budgeting.Schemas.BookUser
 alias PurseCraft.Budgeting.Schemas.Category
 alias PurseCraft.Budgeting.Schemas.Envelope
 alias PurseCraft.Identity.Schemas.User
+alias PurseCraft.Repo
 alias PurseCraft.Utilities.FractionalIndexing
-
-import Ecto.Changeset
 
 IO.puts("--------------------------------")
 IO.puts("|     CREATING DUMMY DATA      |")
@@ -28,11 +28,12 @@ now = DateTime.utc_now(:second)
 password = "password123!"
 hashed_password = Bcrypt.hash_pwd_salt(password)
 
-dummy_book = Repo.insert!(%Book{
-  name: "Dummy Book"
-})
+dummy_book =
+  Repo.insert!(%Book{
+    name: "Dummy Book"
+  })
 
-dummy_book_owner = 
+dummy_book_owner =
   %User{}
   |> User.email_changeset(%{email: "owner@example.com"})
   |> put_change(:hashed_password, hashed_password)
@@ -40,7 +41,7 @@ dummy_book_owner =
   |> put_change(:authenticated_at, now)
   |> Repo.insert!()
 
-dummy_book_editor = 
+dummy_book_editor =
   %User{}
   |> User.email_changeset(%{email: "editor@example.com"})
   |> put_change(:hashed_password, hashed_password)
@@ -48,7 +49,7 @@ dummy_book_editor =
   |> put_change(:authenticated_at, now)
   |> Repo.insert!()
 
-dummy_book_commenter = 
+dummy_book_commenter =
   %User{}
   |> User.email_changeset(%{email: "commenter@example.com"})
   |> put_change(:hashed_password, hashed_password)
@@ -96,7 +97,7 @@ envelope_names = %{
     "Improvements"
   ],
   "Transportation" => [
-    "Car Payment", 
+    "Car Payment",
     "Gas",
     "Car Insurance",
     "Maintenance",
@@ -150,11 +151,14 @@ envelope_names = %{
 category_names
 |> Enum.zip(positions)
 |> Enum.each(fn {category_name, position} ->
-  category = Repo.insert!(%Category{
-    name: category_name,
-    book_id: dummy_book.id,
-    position: position
-  })
+  category =
+    %Category{}
+    |> Category.changeset(%{
+      name: category_name,
+      book_id: dummy_book.id,
+      position: position
+    })
+    |> Repo.insert!()
 
   envelope_list = envelope_names[category_name]
   {:ok, envelope_positions} = FractionalIndexing.initial_positions(length(envelope_list))
@@ -162,11 +166,13 @@ category_names
   envelope_list
   |> Enum.zip(envelope_positions)
   |> Enum.each(fn {envelope_name, envelope_position} ->
-    Repo.insert!(%Envelope{
+    %Envelope{}
+    |> Envelope.changeset(%{
       name: envelope_name,
       category_id: category.id,
       position: envelope_position
     })
+    |> Repo.insert!()
   end)
 end)
 
