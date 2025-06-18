@@ -4,10 +4,10 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelopeTest do
   import Mimic
 
   alias PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelope
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.IdentityFactory
+  alias PurseCraft.PubSub.BroadcastBook
 
   setup do
     book = BudgetingFactory.insert(:book)

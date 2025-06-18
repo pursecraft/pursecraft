@@ -23,7 +23,6 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelope
   alias PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalId
   alias PurseCraft.Budgeting.Commands.Envelopes.UpdateEnvelope
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
   alias PurseCraft.Budgeting.Commands.PubSub.SubscribeCategory
@@ -33,6 +32,7 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub.BroadcastBook
 
   @doc """
   Subscribes to notifications about any book changes associated with the scoped user.

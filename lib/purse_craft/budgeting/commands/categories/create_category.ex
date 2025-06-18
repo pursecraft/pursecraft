@@ -3,12 +3,12 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategory do
   Creates a category and associates it with the given `Book`.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub.BroadcastBook
   alias PurseCraft.Utilities
   alias PurseCraft.Utilities.FractionalIndexing
 

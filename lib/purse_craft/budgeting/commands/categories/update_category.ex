@@ -3,12 +3,12 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategory do
   Updates a category with the given attributes.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub.BroadcastBook
   alias PurseCraft.Types
   alias PurseCraft.Utilities
 

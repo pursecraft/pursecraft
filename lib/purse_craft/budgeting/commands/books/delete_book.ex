@@ -3,12 +3,12 @@ defmodule PurseCraft.Budgeting.Commands.Books.DeleteBook do
   Deletes a book.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.BookRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub.BroadcastBook
 
   @doc """
   Deletes a book.

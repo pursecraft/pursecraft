@@ -3,12 +3,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.UpdateEnvelope do
   Updates an envelope with the given attributes.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub.BroadcastBook
   alias PurseCraft.Utilities
 
   @type attrs :: %{

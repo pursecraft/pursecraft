@@ -3,11 +3,11 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategory do
   Repositions a category between two other categories using fractional indexing.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub.BroadcastBook
   alias PurseCraft.Repo
   alias PurseCraft.Utilities.FractionalIndexing
 
