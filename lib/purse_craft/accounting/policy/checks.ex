@@ -5,8 +5,8 @@ defmodule PurseCraft.Accounting.Policy.Checks do
 
   import Ecto.Query
 
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Accounting.Schemas.Book
+  alias PurseCraft.Accounting.Schemas.BookUser
   alias PurseCraft.Cache
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Identity.Schemas.User

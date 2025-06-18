@@ -5,6 +5,7 @@ defmodule PurseCraft.AccountingFactory do
 
   alias PurseCraft.Accounting.Schemas.Account
   alias PurseCraft.Accounting.Schemas.Book
+  alias PurseCraft.Accounting.Schemas.BookUser
   alias PurseCraft.TestHelpers.PositionHelper
 
   def book_factory do
@@ -36,5 +37,11 @@ defmodule PurseCraft.AccountingFactory do
     account
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()
+  end
+
+  def book_user_factory do
+    %BookUser{
+      role: :owner
+    }
   end
 end

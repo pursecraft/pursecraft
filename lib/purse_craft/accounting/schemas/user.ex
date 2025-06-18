@@ -1,6 +1,6 @@
-defmodule PurseCraft.Budgeting.Schemas.User do
+defmodule PurseCraft.Accounting.Schemas.User do
   @moduledoc """
-  A `User` within the `Budgeting` context.
+  A `User` within the `Accounting` context.
   """
 
   use Ecto.Schema

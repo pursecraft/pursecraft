@@ -7,7 +7,10 @@ defmodule PurseCraft.Accounting.Schemas.Book do
 
   import Ecto.Changeset
 
+  alias Ecto.Association.NotLoaded
   alias PurseCraft.Accounting.Schemas.Account
+  alias PurseCraft.Accounting.Schemas.BookUser
+  alias PurseCraft.Accounting.Schemas.User
   alias PurseCraft.Utilities.EncryptedBinary
   alias PurseCraft.Utilities.HashedHMAC
 
@@ -17,7 +20,9 @@ defmodule PurseCraft.Accounting.Schemas.Book do
           name: String.t() | nil,
           name_hash: binary() | nil,
           external_id: Ecto.UUID.t() | nil,
-          accounts: [Account.t()] | Ecto.Association.NotLoaded.t() | nil,
+          accounts: [Account.t()] | NotLoaded.t() | nil,
+          book_users: [BookUser.t()] | NotLoaded.t() | nil,
+          users: [User.t()] | NotLoaded.t() | nil,
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
         }
@@ -32,6 +37,8 @@ defmodule PurseCraft.Accounting.Schemas.Book do
     field :name_hash, HashedHMAC
 
     has_many :accounts, Account
+    has_many :book_users, BookUser
+    many_to_many :users, User, join_through: BookUser
 
     timestamps(type: :utc_datetime)
   end
