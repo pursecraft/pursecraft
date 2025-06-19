@@ -151,4 +151,114 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert result == "m"
     end
   end
+
+  describe "get_by_external_id/2,3" do
+    test "returns account when found with valid external_id" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      result = AccountRepository.get_by_external_id(book.id, account.external_id)
+
+      assert result.id == account.id
+      assert result.name == account.name
+      assert result.external_id == account.external_id
+    end
+
+    test "returns nil when account not found" do
+      book = AccountingFactory.insert(:book)
+
+      result = AccountRepository.get_by_external_id(book.id, Ecto.UUID.generate())
+
+      assert is_nil(result)
+    end
+
+    test "returns nil when account belongs to different book" do
+      book1 = AccountingFactory.insert(:book)
+      book2 = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book1)
+
+      result = AccountRepository.get_by_external_id(book2.id, account.external_id)
+
+      assert is_nil(result)
+    end
+
+    test "filters out closed account by default" do
+      book = AccountingFactory.insert(:book)
+      closed_account = AccountingFactory.insert(:account, book: book, closed_at: DateTime.utc_now())
+
+      result = AccountRepository.get_by_external_id(book.id, closed_account.external_id)
+
+      assert is_nil(result)
+    end
+
+    test "returns closed account with active_only: false" do
+      book = AccountingFactory.insert(:book)
+      closed_account = AccountingFactory.insert(:account, book: book, closed_at: DateTime.utc_now())
+
+      result = AccountRepository.get_by_external_id(book.id, closed_account.external_id, active_only: false)
+
+      assert result.id == closed_account.id
+      assert not is_nil(result.closed_at)
+    end
+
+    test "returns active account by default" do
+      book = AccountingFactory.insert(:book)
+      active_account = AccountingFactory.insert(:account, book: book)
+
+      result = AccountRepository.get_by_external_id(book.id, active_account.external_id)
+
+      assert result.id == active_account.id
+      assert is_nil(result.closed_at)
+    end
+
+    test "returns account without preloads by default" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      result = AccountRepository.get_by_external_id(book.id, account.external_id)
+
+      assert %Ecto.Association.NotLoaded{} = result.book
+    end
+
+    test "preloads associations when specified" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      result = AccountRepository.get_by_external_id(book.id, account.external_id, preload: [:book])
+
+      assert result.book.id == book.id
+      assert result.book.name == book.name
+    end
+
+    test "handles empty preload list" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      result = AccountRepository.get_by_external_id(book.id, account.external_id, preload: [])
+
+      assert %Ecto.Association.NotLoaded{} = result.book
+    end
+
+    test "works with both active_only and preload options" do
+      book = AccountingFactory.insert(:book)
+      active_account = AccountingFactory.insert(:account, book: book)
+
+      result = AccountRepository.get_by_external_id(book.id, active_account.external_id, active_only: true, preload: [:book])
+
+      assert result.id == active_account.id
+      assert is_nil(result.closed_at)
+      assert result.book.id == book.id
+    end
+
+    test "returns closed account with active_only: false and preload options" do
+      book = AccountingFactory.insert(:book)
+      closed_account = AccountingFactory.insert(:account, book: book, closed_at: DateTime.utc_now())
+
+      result = AccountRepository.get_by_external_id(book.id, closed_account.external_id, active_only: false, preload: [:book])
+
+      assert result.id == closed_account.id
+      assert not is_nil(result.closed_at)
+      assert result.book.id == book.id
+    end
+  end
 end
