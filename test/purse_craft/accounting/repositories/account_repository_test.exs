@@ -522,4 +522,18 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       refute is_nil(updated_account.name_hash)
     end
   end
+
+  describe "delete/1" do
+    test "deletes an account successfully" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      assert {:ok, %Account{} = deleted_account} = AccountRepository.delete(account)
+      assert deleted_account.id == account.id
+      assert deleted_account.external_id == account.external_id
+
+      # Verify the account is actually deleted from database
+      refute Repo.get(Account, account.id)
+    end
+  end
 end
