@@ -12,8 +12,6 @@ defmodule PurseCraft.Accounting.Schemas.BookUser do
 
   use Ecto.Schema
 
-  import Ecto.Changeset
-
   alias PurseCraft.Accounting.Schemas.Book
   alias PurseCraft.Accounting.Schemas.User
 
@@ -27,12 +25,6 @@ defmodule PurseCraft.Accounting.Schemas.BookUser do
           updated_at: DateTime.t() | nil
         }
 
-  @type changeset_attrs :: %{
-          book_id: integer(),
-          user_id: integer(),
-          role: atom()
-        }
-
   schema "books_users" do
     field :role, Ecto.Enum, values: [:owner, :editor, :commenter]
 
@@ -40,16 +32,5 @@ defmodule PurseCraft.Accounting.Schemas.BookUser do
     belongs_to :user, User
 
     timestamps(type: :utc_datetime)
-  end
-
-  @required_attrs [:book_id, :user_id, :role]
-
-  @doc false
-  @spec changeset(t(), changeset_attrs()) :: Ecto.Changeset.t()
-  def changeset(book_user, attrs) do
-    book_user
-    |> cast(attrs, @required_attrs)
-    |> validate_required(@required_attrs)
-    |> unique_constraint([:book_id, :user_id])
   end
 end

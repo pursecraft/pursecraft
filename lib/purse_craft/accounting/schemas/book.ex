@@ -5,8 +5,6 @@ defmodule PurseCraft.Accounting.Schemas.Book do
 
   use Ecto.Schema
 
-  import Ecto.Changeset
-
   alias Ecto.Association.NotLoaded
   alias PurseCraft.Accounting.Schemas.Account
   alias PurseCraft.Accounting.Schemas.BookUser
@@ -27,10 +25,6 @@ defmodule PurseCraft.Accounting.Schemas.Book do
           updated_at: DateTime.t() | nil
         }
 
-  @type changeset_attrs :: %{
-          optional(:name) => String.t()
-        }
-
   schema "books" do
     field :external_id, Ecto.UUID, autogenerate: true
     field :name, EncryptedBinary
@@ -41,28 +35,5 @@ defmodule PurseCraft.Accounting.Schemas.Book do
     many_to_many :users, User, join_through: BookUser
 
     timestamps(type: :utc_datetime)
-  end
-
-  @doc false
-  @spec changeset(t(), changeset_attrs()) :: Ecto.Changeset.t()
-  def changeset(book, attrs) do
-    book
-    |> cast(attrs, [:name])
-    |> put_hashed_fields()
-    |> validate_required([:name])
-  end
-
-  defp put_hashed_fields(changeset) do
-    case get_field(changeset, :name) do
-      nil ->
-        changeset
-
-      name when is_binary(name) ->
-        put_change(changeset, :name_hash, name)
-
-      _other ->
-        # coveralls-ignore-next-line
-        changeset
-    end
   end
 end

@@ -11,9 +11,10 @@ defmodule PurseCraft.AccountingFactory do
   def book_factory do
     name = Faker.Pokemon.name()
 
+    # Manual changeset logic for testing since accounting context doesn't manage books
     book =
-      %Book{}
-      |> Book.changeset(%{name: name})
+      %Book{name: name, name_hash: name}
+      |> Ecto.Changeset.change()
       |> Ecto.Changeset.apply_changes()
 
     book

@@ -42,26 +42,6 @@ defmodule PurseCraft.Accounting.Policy.Checks do
   def role(_scope, _object, _role), do: false
   # coveralls-ignore-stop
 
-  defp get_book_user(%Book{id: nil, external_id: book_external_id}, %User{id: user_id}) do
-    cache_key = {:authorization_check, {:book_user, {:book_external_id, {book_external_id, user_id}}}}
-
-    case Cache.get(cache_key) do
-      nil ->
-        book_user =
-          BookUser
-          |> join(:inner, [bu], b in Book, on: bu.book_id == b.id)
-          |> where([_bu, b], b.external_id == ^book_external_id)
-          |> where([bu], bu.user_id == ^user_id)
-          |> Repo.one()
-
-        Cache.put(cache_key, book_user)
-        book_user
-
-      cached_book_user ->
-        cached_book_user
-    end
-  end
-
   defp get_book_user(%Book{id: book_id}, %User{id: user_id}) do
     cache_key = {:authorization_check, {:book_user, {:book_id, {book_id, user_id}}}}
 
