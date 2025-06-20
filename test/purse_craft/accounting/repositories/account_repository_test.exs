@@ -551,4 +551,117 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       refute Repo.get(Account, account.id)
     end
   end
+
+  describe "update_position/2" do
+    test "updates account position successfully" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book, position: "m")
+
+      assert {:ok, %Account{} = updated_account} = AccountRepository.update_position(account, "z")
+      assert updated_account.id == account.id
+      assert updated_account.position == "z"
+      assert updated_account.external_id == account.external_id
+    end
+
+    test "returns error changeset with invalid position format" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book, position: "m")
+
+      assert {:error, changeset} = AccountRepository.update_position(account, "INVALID123")
+      assert %{position: ["must contain only lowercase letters"]} = errors_on(changeset)
+    end
+
+    test "persists position change to database" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book, position: "m")
+
+      assert {:ok, _updated_account} = AccountRepository.update_position(account, "b")
+
+      persisted_account = Repo.get(Account, account.id)
+      assert persisted_account.position == "b"
+    end
+  end
+
+  describe "list_by_external_ids/2" do
+    test "returns accounts matching given external IDs" do
+      book = AccountingFactory.insert(:book)
+      account1 = AccountingFactory.insert(:account, book: book)
+      account2 = AccountingFactory.insert(:account, book: book)
+      account3 = AccountingFactory.insert(:account, book: book)
+
+      external_ids = [account1.external_id, account3.external_id]
+      result = AccountRepository.list_by_external_ids(external_ids)
+
+      assert length(result) == 2
+      returned_ids = Enum.map(result, & &1.external_id)
+      assert account1.external_id in returned_ids
+      assert account3.external_id in returned_ids
+      refute account2.external_id in returned_ids
+    end
+
+    test "returns empty list when no matching external IDs" do
+      book = AccountingFactory.insert(:book)
+      AccountingFactory.insert(:account, book: book)
+
+      result = AccountRepository.list_by_external_ids([Ecto.UUID.generate(), Ecto.UUID.generate()])
+
+      assert result == []
+    end
+
+    test "returns accounts without preloads by default" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      result = AccountRepository.list_by_external_ids([account.external_id])
+
+      returned_account = hd(result)
+      assert %NotLoaded{} = returned_account.book
+    end
+
+    test "preloads associations when specified" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      result = AccountRepository.list_by_external_ids([account.external_id], preload: [:book])
+
+      returned_account = hd(result)
+      assert returned_account.book.id == book.id
+      assert returned_account.book.name == book.name
+    end
+
+    test "handles empty external_ids list" do
+      book = AccountingFactory.insert(:book)
+      AccountingFactory.insert(:account, book: book)
+
+      result = AccountRepository.list_by_external_ids([])
+
+      assert result == []
+    end
+
+    test "returns accounts from different books" do
+      book1 = AccountingFactory.insert(:book)
+      book2 = AccountingFactory.insert(:book)
+      account1 = AccountingFactory.insert(:account, book: book1)
+      account2 = AccountingFactory.insert(:account, book: book2)
+
+      external_ids = [account1.external_id, account2.external_id]
+      result = AccountRepository.list_by_external_ids(external_ids)
+
+      assert length(result) == 2
+      returned_ids = Enum.map(result, & &1.external_id)
+      assert account1.external_id in returned_ids
+      assert account2.external_id in returned_ids
+    end
+
+    test "handles duplicate external IDs in input" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      external_ids = [account.external_id, account.external_id]
+      result = AccountRepository.list_by_external_ids(external_ids)
+
+      assert length(result) == 1
+      assert hd(result).external_id == account.external_id
+    end
+  end
 end

@@ -138,4 +138,26 @@ defmodule PurseCraft.Accounting.Queries.AccountQuery do
   def active(queryable) do
     from(a in queryable, where: is_nil(a.closed_at))
   end
+
+  @doc """
+  Returns a query for finding accounts by multiple external IDs.
+
+  ## Examples
+
+      iex> by_external_ids(["id1", "id2"])
+      #Ecto.Query<...>
+
+      iex> Account |> by_external_ids(["id1", "id2"])
+      #Ecto.Query<...>
+
+  """
+  @spec by_external_ids([Ecto.UUID.t()]) :: Ecto.Query.t()
+  def by_external_ids(external_ids) do
+    by_external_ids(Account, external_ids)
+  end
+
+  @spec by_external_ids(Ecto.Queryable.t(), [Ecto.UUID.t()]) :: Ecto.Query.t()
+  def by_external_ids(queryable, external_ids) do
+    from(a in queryable, where: a.external_id in ^external_ids)
+  end
 end

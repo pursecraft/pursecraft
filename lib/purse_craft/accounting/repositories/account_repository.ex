@@ -201,4 +201,49 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
     |> Repo.all()
     |> maybe_preload(opts)
   end
+
+  @doc """
+  Updates the position of an account.
+
+  ## Examples
+
+      iex> update_position(account, "m")
+      {:ok, %Account{position: "m"}}
+
+      iex> update_position(account, "ABC")
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec update_position(Account.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def update_position(account, new_position) do
+    account
+    |> Account.position_changeset(%{position: new_position})
+    |> Repo.update()
+  end
+
+  @doc """
+  Gets multiple accounts by their external IDs.
+
+  Returns a list of accounts that match the given external IDs.
+
+  ## Options
+
+  The `:preload` option accepts a list of associations to preload.
+
+  ## Examples
+
+      iex> list_by_external_ids(["id1", "id2", "id3"])
+      [%Account{}, %Account{}]
+
+      iex> list_by_external_ids(["id1", "id2"], preload: [:book])
+      [%Account{book: %Book{}}, %Account{book: %Book{}}]
+
+  """
+  @spec list_by_external_ids([Ecto.UUID.t()], list_options()) :: [Account.t()]
+  def list_by_external_ids(external_ids, opts \\ []) when is_list(external_ids) do
+    external_ids
+    |> AccountQuery.by_external_ids()
+    |> Repo.all()
+    |> maybe_preload(opts)
+  end
 end
