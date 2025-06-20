@@ -384,4 +384,142 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       end)
     end
   end
+
+  describe "update/2" do
+    test "updates an account with valid attributes" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book, name: "Original Name", description: "Original Description")
+
+      attrs = %{name: "Updated Name", description: "Updated Description"}
+
+      assert {:ok, %Account{} = updated_account} = AccountRepository.update(account, attrs)
+      assert updated_account.id == account.id
+      assert updated_account.name == "Updated Name"
+      assert updated_account.description == "Updated Description"
+      assert updated_account.account_type == account.account_type
+      assert updated_account.book_id == account.book_id
+      assert updated_account.position == account.position
+    end
+
+    test "updates account name only" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book, name: "Old Name", description: "Keep Description")
+
+      attrs = %{name: "New Name"}
+
+      assert {:ok, %Account{} = updated_account} = AccountRepository.update(account, attrs)
+      assert updated_account.name == "New Name"
+      assert updated_account.description == "Keep Description"
+    end
+
+    test "updates account description only" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book, name: "Keep Name", description: "Old Description")
+
+      attrs = %{description: "New Description"}
+
+      assert {:ok, %Account{} = updated_account} = AccountRepository.update(account, attrs)
+      assert updated_account.name == "Keep Name"
+      assert updated_account.description == "New Description"
+    end
+
+    test "clears description when set to nil" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book, description: "Remove This")
+
+      attrs = %{description: nil}
+
+      assert {:ok, %Account{} = updated_account} = AccountRepository.update(account, attrs)
+      assert is_nil(updated_account.description)
+    end
+
+    test "returns error changeset with blank name" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      attrs = %{name: ""}
+
+      assert {:error, changeset} = AccountRepository.update(account, attrs)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+
+    test "returns error changeset with nil name" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      attrs = %{name: nil}
+
+      assert {:error, changeset} = AccountRepository.update(account, attrs)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+
+    test "ignores account_type changes in attributes" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book, account_type: "checking")
+
+      attrs = %{name: "Updated Name", account_type: "savings"}
+
+      assert {:ok, %Account{} = updated_account} = AccountRepository.update(account, attrs)
+      assert updated_account.name == "Updated Name"
+      assert updated_account.account_type == "checking"
+    end
+
+    test "ignores position changes in attributes" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book, position: "m")
+
+      attrs = %{name: "Updated Name", position: "z"}
+
+      assert {:ok, %Account{} = updated_account} = AccountRepository.update(account, attrs)
+      assert updated_account.name == "Updated Name"
+      assert updated_account.position == "m"
+    end
+
+    test "ignores book_id changes in attributes" do
+      book1 = AccountingFactory.insert(:book)
+      book2 = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book1)
+
+      attrs = %{name: "Updated Name", book_id: book2.id}
+
+      assert {:ok, %Account{} = updated_account} = AccountRepository.update(account, attrs)
+      assert updated_account.name == "Updated Name"
+      assert updated_account.book_id == book1.id
+    end
+
+    test "ignores external_id changes in attributes" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+      original_external_id = account.external_id
+
+      attrs = %{name: "Updated Name", external_id: Ecto.UUID.generate()}
+
+      assert {:ok, %Account{} = updated_account} = AccountRepository.update(account, attrs)
+      assert updated_account.name == "Updated Name"
+      assert updated_account.external_id == original_external_id
+    end
+
+    test "handles string keys in attributes" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      attrs = %{"name" => "String Key Name", "description" => "String Key Description"}
+
+      assert {:ok, %Account{} = updated_account} = AccountRepository.update(account, attrs)
+      assert updated_account.name == "String Key Name"
+      assert updated_account.description == "String Key Description"
+    end
+
+    test "updates encrypted fields and hash fields correctly" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book, name: "Original")
+
+      attrs = %{name: "Encrypted Update"}
+
+      assert {:ok, %Account{} = updated_account} = AccountRepository.update(account, attrs)
+      assert updated_account.name == "Encrypted Update"
+      assert updated_account.name_hash != account.name_hash
+      refute is_nil(updated_account.name_hash)
+    end
+  end
 end

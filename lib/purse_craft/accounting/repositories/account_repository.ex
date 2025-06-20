@@ -22,6 +22,11 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
           required(:position) => String.t()
         }
 
+  @type update_attrs :: %{
+          optional(:name) => String.t(),
+          optional(:description) => String.t()
+        }
+
   @doc """
   Creates an account for a book.
 
@@ -39,6 +44,25 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
     %Account{}
     |> Account.create_changeset(attrs)
     |> Repo.insert()
+  end
+
+  @doc """
+  Updates an existing account.
+
+  ## Examples
+
+      iex> update(account, %{name: "Updated Name"})
+      {:ok, %Account{}}
+
+      iex> update(account, %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec update(Account.t(), update_attrs()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def update(account, attrs) do
+    account
+    |> Account.update_changeset(attrs)
+    |> Repo.update()
   end
 
   @doc """
