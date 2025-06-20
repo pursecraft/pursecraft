@@ -11,7 +11,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
   @type get_option :: {:preload, Types.preload()} | {:active_only, boolean()}
   @type get_options :: [get_option()]
 
-  @type list_option :: {:preload, Types.preload()}
+  @type list_option :: {:preload, Types.preload()} | {:active_only, boolean()}
   @type list_options :: [list_option()]
 
   @type create_attrs :: %{
@@ -105,10 +105,40 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
 
   defp maybe_preload(nil, _opts), do: nil
 
-  defp maybe_preload(account, opts) do
+  defp maybe_preload(data, opts) do
     case Keyword.get(opts, :preload, []) do
-      [] -> account
-      preload_opts -> Repo.preload(account, preload_opts)
+      [] -> data
+      preload_opts -> Repo.preload(data, preload_opts)
     end
+  end
+
+  @doc """
+  Lists all accounts for a specific book, ordered by position.
+
+  ## Options
+
+  - `:preload` - Associations to preload (default: [])
+  - `:active_only` - Filter to only active (non-closed) accounts (default: true)
+
+  ## Examples
+
+      iex> list_by_book(1)
+      [%Account{}, %Account{}]
+
+      iex> list_by_book(1, preload: [:book])
+      [%Account{book: %Book{}}, %Account{book: %Book{}}]
+
+      iex> list_by_book(1, active_only: false)
+      [%Account{}, %Account{closed_at: ~U[2023-01-01 00:00:00Z]}]
+
+  """
+  @spec list_by_book(integer(), list_options()) :: [Account.t()]
+  def list_by_book(book_id, opts \\ []) do
+    book_id
+    |> AccountQuery.by_book_id()
+    |> maybe_active_only(opts)
+    |> AccountQuery.order_by_position()
+    |> Repo.all()
+    |> maybe_preload(opts)
   end
 end

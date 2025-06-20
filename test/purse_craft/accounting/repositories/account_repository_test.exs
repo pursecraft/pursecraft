@@ -1,6 +1,7 @@
 defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
   use PurseCraft.DataCase, async: true
 
+  alias Ecto.Association.NotLoaded
   alias PurseCraft.Accounting.Repositories.AccountRepository
   alias PurseCraft.Accounting.Schemas.Account
   alias PurseCraft.AccountingFactory
@@ -101,7 +102,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       attrs = %{
         name: "Test Account",
         account_type: "checking",
-        book_id: 999999,
+        book_id: 999_999,
         position: "m"
       }
 
@@ -142,7 +143,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     test "ignores accounts from other books" do
       book1 = AccountingFactory.insert(:book)
       book2 = AccountingFactory.insert(:book)
-      
+
       AccountingFactory.insert(:account, book: book1, position: "m")
       AccountingFactory.insert(:account, book: book2, position: "a")
 
@@ -217,7 +218,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
 
       result = AccountRepository.get_by_external_id(book.id, account.external_id)
 
-      assert %Ecto.Association.NotLoaded{} = result.book
+      assert %NotLoaded{} = result.book
     end
 
     test "preloads associations when specified" do
@@ -236,14 +237,15 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
 
       result = AccountRepository.get_by_external_id(book.id, account.external_id, preload: [])
 
-      assert %Ecto.Association.NotLoaded{} = result.book
+      assert %NotLoaded{} = result.book
     end
 
     test "works with both active_only and preload options" do
       book = AccountingFactory.insert(:book)
       active_account = AccountingFactory.insert(:account, book: book)
 
-      result = AccountRepository.get_by_external_id(book.id, active_account.external_id, active_only: true, preload: [:book])
+      result =
+        AccountRepository.get_by_external_id(book.id, active_account.external_id, active_only: true, preload: [:book])
 
       assert result.id == active_account.id
       assert is_nil(result.closed_at)
@@ -254,11 +256,132 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       book = AccountingFactory.insert(:book)
       closed_account = AccountingFactory.insert(:account, book: book, closed_at: DateTime.utc_now())
 
-      result = AccountRepository.get_by_external_id(book.id, closed_account.external_id, active_only: false, preload: [:book])
+      result =
+        AccountRepository.get_by_external_id(book.id, closed_account.external_id, active_only: false, preload: [:book])
 
       assert result.id == closed_account.id
       assert not is_nil(result.closed_at)
       assert result.book.id == book.id
+    end
+  end
+
+  describe "list_by_book/2" do
+    test "returns accounts for specified book ordered by position" do
+      book = AccountingFactory.insert(:book)
+      account1 = AccountingFactory.insert(:account, book: book, position: "m")
+      account2 = AccountingFactory.insert(:account, book: book, position: "g")
+      account3 = AccountingFactory.insert(:account, book: book, position: "t")
+
+      result = AccountRepository.list_by_book(book.id)
+
+      assert length(result) == 3
+      assert Enum.map(result, & &1.id) == [account2.id, account1.id, account3.id]
+    end
+
+    test "returns empty list when no accounts exist for book" do
+      book = AccountingFactory.insert(:book)
+
+      result = AccountRepository.list_by_book(book.id)
+
+      assert result == []
+    end
+
+    test "returns only accounts for specified book" do
+      book1 = AccountingFactory.insert(:book)
+      book2 = AccountingFactory.insert(:book)
+      account1 = AccountingFactory.insert(:account, book: book1, position: "m")
+      AccountingFactory.insert(:account, book: book2, position: "g")
+
+      result = AccountRepository.list_by_book(book1.id)
+
+      assert length(result) == 1
+      assert hd(result).id == account1.id
+    end
+
+    test "filters out closed accounts by default" do
+      book = AccountingFactory.insert(:book)
+      active_account = AccountingFactory.insert(:account, book: book, position: "m")
+      AccountingFactory.insert(:account, book: book, position: "g", closed_at: DateTime.utc_now())
+
+      result = AccountRepository.list_by_book(book.id)
+
+      assert length(result) == 1
+      assert hd(result).id == active_account.id
+    end
+
+    test "includes closed accounts with active_only: false" do
+      book = AccountingFactory.insert(:book)
+      active_account = AccountingFactory.insert(:account, book: book, position: "m")
+      closed_account = AccountingFactory.insert(:account, book: book, position: "g", closed_at: DateTime.utc_now())
+
+      result = AccountRepository.list_by_book(book.id, active_only: false)
+
+      assert length(result) == 2
+      account_ids = Enum.map(result, & &1.id)
+      assert closed_account.id in account_ids
+      assert active_account.id in account_ids
+    end
+
+    test "returns accounts without preloads by default" do
+      book = AccountingFactory.insert(:book)
+      AccountingFactory.insert(:account, book: book, position: "m")
+
+      result = AccountRepository.list_by_book(book.id)
+
+      account = hd(result)
+      assert %NotLoaded{} = account.book
+    end
+
+    test "preloads associations when specified" do
+      book = AccountingFactory.insert(:book)
+      AccountingFactory.insert(:account, book: book, position: "m")
+
+      result = AccountRepository.list_by_book(book.id, preload: [:book])
+
+      account = hd(result)
+      assert account.book.id == book.id
+      assert account.book.name == book.name
+    end
+
+    test "handles empty preload list" do
+      book = AccountingFactory.insert(:book)
+      AccountingFactory.insert(:account, book: book, position: "m")
+
+      result = AccountRepository.list_by_book(book.id, preload: [])
+
+      account = hd(result)
+      assert %NotLoaded{} = account.book
+    end
+
+    test "works with both active_only and preload options" do
+      book = AccountingFactory.insert(:book)
+      active_account = AccountingFactory.insert(:account, book: book, position: "m")
+      AccountingFactory.insert(:account, book: book, position: "g", closed_at: DateTime.utc_now())
+
+      result = AccountRepository.list_by_book(book.id, active_only: true, preload: [:book])
+
+      assert length(result) == 1
+      account = hd(result)
+      assert account.id == active_account.id
+      assert is_nil(account.closed_at)
+      assert account.book.id == book.id
+    end
+
+    test "returns closed accounts with active_only: false and preload options" do
+      book = AccountingFactory.insert(:book)
+      active_account = AccountingFactory.insert(:account, book: book, position: "m")
+      closed_account = AccountingFactory.insert(:account, book: book, position: "g", closed_at: DateTime.utc_now())
+
+      result = AccountRepository.list_by_book(book.id, active_only: false, preload: [:book])
+
+      assert length(result) == 2
+      account_ids = Enum.map(result, & &1.id)
+      assert closed_account.id in account_ids
+      assert active_account.id in account_ids
+
+      Enum.each(result, fn account ->
+        assert account.book.id == book.id
+      end)
     end
   end
 end

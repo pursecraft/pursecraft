@@ -34,7 +34,6 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalIdTest d
       assert {:ok, ^account} = FetchAccountByExternalId.call(scope, book, account.external_id)
     end
 
-
     test "with invalid external_id returns not found error", %{book: book, user: user} do
       AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
@@ -91,6 +90,5 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalIdTest d
 
       assert {:error, :not_found} = FetchAccountByExternalId.call(scope, different_book, account.external_id)
     end
-
   end
 end
