@@ -66,6 +66,25 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
   end
 
   @doc """
+  Closes an account (business closure with closed_at timestamp).
+
+  ## Examples
+
+      iex> close(account)
+      {:ok, %Account{}}
+
+      iex> close(invalid_account)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec close(Account.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def close(account) do
+    account
+    |> Account.close_changeset(%{closed_at: DateTime.utc_now()})
+    |> Repo.update()
+  end
+
+  @doc """
   Deletes an account (hard delete).
 
   ## Examples

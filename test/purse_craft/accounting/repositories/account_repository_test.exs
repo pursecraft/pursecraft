@@ -523,6 +523,22 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
   end
 
+  describe "close/1" do
+    test "closes an account successfully" do
+      book = AccountingFactory.insert(:book)
+      account = AccountingFactory.insert(:account, book: book)
+
+      assert {:ok, %Account{} = closed_account} = AccountRepository.close(account)
+      assert closed_account.id == account.id
+      assert closed_account.external_id == account.external_id
+      assert not is_nil(closed_account.closed_at)
+
+      persisted_account = Repo.get(Account, account.id)
+      assert persisted_account
+      assert not is_nil(persisted_account.closed_at)
+    end
+  end
+
   describe "delete/1" do
     test "deletes an account successfully" do
       book = AccountingFactory.insert(:book)
@@ -532,7 +548,6 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert deleted_account.id == account.id
       assert deleted_account.external_id == account.external_id
 
-      # Verify the account is actually deleted from database
       refute Repo.get(Account, account.id)
     end
   end
