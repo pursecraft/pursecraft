@@ -12,6 +12,7 @@
 
 import Ecto.Changeset
 
+alias PurseCraft.Accounting.Schemas.Account
 alias PurseCraft.Budgeting.Schemas.Book
 alias PurseCraft.Budgeting.Schemas.BookUser
 alias PurseCraft.Budgeting.Schemas.Category
@@ -174,6 +175,36 @@ category_names
     })
     |> Repo.insert!()
   end)
+end)
+
+# Create dummy accounts
+account_data = [
+  %{name: "Chase Checking", account_type: "checking"},
+  %{name: "Ally Savings", account_type: "savings"},
+  %{name: "Cash Wallet", account_type: "cash"},
+  %{name: "Chase Freedom Credit Card", account_type: "credit_card"},
+  %{name: "Home Equity Line of Credit", account_type: "line_of_credit"},
+  %{name: "Home Mortgage", account_type: "mortgage"},
+  %{name: "Honda CR-V Loan", account_type: "auto_loan"},
+  %{name: "Student Loans", account_type: "student_loan"},
+  %{name: "Personal Loan", account_type: "personal_loan"},
+  %{name: "House (Asset)", account_type: "asset"},
+  %{name: "Investment Portfolio", account_type: "asset"}
+]
+
+{:ok, account_positions} = FractionalIndexing.initial_positions(length(account_data))
+
+account_data
+|> Enum.zip(account_positions)
+|> Enum.each(fn {account_info, position} ->
+  %Account{}
+  |> Account.create_changeset(%{
+    name: account_info.name,
+    account_type: account_info.account_type,
+    book_id: dummy_book.id,
+    position: position
+  })
+  |> Repo.insert!()
 end)
 
 Process.sleep(1)
