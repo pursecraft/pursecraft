@@ -5,10 +5,11 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
   alias PurseCraft.Accounting.Repositories.AccountRepository
   alias PurseCraft.Accounting.Schemas.Account
   alias PurseCraft.AccountingFactory
+  alias PurseCraft.IdentityFactory
 
   describe "create/1" do
     test "creates an account with valid attributes" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       attrs = %{
         name: "Test Account",
@@ -29,7 +30,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "creates an account without optional description" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       attrs = %{
         name: "Simple Account",
@@ -59,7 +60,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns error changeset with invalid account type" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       attrs = %{
         name: "Test Account",
@@ -85,7 +86,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns error changeset with invalid position format" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       attrs = %{
         name: "Test Account",
@@ -113,7 +114,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
 
   describe "get_first_position/1" do
     test "returns the position of the first account when accounts exist" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       AccountingFactory.insert(:account, book: book, position: "m")
       AccountingFactory.insert(:account, book: book, position: "g")
       AccountingFactory.insert(:account, book: book, position: "t")
@@ -124,7 +125,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns nil when no accounts exist for the book" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       result = AccountRepository.get_first_position(book.id)
 
@@ -132,7 +133,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns first position when only one account exists" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       AccountingFactory.insert(:account, book: book, position: "m")
 
       result = AccountRepository.get_first_position(book.id)
@@ -141,8 +142,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "ignores accounts from other books" do
-      book1 = AccountingFactory.insert(:book)
-      book2 = AccountingFactory.insert(:book)
+      book1 = IdentityFactory.insert(:book)
+      book2 = IdentityFactory.insert(:book)
 
       AccountingFactory.insert(:account, book: book1, position: "m")
       AccountingFactory.insert(:account, book: book2, position: "a")
@@ -155,7 +156,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
 
   describe "get_by_external_id/2,3" do
     test "returns account when found with valid external_id" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       result = AccountRepository.get_by_external_id(book.id, account.external_id)
@@ -166,7 +167,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns nil when account not found" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       result = AccountRepository.get_by_external_id(book.id, Ecto.UUID.generate())
 
@@ -174,8 +175,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns nil when account belongs to different book" do
-      book1 = AccountingFactory.insert(:book)
-      book2 = AccountingFactory.insert(:book)
+      book1 = IdentityFactory.insert(:book)
+      book2 = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book1)
 
       result = AccountRepository.get_by_external_id(book2.id, account.external_id)
@@ -184,7 +185,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "filters out closed account by default" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       closed_account = AccountingFactory.insert(:account, book: book, closed_at: DateTime.utc_now())
 
       result = AccountRepository.get_by_external_id(book.id, closed_account.external_id)
@@ -193,7 +194,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns closed account with active_only: false" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       closed_account = AccountingFactory.insert(:account, book: book, closed_at: DateTime.utc_now())
 
       result = AccountRepository.get_by_external_id(book.id, closed_account.external_id, active_only: false)
@@ -203,7 +204,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns active account by default" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       active_account = AccountingFactory.insert(:account, book: book)
 
       result = AccountRepository.get_by_external_id(book.id, active_account.external_id)
@@ -213,7 +214,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns account without preloads by default" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       result = AccountRepository.get_by_external_id(book.id, account.external_id)
@@ -222,7 +223,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "preloads associations when specified" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       result = AccountRepository.get_by_external_id(book.id, account.external_id, preload: [:book])
@@ -232,7 +233,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "handles empty preload list" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       result = AccountRepository.get_by_external_id(book.id, account.external_id, preload: [])
@@ -241,7 +242,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "works with both active_only and preload options" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       active_account = AccountingFactory.insert(:account, book: book)
 
       result =
@@ -253,7 +254,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns closed account with active_only: false and preload options" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       closed_account = AccountingFactory.insert(:account, book: book, closed_at: DateTime.utc_now())
 
       result =
@@ -267,7 +268,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
 
   describe "list_by_book/2" do
     test "returns accounts for specified book ordered by position" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account1 = AccountingFactory.insert(:account, book: book, position: "m")
       account2 = AccountingFactory.insert(:account, book: book, position: "g")
       account3 = AccountingFactory.insert(:account, book: book, position: "t")
@@ -279,7 +280,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns empty list when no accounts exist for book" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       result = AccountRepository.list_by_book(book.id)
 
@@ -287,8 +288,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns only accounts for specified book" do
-      book1 = AccountingFactory.insert(:book)
-      book2 = AccountingFactory.insert(:book)
+      book1 = IdentityFactory.insert(:book)
+      book2 = IdentityFactory.insert(:book)
       account1 = AccountingFactory.insert(:account, book: book1, position: "m")
       AccountingFactory.insert(:account, book: book2, position: "g")
 
@@ -299,7 +300,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "filters out closed accounts by default" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       active_account = AccountingFactory.insert(:account, book: book, position: "m")
       AccountingFactory.insert(:account, book: book, position: "g", closed_at: DateTime.utc_now())
 
@@ -310,7 +311,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "includes closed accounts with active_only: false" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       active_account = AccountingFactory.insert(:account, book: book, position: "m")
       closed_account = AccountingFactory.insert(:account, book: book, position: "g", closed_at: DateTime.utc_now())
 
@@ -323,7 +324,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns accounts without preloads by default" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       AccountingFactory.insert(:account, book: book, position: "m")
 
       result = AccountRepository.list_by_book(book.id)
@@ -333,7 +334,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "preloads associations when specified" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       AccountingFactory.insert(:account, book: book, position: "m")
 
       result = AccountRepository.list_by_book(book.id, preload: [:book])
@@ -344,7 +345,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "handles empty preload list" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       AccountingFactory.insert(:account, book: book, position: "m")
 
       result = AccountRepository.list_by_book(book.id, preload: [])
@@ -354,7 +355,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "works with both active_only and preload options" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       active_account = AccountingFactory.insert(:account, book: book, position: "m")
       AccountingFactory.insert(:account, book: book, position: "g", closed_at: DateTime.utc_now())
 
@@ -368,7 +369,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns closed accounts with active_only: false and preload options" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       active_account = AccountingFactory.insert(:account, book: book, position: "m")
       closed_account = AccountingFactory.insert(:account, book: book, position: "g", closed_at: DateTime.utc_now())
 
@@ -387,7 +388,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
 
   describe "update/2" do
     test "updates an account with valid attributes" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book, name: "Original Name", description: "Original Description")
 
       attrs = %{name: "Updated Name", description: "Updated Description"}
@@ -402,7 +403,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "updates account name only" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book, name: "Old Name", description: "Keep Description")
 
       attrs = %{name: "New Name"}
@@ -413,7 +414,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "updates account description only" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book, name: "Keep Name", description: "Old Description")
 
       attrs = %{description: "New Description"}
@@ -424,7 +425,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "clears description when set to nil" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book, description: "Remove This")
 
       attrs = %{description: nil}
@@ -434,7 +435,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns error changeset with blank name" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       attrs = %{name: ""}
@@ -444,7 +445,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns error changeset with nil name" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       attrs = %{name: nil}
@@ -454,7 +455,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "ignores account_type changes in attributes" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book, account_type: "checking")
 
       attrs = %{name: "Updated Name", account_type: "savings"}
@@ -465,7 +466,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "ignores position changes in attributes" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book, position: "m")
 
       attrs = %{name: "Updated Name", position: "z"}
@@ -476,8 +477,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "ignores book_id changes in attributes" do
-      book1 = AccountingFactory.insert(:book)
-      book2 = AccountingFactory.insert(:book)
+      book1 = IdentityFactory.insert(:book)
+      book2 = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book1)
 
       attrs = %{name: "Updated Name", book_id: book2.id}
@@ -488,7 +489,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "ignores external_id changes in attributes" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
       original_external_id = account.external_id
 
@@ -500,7 +501,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "handles string keys in attributes" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       attrs = %{"name" => "String Key Name", "description" => "String Key Description"}
@@ -511,7 +512,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "updates encrypted fields and hash fields correctly" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book, name: "Original")
 
       attrs = %{name: "Encrypted Update"}
@@ -525,7 +526,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
 
   describe "close/1" do
     test "closes an account successfully" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       assert {:ok, %Account{} = closed_account} = AccountRepository.close(account)
@@ -541,7 +542,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
 
   describe "delete/1" do
     test "deletes an account successfully" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       assert {:ok, %Account{} = deleted_account} = AccountRepository.delete(account)
@@ -554,7 +555,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
 
   describe "update_position/2" do
     test "updates account position successfully" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book, position: "m")
 
       assert {:ok, %Account{} = updated_account} = AccountRepository.update_position(account, "z")
@@ -564,7 +565,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns error changeset with invalid position format" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book, position: "m")
 
       assert {:error, changeset} = AccountRepository.update_position(account, "INVALID123")
@@ -572,7 +573,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "persists position change to database" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book, position: "m")
 
       assert {:ok, _updated_account} = AccountRepository.update_position(account, "b")
@@ -584,7 +585,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
 
   describe "list_by_external_ids/2" do
     test "returns accounts matching given external IDs" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account1 = AccountingFactory.insert(:account, book: book)
       account2 = AccountingFactory.insert(:account, book: book)
       account3 = AccountingFactory.insert(:account, book: book)
@@ -600,7 +601,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns empty list when no matching external IDs" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       AccountingFactory.insert(:account, book: book)
 
       result = AccountRepository.list_by_external_ids([Ecto.UUID.generate(), Ecto.UUID.generate()])
@@ -609,7 +610,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns accounts without preloads by default" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       result = AccountRepository.list_by_external_ids([account.external_id])
@@ -619,7 +620,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "preloads associations when specified" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       result = AccountRepository.list_by_external_ids([account.external_id], preload: [:book])
@@ -630,7 +631,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "handles empty external_ids list" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       AccountingFactory.insert(:account, book: book)
 
       result = AccountRepository.list_by_external_ids([])
@@ -639,8 +640,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns accounts from different books" do
-      book1 = AccountingFactory.insert(:book)
-      book2 = AccountingFactory.insert(:book)
+      book1 = IdentityFactory.insert(:book)
+      book2 = IdentityFactory.insert(:book)
       account1 = AccountingFactory.insert(:account, book: book1)
       account2 = AccountingFactory.insert(:account, book: book2)
 
@@ -654,7 +655,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "handles duplicate external IDs in input" do
-      book = AccountingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       account = AccountingFactory.insert(:account, book: book)
 
       external_ids = [account.external_id, account.external_id]

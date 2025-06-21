@@ -5,16 +5,16 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
   import Phoenix.LiveViewTest
 
   alias PurseCraft.Budgeting
-  alias PurseCraft.BudgetingFactory
+  alias PurseCraft.IdentityFactory
   alias PurseCraft.Repo
 
   setup :register_and_log_in_user
 
   describe "List Books" do
     test "returns all scoped books", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book, name: "Book 1")
-      BudgetingFactory.insert(:book, name: "Book 2")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id)
+      book = IdentityFactory.insert(:book, name: "Book 1")
+      IdentityFactory.insert(:book, name: "Book 2")
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id)
 
       {:ok, _index_live, html} = live(conn, ~p"/books")
 
@@ -76,8 +76,8 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
 
   describe "Update Book" do
     test "with owner role and valid data updates book", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book, name: "Book 1")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = IdentityFactory.insert(:book, name: "Book 1")
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       attrs = %{
         name: "Updated Book"
@@ -106,8 +106,8 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
     end
 
     test "with blank name returns error", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book, name: "Book 1")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = IdentityFactory.insert(:book, name: "Book 1")
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       attrs = %{
         name: ""
@@ -149,8 +149,8 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
     end
 
     test "with unauthorized scope returns flash error", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      book = IdentityFactory.insert(:book)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
 
       {:ok, view, _html} = live(conn, ~p"/books")
 
@@ -161,8 +161,8 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
     end
 
     test "handles error when book deletion fails", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = IdentityFactory.insert(:book)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       {:ok, view, _html} = live(conn, ~p"/books")
 
@@ -177,8 +177,8 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
     end
 
     test "with owner role and associated book deletes book in listing", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = IdentityFactory.insert(:book)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       {:ok, index_live, _html} = live(conn, ~p"/books")
 
@@ -192,8 +192,8 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
 
   describe "PubSub Book Update" do
     test "updates to the latest value of the book", %{conn: conn, scope: scope, user: user} do
-      book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = IdentityFactory.insert(:book, name: "My Awesome Budget")
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       {:ok, index_live, html} = live(conn, ~p"/books")
 
@@ -215,8 +215,8 @@ defmodule PurseCraftWeb.BookLive.IndexTest do
 
   describe "PubSub Book Delete" do
     test "deletions remove book from listing", %{conn: conn, scope: scope, user: user} do
-      book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = IdentityFactory.insert(:book, name: "My Awesome Budget")
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       {:ok, index_live, html} = live(conn, ~p"/books")
 

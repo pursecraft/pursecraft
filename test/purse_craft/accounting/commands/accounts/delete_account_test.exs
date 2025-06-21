@@ -10,7 +10,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.DeleteAccountTest do
   alias PurseCraft.PubSub.BroadcastBook
 
   setup do
-    book = AccountingFactory.insert(:book)
+    book = IdentityFactory.insert(:book)
     account = AccountingFactory.insert(:account, book: book)
 
     %{
@@ -22,7 +22,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.DeleteAccountTest do
   describe "call/3" do
     test "with owner role (authorized scope) deletes an account", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Account{} = deleted_account} = DeleteAccount.call(scope, book, account.external_id)
@@ -31,7 +31,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.DeleteAccountTest do
 
     test "with editor role (authorized scope) deletes an account", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Account{}} = DeleteAccount.call(scope, book, account.external_id)
@@ -39,7 +39,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.DeleteAccountTest do
 
     test "with commenter role (unauthorized scope) returns error", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} = DeleteAccount.call(scope, book, account.external_id)
@@ -54,7 +54,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.DeleteAccountTest do
 
     test "invokes BroadcastBook when account is deleted successfully", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       expect(BroadcastBook, :call, fn broadcast_book, {:account_deleted, broadcast_account} ->

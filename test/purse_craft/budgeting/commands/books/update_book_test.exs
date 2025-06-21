@@ -5,15 +5,14 @@ defmodule PurseCraft.Budgeting.Commands.Books.UpdateBookTest do
 
   alias PurseCraft.Budgeting.Commands.Books.UpdateBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.BudgetingFactory
+  alias PurseCraft.Identity.Schemas.Book
   alias PurseCraft.IdentityFactory
   alias PurseCraft.PubSub.BroadcastBook
 
   setup do
     user = IdentityFactory.insert(:user)
-    book = BudgetingFactory.insert(:book)
-    BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+    book = IdentityFactory.insert(:book)
+    IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
     scope = IdentityFactory.build(:scope, user: user)
 
     %{
@@ -40,7 +39,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.UpdateBookTest do
 
     test "with non-owner role returns unauthorized error", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Editor Updated Name"}

@@ -10,7 +10,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
   alias PurseCraft.PubSub.BroadcastBook
 
   setup do
-    book = AccountingFactory.insert(:book)
+    book = IdentityFactory.insert(:book)
 
     %{
       book: book
@@ -20,7 +20,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
   describe "call/3" do
     test "with string keys in attrs creates an account correctly", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{"name" => "String Key Account", "account_type" => "checking"}
@@ -34,7 +34,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
 
     test "with blank name returns error changeset", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "", account_type: "checking"}
@@ -45,7 +45,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
 
     test "with invalid account type returns error changeset", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Test Account", account_type: "invalid_type"}
@@ -56,7 +56,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
 
     test "with owner role (authorized scope) creates an account", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Owner Account", account_type: "savings", description: "My savings account"}
@@ -73,7 +73,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
 
     test "with editor role (authorized scope) creates an account", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Editor Account", account_type: "credit_card"}
@@ -89,7 +89,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
 
     test "with commenter role (unauthorized scope) returns error", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Commenter Account", account_type: "checking"}
@@ -108,7 +108,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
 
     test "invokes BroadcastBook when account is created successfully", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       expect(BroadcastBook, :call, fn broadcast_book, {:account_created, broadcast_account} ->
@@ -126,7 +126,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
 
     test "assigns position 'm' for first account in a book", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "First Account", account_type: "checking"}
@@ -137,7 +137,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
 
     test "assigns position before existing accounts", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       # Create first account
@@ -152,7 +152,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
 
     test "handles multiple accounts being added at the top", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       # Create initial accounts
@@ -169,7 +169,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccountTest do
 
     test "returns error when first account is already at 'a'", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       # Create an account at the boundary

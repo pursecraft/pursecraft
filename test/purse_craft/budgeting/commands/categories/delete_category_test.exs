@@ -10,7 +10,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.DeleteCategoryTest do
   alias PurseCraft.PubSub.BroadcastBook
 
   setup do
-    book = BudgetingFactory.insert(:book)
+    book = IdentityFactory.insert(:book)
     category = BudgetingFactory.insert(:category, book_id: book.id)
 
     %{
@@ -22,7 +22,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.DeleteCategoryTest do
   describe "call/3" do
     test "with owner role (authorized scope) deletes a category", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Category{}} = DeleteCategory.call(scope, book, category)
@@ -31,7 +31,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.DeleteCategoryTest do
 
     test "with editor role (authorized scope) deletes a category", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Category{}} = DeleteCategory.call(scope, book, category)
@@ -40,7 +40,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.DeleteCategoryTest do
 
     test "with commenter role (unauthorized scope) returns error", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} = DeleteCategory.call(scope, book, category)
@@ -57,7 +57,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.DeleteCategoryTest do
 
     test "invokes BroadcastBook when category is deleted successfully", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       expect(BroadcastBook, :call, fn broadcast_book, {:category_deleted, broadcast_category} ->

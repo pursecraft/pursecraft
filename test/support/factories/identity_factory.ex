@@ -2,6 +2,8 @@ defmodule PurseCraft.IdentityFactory do
   @moduledoc false
   use PurseCraft.FactoryTemplate
 
+  alias PurseCraft.Identity.Schemas.Book
+  alias PurseCraft.Identity.Schemas.BookUser
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Identity.Schemas.User
   alias PurseCraft.Identity.Schemas.UserToken
@@ -48,5 +50,22 @@ defmodule PurseCraft.IdentityFactory do
     |> UserToken.put_hashed_fields()
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()
+  end
+
+  def book_factory do
+    name = Faker.Pokemon.name()
+
+    book =
+      %Book{}
+      |> Book.changeset(%{name: name})
+      |> Ecto.Changeset.apply_changes()
+
+    book
+  end
+
+  def book_user_factory do
+    %BookUser{
+      role: Enum.random([:owner, :editor, :commenter])
+    }
   end
 end

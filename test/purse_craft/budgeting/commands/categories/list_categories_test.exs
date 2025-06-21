@@ -7,8 +7,8 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ListCategoriesTest do
 
   setup do
     user = IdentityFactory.insert(:user)
-    book = BudgetingFactory.insert(:book)
-    BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+    book = IdentityFactory.insert(:book)
+    IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
     scope = IdentityFactory.build(:scope, user: user)
 
     %{
@@ -22,7 +22,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ListCategoriesTest do
     setup %{book: book} do
       categories = Enum.map(["a", "b", "c"], &BudgetingFactory.insert(:category, book_id: book.id, position: &1))
 
-      other_book = BudgetingFactory.insert(:book)
+      other_book = IdentityFactory.insert(:book)
       other_category = BudgetingFactory.insert(:category, book_id: other_book.id, position: "d")
 
       %{categories: categories, other_book: other_book, other_category: other_category}
@@ -77,7 +77,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ListCategoriesTest do
       categories: categories
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       result = ListCategories.call(scope, book)
@@ -89,7 +89,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ListCategoriesTest do
       categories: categories
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       result = ListCategories.call(scope, book)
@@ -112,7 +112,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ListCategoriesTest do
       other_book: other_book,
       other_category: other_category
     } do
-      BudgetingFactory.insert(:book_user, book_id: other_book.id, user_id: scope.user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: other_book.id, user_id: scope.user.id, role: :owner)
 
       book_categories = ListCategories.call(scope, book)
       assert length(book_categories) == length(categories)

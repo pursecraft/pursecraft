@@ -10,8 +10,8 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
   import Ecto.Changeset
 
   alias Ecto.Association.NotLoaded
-  alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Envelope
+  alias PurseCraft.Identity.Schemas.Book
   alias PurseCraft.Utilities.EncryptedBinary
   alias PurseCraft.Utilities.HashedHMAC
 

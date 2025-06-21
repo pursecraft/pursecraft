@@ -8,7 +8,7 @@ defmodule PurseCraft.Accounting.Schemas.Account do
 
   import Ecto.Changeset
 
-  alias PurseCraft.Accounting.Schemas.Book
+  alias PurseCraft.Identity.Schemas.Book
   alias PurseCraft.Utilities.EncryptedBinary
   alias PurseCraft.Utilities.HashedHMAC
 

@@ -1116,7 +1116,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
     end
 
     test "redirects to books page when unauthorized", %{conn: conn} do
-      book = BudgetingFactory.insert(:book, name: "Someone Else's Budget")
+      book = IdentityFactory.insert(:book, name: "Someone Else's Budget")
 
       assert {:error, {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book"}}}} =
                live(conn, ~p"/books/#{book.external_id}/budget")

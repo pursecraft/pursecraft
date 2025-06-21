@@ -1,4 +1,4 @@
-defmodule PurseCraft.Budgeting.Schemas.Book do
+defmodule PurseCraft.Identity.Schemas.Book do
   @moduledoc """
   A `Book` represents the user's budget. This is also the
   umbrella table where everything about budgets are grouped
@@ -9,9 +9,9 @@ defmodule PurseCraft.Budgeting.Schemas.Book do
 
   import Ecto.Changeset
 
-  alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Identity.Schemas.BookUser
   alias PurseCraft.Budgeting.Schemas.Category
-  alias PurseCraft.Budgeting.Schemas.User
+  alias PurseCraft.Identity.Schemas.User
   alias PurseCraft.Utilities.EncryptedBinary
   alias PurseCraft.Utilities.HashedHMAC
 

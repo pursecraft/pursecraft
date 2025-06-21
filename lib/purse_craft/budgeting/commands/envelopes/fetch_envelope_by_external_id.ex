@@ -5,8 +5,8 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalId do
 
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
-  alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Envelope
+  alias PurseCraft.Identity.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Types
 

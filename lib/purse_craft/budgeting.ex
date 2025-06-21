@@ -25,12 +25,11 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Envelopes.UpdateEnvelope
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Repositories.BookRepository
-  alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
+  alias PurseCraft.Identity.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub.BroadcastBook
-
 
   @doc """
   Sends notifications about any book changes associated with the scoped user.
@@ -45,7 +44,6 @@ defmodule PurseCraft.Budgeting do
   @spec broadcast_user_book(Scope.t(), tuple()) :: :ok | {:error, term()}
   defdelegate broadcast_user_book(scope, message), to: BroadcastUserBook, as: :call
 
-
   @doc """
   Sends notifications about any changes on the given book
 
@@ -57,7 +55,6 @@ defmodule PurseCraft.Budgeting do
   """
   @spec broadcast_book(Book.t(), tuple()) :: :ok | {:error, term()}
   defdelegate broadcast_book(book, message), to: BroadcastBook, as: :call
-
 
   @doc """
   Returns the list of books.

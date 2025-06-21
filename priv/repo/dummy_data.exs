@@ -13,8 +13,8 @@
 import Ecto.Changeset
 
 alias PurseCraft.Accounting.Schemas.Account
-alias PurseCraft.Budgeting.Schemas.Book
-alias PurseCraft.Budgeting.Schemas.BookUser
+alias PurseCraft.Identity.Schemas.Book
+alias PurseCraft.Identity.Schemas.BookUser
 alias PurseCraft.Budgeting.Schemas.Category
 alias PurseCraft.Budgeting.Schemas.Envelope
 alias PurseCraft.Identity.Schemas.User

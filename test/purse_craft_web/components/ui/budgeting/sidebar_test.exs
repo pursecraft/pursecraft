@@ -3,12 +3,13 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
 
   import Phoenix.LiveViewTest
 
+  alias PurseCraft.IdentityFactory
   alias PurseCraftWeb.Components.UI.Budgeting.Sidebar
 
   setup do
-    user = PurseCraft.IdentityFactory.build(:user, email: "test@example.com")
-    scope = PurseCraft.IdentityFactory.build(:scope, user: user)
-    book = PurseCraft.BudgetingFactory.build(:book, external_id: "abcd1234-5678-90ab-cdef-1234567890ab")
+    user = IdentityFactory.build(:user, email: "test@example.com")
+    scope = IdentityFactory.build(:scope, user: user)
+    book = IdentityFactory.build(:book, external_id: "abcd1234-5678-90ab-cdef-1234567890ab")
     %{user: user, scope: scope, book: book}
   end
 

@@ -10,7 +10,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.UpdateAccountTest do
   alias PurseCraft.PubSub.BroadcastBook
 
   setup do
-    book = AccountingFactory.insert(:book)
+    book = IdentityFactory.insert(:book)
     account = AccountingFactory.insert(:account, book: book)
 
     %{
@@ -22,7 +22,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.UpdateAccountTest do
   describe "call/4" do
     test "with owner role (authorized scope) updates an account", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{"name" => "Owner Updated Account", "description" => "Updated by owner"}
@@ -35,7 +35,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.UpdateAccountTest do
 
     test "with editor role (authorized scope) updates an account", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{"name" => "Editor Updated Account"}
@@ -47,7 +47,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.UpdateAccountTest do
 
     test "with commenter role (unauthorized scope) returns error", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{"name" => "Commenter Updated Account"}
@@ -66,7 +66,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.UpdateAccountTest do
 
     test "with non-existent account returns error", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{"name" => "Non-existent Account"}
@@ -76,7 +76,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.UpdateAccountTest do
 
     test "with account_type change attempt ignores the change", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       original_account_type = account.account_type
@@ -89,7 +89,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.UpdateAccountTest do
 
     test "invokes BroadcastBook when account is updated successfully", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       expect(BroadcastBook, :call, fn broadcast_book, {:account_updated, broadcast_account} ->

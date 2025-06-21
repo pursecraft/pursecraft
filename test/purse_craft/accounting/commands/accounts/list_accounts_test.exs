@@ -9,8 +9,8 @@ defmodule PurseCraft.Accounting.Commands.Accounts.ListAccountsTest do
 
   setup do
     user = IdentityFactory.insert(:user)
-    book = AccountingFactory.insert(:book)
-    AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+    book = IdentityFactory.insert(:book)
+    IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
     scope = IdentityFactory.build(:scope, user: user)
 
     %{
@@ -61,7 +61,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.ListAccountsTest do
 
     test "with editor role (authorized scope) returns accounts", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       accounts = [AccountingFactory.build(:account, book: book)]
@@ -75,7 +75,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.ListAccountsTest do
 
     test "with commenter role (authorized scope) returns accounts", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       accounts = [AccountingFactory.build(:account, book: book)]

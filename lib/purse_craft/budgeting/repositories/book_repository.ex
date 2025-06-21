@@ -5,8 +5,8 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
 
   alias Ecto.Multi
   alias PurseCraft.Budgeting.Queries.BookQuery
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Identity.Schemas.Book
+  alias PurseCraft.Identity.Schemas.BookUser
   alias PurseCraft.Repo
 
   @type preload_item :: atom() | {atom(), preload_item()} | [preload_item()]

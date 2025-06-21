@@ -1,7 +1,7 @@
 defmodule PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooksTest do
   use PurseCraft.DataCase, async: true
 
-  alias PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooks
+  alias PurseCraft.PubSub.SubscribeUserBooks
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.IdentityFactory
 

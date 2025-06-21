@@ -11,8 +11,8 @@ defmodule PurseCraft.Budgeting.Commands.Books.FetchBookByExternalIdTest do
     test "with associated book (authorized scope) returns ok tuple with book" do
       user = IdentityFactory.insert(:user)
       scope = IdentityFactory.build(:scope, user: user)
-      book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = IdentityFactory.insert(:book)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       assert {:ok, returned_book} = FetchBookByExternalId.call(scope, book.external_id)
       assert returned_book.id == book.id
@@ -21,8 +21,8 @@ defmodule PurseCraft.Budgeting.Commands.Books.FetchBookByExternalIdTest do
     test "supports preloading associations" do
       user = IdentityFactory.insert(:user)
       scope = IdentityFactory.build(:scope, user: user)
-      book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = IdentityFactory.insert(:book)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       category1 = BudgetingFactory.insert(:category, book_id: book.id)
       category2 = BudgetingFactory.insert(:category, book_id: book.id)
@@ -48,7 +48,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.FetchBookByExternalIdTest do
     test "with unauthorized scope returns error tuple" do
       user = IdentityFactory.insert(:user)
       scope = IdentityFactory.build(:scope, user: user)
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       assert {:error, :unauthorized} = FetchBookByExternalId.call(scope, book.external_id)
     end

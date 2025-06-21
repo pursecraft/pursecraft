@@ -2,8 +2,8 @@ defmodule PurseCraft.Budgeting.Queries.BookQueryTest do
   use PurseCraft.DataCase, async: true
 
   alias PurseCraft.Budgeting.Queries.BookQuery
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Identity.Schemas.Book
+  alias PurseCraft.Identity.Schemas.BookUser
 
   describe "by_user/1" do
     test "creates a query with join and filter by user_id" do

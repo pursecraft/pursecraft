@@ -7,7 +7,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalIdTest
   alias PurseCraft.IdentityFactory
 
   setup do
-    book = BudgetingFactory.insert(:book)
+    book = IdentityFactory.insert(:book)
     category = BudgetingFactory.insert(:category, book_id: book.id)
 
     %{
@@ -19,7 +19,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalIdTest
   describe "call/4" do
     test "with valid external_id returns category", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Category{} = fetched_category} = FetchCategoryByExternalId.call(scope, book, category.external_id)
@@ -32,7 +32,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalIdTest
       category: category
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
@@ -47,7 +47,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalIdTest
 
     test "with invalid external_id returns not found error", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} = FetchCategoryByExternalId.call(scope, book, Ecto.UUID.generate())
@@ -55,7 +55,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalIdTest
 
     test "with owner role (authorized scope) returns category", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Category{}} = FetchCategoryByExternalId.call(scope, book, category.external_id)
@@ -63,7 +63,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalIdTest
 
     test "with editor role (authorized scope) returns category", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Category{}} = FetchCategoryByExternalId.call(scope, book, category.external_id)
@@ -71,7 +71,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalIdTest
 
     test "with commenter role (authorized scope) returns category", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Category{}} = FetchCategoryByExternalId.call(scope, book, category.external_id)
@@ -85,9 +85,9 @@ defmodule PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalIdTest
     end
 
     test "with category from different book returns not found", %{category: category} do
-      different_book = BudgetingFactory.insert(:book)
+      different_book = IdentityFactory.insert(:book)
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: different_book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: different_book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} = FetchCategoryByExternalId.call(scope, different_book, category.external_id)

@@ -4,13 +4,14 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.IdentityFactory
 
   describe "list_by_book_id/2" do
     test "returns all categories for a given book" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       categories = for _index <- 1..3, do: BudgetingFactory.insert(:category, book_id: book.id)
 
-      other_book = BudgetingFactory.insert(:book)
+      other_book = IdentityFactory.insert(:book)
       BudgetingFactory.insert(:category, book_id: other_book.id)
 
       result = CategoryRepository.list_by_book_id(book.id)
@@ -32,7 +33,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "returns empty list when no categories exist for book" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       result = CategoryRepository.list_by_book_id(book.id)
 
@@ -40,7 +41,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "with preload option returns categories with preloaded associations" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
 
@@ -53,7 +54,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "with preload option returns envelopes ordered by position" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
 
       env1 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "s")
@@ -74,7 +75,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "without preload option returns categories without preloaded associations" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
       BudgetingFactory.insert(:envelope, category_id: category.id)
 
@@ -88,7 +89,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
 
   describe "get_by_external_id_and_book_id/3" do
     test "returns category when found" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
 
       result = CategoryRepository.get_by_external_id_and_book_id(category.external_id, book.id)
@@ -99,7 +100,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "returns nil when category not found by external_id" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       result = CategoryRepository.get_by_external_id_and_book_id(Ecto.UUID.generate(), book.id)
 
@@ -107,8 +108,8 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "returns nil when category not found by book_id" do
-      book1 = BudgetingFactory.insert(:book)
-      book2 = BudgetingFactory.insert(:book)
+      book1 = IdentityFactory.insert(:book)
+      book2 = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book1.id)
 
       result = CategoryRepository.get_by_external_id_and_book_id(category.external_id, book2.id)
@@ -117,7 +118,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "with preload option returns category with preloaded associations" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
 
@@ -129,7 +130,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "with preload option returns envelopes ordered by position" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
 
       env1 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
@@ -149,7 +150,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "without preload option returns category without preloaded associations" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
       BudgetingFactory.insert(:envelope, category_id: category.id)
 
@@ -162,7 +163,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
 
   describe "update/3" do
     test "updates the given category with valid attributes" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id, name: "Original Name")
 
       attrs = %{name: "Updated Name"}
@@ -174,7 +175,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "returns error changeset with invalid attributes" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
 
       attrs = %{name: ""}
@@ -184,7 +185,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "with preload option returns category with preloaded associations" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id, name: "Original Name")
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
 
@@ -197,7 +198,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "without preload option returns category without preloaded associations" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id, name: "Original Name")
       BudgetingFactory.insert(:envelope, category_id: category.id)
 
@@ -211,7 +212,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
 
   describe "delete/1" do
     test "deletes the given category" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
 
       assert {:ok, %Category{}} = CategoryRepository.delete(category)
@@ -221,7 +222,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
 
   describe "get_first_position/1" do
     test "returns the position of the first category when categories exist" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       BudgetingFactory.insert(:category, book: book, position: "m")
       BudgetingFactory.insert(:category, book: book, position: "g")
       BudgetingFactory.insert(:category, book: book, position: "t")
@@ -232,7 +233,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "returns nil when no categories exist for the book" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       result = CategoryRepository.get_first_position(book.id)
 
@@ -242,7 +243,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
 
   describe "list_by_external_ids/2" do
     test "returns categories matching the given external IDs" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       cat1 = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
       cat2 = BudgetingFactory.insert(:category, book_id: book.id, position: "m")
       cat3 = BudgetingFactory.insert(:category, book_id: book.id, position: "t")
@@ -264,7 +265,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "returns subset when only some external IDs match" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       cat1 = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
 
       external_ids = [cat1.external_id, Ecto.UUID.generate(), Ecto.UUID.generate()]
@@ -275,7 +276,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "with preload option returns categories with preloaded associations" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       cat1 = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
       cat2 = BudgetingFactory.insert(:category, book_id: book.id, position: "m")
 
@@ -305,7 +306,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
 
   describe "update_position/2" do
     test "updates the position of a category with valid position" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
 
       assert {:ok, updated_category} = CategoryRepository.update_position(category, "m")
@@ -315,7 +316,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "returns error changeset with invalid position format" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
 
       assert {:error, changeset} = CategoryRepository.update_position(category, "ABC")
@@ -323,7 +324,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "returns error changeset with empty position" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
 
       assert {:error, changeset} = CategoryRepository.update_position(category, "")
@@ -331,7 +332,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "returns error changeset when position violates unique constraint" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       BudgetingFactory.insert(:category, book_id: book.id, position: "g")
       cat2 = BudgetingFactory.insert(:category, book_id: book.id, position: "m")
 
@@ -340,8 +341,8 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "allows same position in different books" do
-      book1 = BudgetingFactory.insert(:book)
-      book2 = BudgetingFactory.insert(:book)
+      book1 = IdentityFactory.insert(:book)
+      book2 = IdentityFactory.insert(:book)
       BudgetingFactory.insert(:category, book_id: book1.id, position: "g")
       cat2 = BudgetingFactory.insert(:category, book_id: book2.id, position: "m")
 
@@ -352,7 +353,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
 
   describe "fetch/2" do
     test "returns {:ok, category} when found" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
 
       assert {:ok, result} = CategoryRepository.fetch(category.id)
@@ -366,7 +367,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "with preload option returns category with preloaded associations" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
 
@@ -377,7 +378,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
     end
 
     test "without preload option returns category without preloaded associations" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
       BudgetingFactory.insert(:envelope, category_id: category.id)
 

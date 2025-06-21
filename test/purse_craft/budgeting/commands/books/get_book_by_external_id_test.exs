@@ -4,15 +4,14 @@ defmodule PurseCraft.Budgeting.Commands.Books.GetBookByExternalIdTest do
 
   alias PurseCraft.Budgeting.Commands.Books.GetBookByExternalId
   alias PurseCraft.Budgeting.Policy
-  alias PurseCraft.BudgetingFactory
   alias PurseCraft.IdentityFactory
 
   describe "call!/2" do
     test "with associated book (authorized scope) returns book" do
       user = IdentityFactory.insert(:user)
       scope = IdentityFactory.build(:scope, user: user)
-      book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = IdentityFactory.insert(:book)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       result = GetBookByExternalId.call!(scope, book.external_id)
       assert result.id == book.id
@@ -24,7 +23,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.GetBookByExternalIdTest do
       assert_raise LetMe.UnauthorizedError, fn ->
         user = IdentityFactory.insert(:user)
         scope = IdentityFactory.build(:scope, user: user)
-        book = BudgetingFactory.insert(:book)
+        book = IdentityFactory.insert(:book)
 
         GetBookByExternalId.call!(scope, book.external_id)
       end

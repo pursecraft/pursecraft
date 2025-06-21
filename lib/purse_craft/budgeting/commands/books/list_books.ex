@@ -5,7 +5,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.ListBooks do
 
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.BookRepository
-  alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Identity.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
 
   @doc """

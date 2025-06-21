@@ -2,8 +2,8 @@ defmodule PurseCraft.BudgetingTest do
   use PurseCraft.DataCase, async: true
 
   alias PurseCraft.Budgeting
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Identity.Schemas.Book
+  alias PurseCraft.Identity.Schemas.BookUser
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.BudgetingFactory
@@ -12,8 +12,8 @@ defmodule PurseCraft.BudgetingTest do
 
   setup do
     user = IdentityFactory.insert(:user)
-    book = BudgetingFactory.insert(:book)
-    BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+    book = IdentityFactory.insert(:book)
+    IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
     scope = IdentityFactory.build(:scope, user: user)
 
     %{
@@ -79,9 +79,9 @@ defmodule PurseCraft.BudgetingTest do
     test "with associated books returns all scoped books", %{scope: scope, book: book} do
       other_user = IdentityFactory.insert(:user)
       other_scope = IdentityFactory.build(:scope, user: other_user)
-      other_book = BudgetingFactory.insert(:book)
+      other_book = IdentityFactory.insert(:book)
 
-      BudgetingFactory.insert(:book_user, book_id: other_book.id, user_id: other_user.id)
+      IdentityFactory.insert(:book_user, book_id: other_book.id, user_id: other_user.id)
 
       result = Budgeting.list_books(scope)
       assert [returned_book] = result
@@ -116,7 +116,7 @@ defmodule PurseCraft.BudgetingTest do
       assert_raise LetMe.UnauthorizedError, fn ->
         user = IdentityFactory.insert(:user)
         scope = IdentityFactory.build(:scope, user: user)
-        book = BudgetingFactory.insert(:book)
+        book = IdentityFactory.insert(:book)
 
         Budgeting.get_book_by_external_id!(scope, book.external_id)
       end
@@ -185,7 +185,7 @@ defmodule PurseCraft.BudgetingTest do
 
     test "with associated book, non-owner role (unauthorized scope) and valid data updates the book", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "some updated name"}
@@ -214,7 +214,7 @@ defmodule PurseCraft.BudgetingTest do
 
     test "with associated book, non-owner role (unauthorized scope) and valid data updates the book", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} = Budgeting.delete_book(scope, book)
@@ -230,7 +230,7 @@ defmodule PurseCraft.BudgetingTest do
 
   describe "change_book/2" do
     test "returns a book changeset" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       assert %Ecto.Changeset{} = Budgeting.change_book(book, %{})
     end
@@ -277,7 +277,7 @@ defmodule PurseCraft.BudgetingTest do
 
     test "with editor role (authorized scope) creates a category", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "editor category"}
@@ -288,7 +288,7 @@ defmodule PurseCraft.BudgetingTest do
 
     test "with commenter role (unauthorized scope) returns error", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "commenter category"}
@@ -326,7 +326,7 @@ defmodule PurseCraft.BudgetingTest do
       category: category
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Category{}} = Budgeting.delete_category(scope, book, category)
@@ -338,7 +338,7 @@ defmodule PurseCraft.BudgetingTest do
       category: category
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} = Budgeting.delete_category(scope, book, category)
@@ -400,8 +400,8 @@ defmodule PurseCraft.BudgetingTest do
     end
 
     test "with category from a different book returns not_found error", %{scope: scope, book: book} do
-      other_book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: other_book.id, user_id: scope.user.id, role: :owner)
+      other_book = IdentityFactory.insert(:book)
+      IdentityFactory.insert(:book_user, book_id: other_book.id, user_id: scope.user.id, role: :owner)
 
       other_category = BudgetingFactory.insert(:category, book_id: other_book.id)
 
@@ -414,7 +414,7 @@ defmodule PurseCraft.BudgetingTest do
       category: category
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, fetched_category} = Budgeting.fetch_category_by_external_id(scope, book, category.external_id)
@@ -426,7 +426,7 @@ defmodule PurseCraft.BudgetingTest do
       category: category
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, fetched_category} = Budgeting.fetch_category_by_external_id(scope, book, category.external_id)
@@ -451,7 +451,7 @@ defmodule PurseCraft.BudgetingTest do
           BudgetingFactory.insert(:category, book_id: book.id)
         end
 
-      other_book = BudgetingFactory.insert(:book)
+      other_book = IdentityFactory.insert(:book)
       other_category = BudgetingFactory.insert(:category, book_id: other_book.id)
 
       %{categories: categories, other_book: other_book, other_category: other_category}
@@ -506,7 +506,7 @@ defmodule PurseCraft.BudgetingTest do
       categories: categories
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       result = Budgeting.list_categories(scope, book)
@@ -518,7 +518,7 @@ defmodule PurseCraft.BudgetingTest do
       categories: categories
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       result = Budgeting.list_categories(scope, book)
@@ -541,7 +541,7 @@ defmodule PurseCraft.BudgetingTest do
       other_book: other_book,
       other_category: other_category
     } do
-      BudgetingFactory.insert(:book_user, book_id: other_book.id, user_id: scope.user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: other_book.id, user_id: scope.user.id, role: :owner)
 
       book_categories = Budgeting.list_categories(scope, book)
       assert length(book_categories) == length(categories)
@@ -592,7 +592,7 @@ defmodule PurseCraft.BudgetingTest do
       category: category
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "editor updated category"}
@@ -606,7 +606,7 @@ defmodule PurseCraft.BudgetingTest do
       category: category
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "commenter category"}
@@ -695,7 +695,7 @@ defmodule PurseCraft.BudgetingTest do
 
     test "with editor role (authorized scope) creates an envelope", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "editor envelope"}
@@ -706,7 +706,7 @@ defmodule PurseCraft.BudgetingTest do
 
     test "with commenter role (unauthorized scope) returns error", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "commenter envelope"}
@@ -751,8 +751,8 @@ defmodule PurseCraft.BudgetingTest do
     end
 
     test "with envelope from a different book returns not_found error", %{scope: scope, book: book} do
-      other_book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: other_book.id, user_id: scope.user.id, role: :owner)
+      other_book = IdentityFactory.insert(:book)
+      IdentityFactory.insert(:book_user, book_id: other_book.id, user_id: scope.user.id, role: :owner)
 
       other_category = BudgetingFactory.insert(:category, book_id: other_book.id)
       other_envelope = BudgetingFactory.insert(:envelope, category_id: other_category.id)
@@ -765,7 +765,7 @@ defmodule PurseCraft.BudgetingTest do
       envelope: envelope
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, fetched_envelope} = Budgeting.fetch_envelope_by_external_id(scope, book, envelope.external_id)
@@ -777,7 +777,7 @@ defmodule PurseCraft.BudgetingTest do
       envelope: envelope
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, fetched_envelope} = Budgeting.fetch_envelope_by_external_id(scope, book, envelope.external_id)
@@ -820,7 +820,7 @@ defmodule PurseCraft.BudgetingTest do
       envelope: envelope
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "editor updated envelope"}
@@ -834,7 +834,7 @@ defmodule PurseCraft.BudgetingTest do
       envelope: envelope
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "commenter envelope"}
@@ -898,7 +898,7 @@ defmodule PurseCraft.BudgetingTest do
       envelope: envelope
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Envelope{}} = Budgeting.delete_envelope(scope, book, envelope)
@@ -910,7 +910,7 @@ defmodule PurseCraft.BudgetingTest do
       envelope: envelope
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} = Budgeting.delete_envelope(scope, book, envelope)

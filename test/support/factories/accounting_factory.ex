@@ -4,21 +4,7 @@ defmodule PurseCraft.AccountingFactory do
   use PurseCraft.FactoryTemplate
 
   alias PurseCraft.Accounting.Schemas.Account
-  alias PurseCraft.Accounting.Schemas.Book
-  alias PurseCraft.Accounting.Schemas.BookUser
   alias PurseCraft.TestHelpers.PositionHelper
-
-  def book_factory do
-    name = Faker.Pokemon.name()
-
-    # Manual changeset logic for testing since accounting context doesn't manage books
-    book =
-      %Book{name: name, name_hash: name}
-      |> Ecto.Changeset.change()
-      |> Ecto.Changeset.apply_changes()
-
-    book
-  end
 
   def account_factory(attrs) do
     name = Map.get(attrs, :name, Faker.Person.first_name() <> "'s " <> Faker.Commerce.product_name())
@@ -40,9 +26,4 @@ defmodule PurseCraft.AccountingFactory do
     |> evaluate_lazy_attributes()
   end
 
-  def book_user_factory do
-    %BookUser{
-      role: :owner
-    }
-  end
 end

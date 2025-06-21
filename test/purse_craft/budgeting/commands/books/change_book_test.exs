@@ -2,11 +2,11 @@ defmodule PurseCraft.Budgeting.Commands.Books.ChangeBookTest do
   use PurseCraft.DataCase, async: true
 
   alias PurseCraft.Budgeting.Commands.Books.ChangeBook
-  alias PurseCraft.BudgetingFactory
+  alias PurseCraft.IdentityFactory
 
   describe "call/2" do
     test "returns a book changeset" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
 
       assert %Ecto.Changeset{} = changeset = ChangeBook.call(book, %{})
       assert changeset.data == book
@@ -14,7 +14,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.ChangeBookTest do
     end
 
     test "returns a book changeset with changes" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       new_name = "New Book Name"
 
       assert %Ecto.Changeset{} = changeset = ChangeBook.call(book, %{name: new_name})

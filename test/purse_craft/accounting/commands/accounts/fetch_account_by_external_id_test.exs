@@ -8,7 +8,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalIdTest d
   alias PurseCraft.IdentityFactory
 
   setup do
-    book = AccountingFactory.insert(:book)
+    book = IdentityFactory.insert(:book)
     account = AccountingFactory.insert(:account, book: book)
     user = IdentityFactory.insert(:user)
 
@@ -21,7 +21,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalIdTest d
 
   describe "call/4" do
     test "with owner role (authorized scope) returns account", %{book: book, account: account, user: user} do
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(AccountRepository, :get_by_external_id, fn book_id, external_id, opts ->
@@ -35,7 +35,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalIdTest d
     end
 
     test "with invalid external_id returns not found error", %{book: book, user: user} do
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
       invalid_uuid = Ecto.UUID.generate()
 
@@ -50,7 +50,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalIdTest d
     end
 
     test "with editor role (authorized scope) returns account", %{book: book, account: account, user: user} do
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(AccountRepository, :get_by_external_id, fn _book_id, _external_id, _opts -> account end)
@@ -59,7 +59,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalIdTest d
     end
 
     test "with commenter role (authorized scope) returns account", %{book: book, account: account, user: user} do
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(AccountRepository, :get_by_external_id, fn _book_id, _external_id, _opts -> account end)
@@ -77,8 +77,8 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalIdTest d
     end
 
     test "with account from different book returns not found", %{account: account, user: user} do
-      different_book = AccountingFactory.insert(:book)
-      AccountingFactory.insert(:book_user, book_id: different_book.id, user_id: user.id, role: :owner)
+      different_book = IdentityFactory.insert(:book)
+      IdentityFactory.insert(:book_user, book_id: different_book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(AccountRepository, :get_by_external_id, fn book_id, external_id, opts ->

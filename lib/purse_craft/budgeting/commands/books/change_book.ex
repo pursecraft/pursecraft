@@ -3,7 +3,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.ChangeBook do
   Returns a changeset for tracking book changes.
   """
 
-  alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Identity.Schemas.Book
 
   @type attrs :: %{
           optional(:name) => String.t()

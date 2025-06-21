@@ -6,7 +6,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.UpdateBook do
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.BookRepository
-  alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Identity.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub.BroadcastBook
 

@@ -1,7 +1,7 @@
 defmodule PurseCraft.Budgeting.Commands.PubSub.SubscribeCategoryTest do
   use PurseCraft.DataCase, async: true
 
-  alias PurseCraft.Budgeting.Commands.PubSub.SubscribeCategory
+  alias PurseCraft.PubSub.SubscribeCategory
 
   describe "call/1" do
     test "subscribes to category PubSub channel" do

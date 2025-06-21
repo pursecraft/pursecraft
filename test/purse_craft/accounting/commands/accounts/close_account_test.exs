@@ -10,7 +10,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CloseAccountTest do
   alias PurseCraft.PubSub.BroadcastBook
 
   setup do
-    book = AccountingFactory.insert(:book)
+    book = IdentityFactory.insert(:book)
     account = AccountingFactory.insert(:account, book: book)
 
     %{
@@ -22,7 +22,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CloseAccountTest do
   describe "call/3" do
     test "with owner role (authorized scope) closes an account", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Account{} = closed_account} = CloseAccount.call(scope, book, account.external_id)
@@ -32,7 +32,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CloseAccountTest do
 
     test "with editor role (authorized scope) closes an account", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, %Account{} = closed_account} = CloseAccount.call(scope, book, account.external_id)
@@ -42,7 +42,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CloseAccountTest do
 
     test "with commenter role (unauthorized scope) returns authorization error", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} = CloseAccount.call(scope, book, account.external_id)
@@ -50,7 +50,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CloseAccountTest do
 
     test "with non-existent account returns not found error", %{book: book} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} = CloseAccount.call(scope, book, Ecto.UUID.generate())
@@ -58,7 +58,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CloseAccountTest do
 
     test "invokes BroadcastBook when account is closed successfully", %{book: book, account: account} do
       user = IdentityFactory.insert(:user)
-      AccountingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       expect(BroadcastBook, :call, fn broadcast_book, {:account_closed, broadcast_account} ->

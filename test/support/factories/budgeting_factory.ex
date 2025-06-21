@@ -3,29 +3,10 @@ defmodule PurseCraft.BudgetingFactory do
 
   use PurseCraft.FactoryTemplate
 
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Budgeting.Schemas.User
   alias PurseCraft.TestHelpers.PositionHelper
-
-  def book_factory do
-    name = Faker.Pokemon.name()
-
-    book =
-      %Book{}
-      |> Book.changeset(%{name: name})
-      |> Ecto.Changeset.apply_changes()
-
-    book
-  end
-
-  def book_user_factory do
-    %BookUser{
-      role: Enum.random([:owner, :editor, :commenter])
-    }
-  end
 
   def category_factory(attrs) do
     name = Map.get(attrs, :name, Faker.Industry.industry())

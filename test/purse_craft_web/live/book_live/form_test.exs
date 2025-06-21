@@ -5,7 +5,7 @@ defmodule PurseCraftWeb.BookLive.FormTest do
   import Phoenix.LiveViewTest
 
   alias PurseCraft.Budgeting.Policy
-  alias PurseCraft.BudgetingFactory
+  alias PurseCraft.IdentityFactory
 
   setup :register_and_log_in_user
 
@@ -47,7 +47,7 @@ defmodule PurseCraftWeb.BookLive.FormTest do
     end
 
     test "redirects when unauthorized", %{conn: conn} do
-      book = BudgetingFactory.insert(:book, name: "Someone Else's Budget")
+      book = IdentityFactory.insert(:book, name: "Someone Else's Budget")
 
       assert {:error, {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book"}}}} =
                live(conn, ~p"/books/#{book.external_id}/edit")

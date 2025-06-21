@@ -11,7 +11,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
   alias PurseCraft.IdentityFactory
 
   setup do
-    book = BudgetingFactory.insert(:book)
+    book = IdentityFactory.insert(:book)
     category = BudgetingFactory.insert(:category, book: book, position: "c")
     target_category = BudgetingFactory.insert(:category, book: book, position: "s")
 
@@ -38,7 +38,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
       env3: env3
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} =
@@ -52,7 +52,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
 
     test "successfully moves envelope to different category", %{book: book, target_category: target_category, env1: env1} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} = RepositionEnvelope.call(scope, env1.external_id, target_category.external_id, nil, nil)
@@ -68,7 +68,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
       env3: env3
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} =
@@ -85,7 +85,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
       env3: env3
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} =
@@ -97,7 +97,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
 
     test "returns not_found when envelope doesn't exist", %{book: book, category: category, env1: env1, env2: env2} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} =
@@ -120,7 +120,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
 
     test "returns not_found when prev_envelope doesn't exist", %{book: book, category: category, env1: env1, env2: env2} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} =
@@ -135,7 +135,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
 
     test "returns not_found when next_envelope doesn't exist", %{book: book, category: category, env1: env1, env2: env2} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} =
@@ -156,7 +156,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
       env2: env2
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       other_env = BudgetingFactory.insert(:envelope, category: target_category, position: "a")
@@ -179,7 +179,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
       env3: env3
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} =
@@ -188,7 +188,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
 
     test "returns error when fractional indexing fails", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       env1 = BudgetingFactory.insert(:envelope, category: category, position: "z")
@@ -207,7 +207,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
       env3: env3
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       expect(BroadcastCategory, :call, fn received_category, {:envelope_repositioned, received_envelope} ->
@@ -229,7 +229,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
       env1: env1
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       expect(BroadcastCategory, :call, 2, fn
@@ -257,7 +257,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
       env3: env3
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} =
@@ -270,7 +270,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
 
     test "returns error after max retries", %{book: book, category: category, env1: env1, env2: env2, env3: env3} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(EnvelopeRepository, :update_position, fn _envelope, _position, _category_id ->
@@ -290,7 +290,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
 
     test "handles non-position errors in changeset", %{book: book, category: category, env1: env1, env2: env2, env3: env3} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(EnvelopeRepository, :update_position, fn _envelope, _position, _category_id ->

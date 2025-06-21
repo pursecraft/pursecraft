@@ -5,8 +5,8 @@ defmodule PurseCraft.Budgeting.Commands.Books.CreateBookTest do
 
   alias PurseCraft.Budgeting.Commands.Books.CreateBook
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Identity.Schemas.Book
+  alias PurseCraft.Identity.Schemas.BookUser
   alias PurseCraft.IdentityFactory
   alias PurseCraft.Repo
 

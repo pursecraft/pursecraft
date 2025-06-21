@@ -4,10 +4,11 @@ defmodule PurseCraft.Budgeting.Commands.PubSub.BroadcastCategoryTest do
   alias Phoenix.PubSub
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastCategory
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.IdentityFactory
 
   describe "call/2" do
     test "broadcasts envelope_repositioned message to category channel" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book: book)
       envelope = BudgetingFactory.insert(:envelope, category: category)
 
@@ -18,7 +19,7 @@ defmodule PurseCraft.Budgeting.Commands.PubSub.BroadcastCategoryTest do
     end
 
     test "broadcasts envelope_removed message to category channel" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book: book)
       envelope = BudgetingFactory.insert(:envelope, category: category)
 
@@ -29,7 +30,7 @@ defmodule PurseCraft.Budgeting.Commands.PubSub.BroadcastCategoryTest do
     end
 
     test "broadcasts envelope_created message to category channel" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book: book)
       envelope = BudgetingFactory.insert(:envelope, category: category)
 
@@ -40,7 +41,7 @@ defmodule PurseCraft.Budgeting.Commands.PubSub.BroadcastCategoryTest do
     end
 
     test "broadcasts envelope_updated message to category channel" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book: book)
       envelope = BudgetingFactory.insert(:envelope, category: category)
 
@@ -51,7 +52,7 @@ defmodule PurseCraft.Budgeting.Commands.PubSub.BroadcastCategoryTest do
     end
 
     test "broadcasts envelope_deleted message to category channel" do
-      book = BudgetingFactory.insert(:book)
+      book = IdentityFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book: book)
       envelope = BudgetingFactory.insert(:envelope, category: category)
 

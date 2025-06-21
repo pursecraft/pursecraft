@@ -5,8 +5,8 @@ defmodule PurseCraft.Budgeting.Queries.BookQuery do
 
   import Ecto.Query
 
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Identity.Schemas.Book
+  alias PurseCraft.Identity.Schemas.BookUser
 
   @doc """
   Returns a query for books associated with a specific user.
