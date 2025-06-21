@@ -4,6 +4,7 @@ defmodule PurseCraftWeb.BookLive.Index do
 
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.PubSub
   alias PurseCraftWeb.CoreComponents
 
   @impl Phoenix.LiveView
@@ -53,7 +54,7 @@ defmodule PurseCraftWeb.BookLive.Index do
 
   @impl Phoenix.LiveView
   def mount(_params, _session, socket) do
-    Budgeting.subscribe_user_books(socket.assigns.current_scope)
+    PubSub.subscribe_user_books(socket.assigns.current_scope)
 
     {:ok,
      socket

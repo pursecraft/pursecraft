@@ -1,6 +1,6 @@
-defmodule PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooks do
+defmodule PurseCraft.PubSub.SubscribeUserBooks do
   @moduledoc """
-  Command for subscribing to notifications about book changes for a specific user.
+  Subscribes to notifications about book changes for a specific user.
   """
 
   alias PurseCraft.Identity.Schemas.Scope

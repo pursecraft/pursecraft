@@ -24,9 +24,6 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalId
   alias PurseCraft.Budgeting.Commands.Envelopes.UpdateEnvelope
   alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
-  alias PurseCraft.Budgeting.Commands.PubSub.SubscribeBook
-  alias PurseCraft.Budgeting.Commands.PubSub.SubscribeCategory
-  alias PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooks
   alias PurseCraft.Budgeting.Repositories.BookRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
@@ -34,18 +31,6 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub.BroadcastBook
 
-  @doc """
-  Subscribes to notifications about any book changes associated with the scoped user.
-
-  The broadcasted messages match the pattern:
-
-    * {:created, %Book{}}
-    * {:updated, %Book{}}
-    * {:deleted, %Book{}}
-
-  """
-  @spec subscribe_user_books(Scope.t()) :: :ok | {:error, term()}
-  defdelegate subscribe_user_books(scope), to: SubscribeUserBooks, as: :call
 
   @doc """
   Sends notifications about any book changes associated with the scoped user.
@@ -60,17 +45,6 @@ defmodule PurseCraft.Budgeting do
   @spec broadcast_user_book(Scope.t(), tuple()) :: :ok | {:error, term()}
   defdelegate broadcast_user_book(scope, message), to: BroadcastUserBook, as: :call
 
-  @doc """
-  Subscribes to notifications about any changes on the given book.
-
-  The broadcasted messages match the pattern:
-
-    * {:updated, %Book{}}
-    * {:deleted, %Book{}}
-
-  """
-  @spec subscribe_book(Book.t()) :: :ok | {:error, term()}
-  defdelegate subscribe_book(book), to: SubscribeBook, as: :call
 
   @doc """
   Sends notifications about any changes on the given book
@@ -84,17 +58,6 @@ defmodule PurseCraft.Budgeting do
   @spec broadcast_book(Book.t(), tuple()) :: :ok | {:error, term()}
   defdelegate broadcast_book(book, message), to: BroadcastBook, as: :call
 
-  @doc """
-  Subscribes to notifications about changes for a specific category.
-
-  The broadcasted messages match the pattern:
-
-    * {:envelope_repositioned, %Envelope{}}
-    * {:envelope_removed, %Envelope{}}
-
-  """
-  @spec subscribe_category(Ecto.UUID.t()) :: :ok | {:error, term()}
-  defdelegate subscribe_category(category_external_id), to: SubscribeCategory, as: :call
 
   @doc """
   Returns the list of books.

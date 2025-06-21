@@ -1,9 +1,7 @@
-defmodule PurseCraft.Budgeting.Commands.PubSub.SubscribeBook do
+defmodule PurseCraft.PubSub.SubscribeBook do
   @moduledoc """
-  Command for subscribing to notifications about changes for a specific book.
+  Subscribes to notifications about changes for a specific book.
   """
-
-  alias PurseCraft.Budgeting.Schemas.Book
 
   @doc """
   Subscribes to notifications about any changes on the given book.
@@ -12,6 +10,9 @@ defmodule PurseCraft.Budgeting.Commands.PubSub.SubscribeBook do
 
     * {:updated, %Book{}}
     * {:deleted, %Book{}}
+    * {:account_created, %Account{}}
+    * {:account_updated, %Account{}}
+    * {:account_deleted, %Account{}}
 
   ## Examples
 
@@ -19,8 +20,8 @@ defmodule PurseCraft.Budgeting.Commands.PubSub.SubscribeBook do
       :ok
 
   """
-  @spec call(Book.t()) :: :ok | {:error, term()}
-  def call(%Book{} = book) do
+  @spec call(struct()) :: :ok | {:error, term()}
+  def call(book) when is_struct(book) do
     Phoenix.PubSub.subscribe(PurseCraft.PubSub, "book:#{book.external_id}")
   end
 end

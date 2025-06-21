@@ -4,6 +4,7 @@ defmodule PurseCraftWeb.BookLive.Show do
 
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.PubSub
   alias PurseCraftWeb.CoreComponents
 
   @impl Phoenix.LiveView
@@ -37,7 +38,7 @@ defmodule PurseCraftWeb.BookLive.Show do
   def mount(%{"external_id" => external_id}, _session, socket) do
     case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
       {:ok, book} ->
-        Budgeting.subscribe_book(book)
+        PubSub.subscribe_book(book)
 
         {:ok,
          socket

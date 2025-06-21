@@ -3,7 +3,9 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   use PurseCraftWeb, :live_view
 
+  alias PurseCraft.Accounting
   alias PurseCraft.Budgeting
+  alias PurseCraft.PubSub
   alias PurseCraft.Budgeting.Commands.Categories.RepositionCategory
   alias PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
@@ -567,7 +569,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   defp subscribe_to_categories(categories) do
     Enum.each(categories, fn category ->
-      Budgeting.subscribe_category(category.external_id)
+      PubSub.subscribe_category(category.external_id)
     end)
   end
 end
