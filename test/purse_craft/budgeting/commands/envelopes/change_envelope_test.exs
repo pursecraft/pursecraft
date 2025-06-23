@@ -3,10 +3,11 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.ChangeEnvelopeTest do
 
   alias PurseCraft.Budgeting.Commands.Envelopes.ChangeEnvelope
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.CoreFactory
 
   describe "call/2" do
     test "returns an envelope changeset" do
-      book = BudgetingFactory.insert(:book)
+      book = CoreFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
 
@@ -16,7 +17,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.ChangeEnvelopeTest do
     end
 
     test "returns an envelope changeset with changes" do
-      book = BudgetingFactory.insert(:book)
+      book = CoreFactory.insert(:book)
       category = BudgetingFactory.insert(:category, book_id: book.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
       new_name = "New Envelope Name"

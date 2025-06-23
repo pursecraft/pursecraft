@@ -6,11 +6,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelopeTest do
   alias PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelope
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.PubSub.BroadcastBook
 
   setup do
-    book = BudgetingFactory.insert(:book)
+    book = CoreFactory.insert(:book)
     category = BudgetingFactory.insert(:category, book_id: book.id)
     envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
 
@@ -24,7 +25,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelopeTest do
   describe "call/3" do
     test "with owner role (authorized scope) deletes an envelope", %{book: book, envelope: envelope} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(EnvelopeRepository, :delete, fn ^envelope ->
@@ -36,7 +37,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelopeTest do
 
     test "with editor role (authorized scope) deletes an envelope", %{book: book, envelope: envelope} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(EnvelopeRepository, :delete, fn ^envelope ->
@@ -48,7 +49,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelopeTest do
 
     test "with commenter role (unauthorized scope) returns error", %{book: book, envelope: envelope} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} = DeleteEnvelope.call(scope, book, envelope)
@@ -63,7 +64,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelopeTest do
 
     test "with database error returns error changeset", %{book: book, envelope: envelope} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       changeset = %Ecto.Changeset{valid?: false}
@@ -77,7 +78,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelopeTest do
 
     test "invokes BroadcastBook when envelope is deleted successfully", %{book: book, envelope: envelope} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(EnvelopeRepository, :delete, fn ^envelope -> {:ok, envelope} end)

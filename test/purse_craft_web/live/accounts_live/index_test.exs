@@ -5,12 +5,13 @@ defmodule PurseCraftWeb.AccountsLive.IndexTest do
   import Phoenix.LiveViewTest
 
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.CoreFactory
 
   setup :register_and_log_in_user
 
   setup %{user: user} do
-    book = BudgetingFactory.insert(:book, name: "Test Accounts Book")
-    BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+    book = CoreFactory.insert(:book, name: "Test Accounts Book")
+    CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
     %{book: book}
   end
 
@@ -96,7 +97,7 @@ defmodule PurseCraftWeb.AccountsLive.IndexTest do
     end
 
     test "redirects to books page when unauthorized", %{conn: conn} do
-      book = BudgetingFactory.insert(:book, name: "Someone Else's Budget")
+      book = CoreFactory.insert(:book, name: "Someone Else's Budget")
 
       assert {:error, {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book"}}}} =
                live(conn, ~p"/books/#{book.external_id}/accounts")

@@ -4,8 +4,8 @@ defmodule PurseCraft.Budgeting.Commands.Books.DeleteBookTest do
   import Mimic
 
   alias PurseCraft.Budgeting.Commands.Books.DeleteBook
-  alias PurseCraft.BudgetingFactory
   alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.PubSub.BroadcastBook
   alias PurseCraft.PubSub.BroadcastUserBook
@@ -13,8 +13,8 @@ defmodule PurseCraft.Budgeting.Commands.Books.DeleteBookTest do
 
   setup do
     user = IdentityFactory.insert(:user)
-    book = BudgetingFactory.insert(:book)
-    BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+    book = CoreFactory.insert(:book)
+    CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
     scope = IdentityFactory.build(:scope, user: user)
 
     %{
@@ -32,7 +32,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.DeleteBookTest do
 
     test "with non-owner role returns unauthorized error", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} = DeleteBook.call(scope, book)

@@ -6,14 +6,15 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
 
   alias PurseCraft.Budgeting
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.CoreFactory
   alias PurseCraft.Repo
 
   setup :register_and_log_in_user
 
   describe "Display Book" do
     test "with associated book (authorized scope) displays book", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      book = CoreFactory.insert(:book, name: "My Awesome Budget")
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
 
       {:ok, _show_live, html} = live(conn, ~p"/books/#{book.external_id}")
 
@@ -42,7 +43,7 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
     end
 
     test "redirects to books page when unauthorized", %{conn: conn} do
-      book = BudgetingFactory.insert(:book, name: "Someone Else's Budget")
+      book = CoreFactory.insert(:book, name: "Someone Else's Budget")
 
       assert {:error, {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book"}}}} =
                live(conn, ~p"/books/#{book.external_id}")
@@ -51,8 +52,8 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
 
   describe "Update Book" do
     test "with associated book, owner role, and valid data updates book and returns to show", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = CoreFactory.insert(:book, name: "My Awesome Budget")
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       attrs = %{
         name: "My Spectacular Budget"
@@ -81,8 +82,8 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
     end
 
     test "with associated book, owner role, and blank name returns error", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = CoreFactory.insert(:book, name: "My Awesome Budget")
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       attrs = %{
         name: ""
@@ -110,8 +111,8 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
 
   describe "PubSub Book Update" do
     test "updates to the latest value of the book", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = CoreFactory.insert(:book, name: "My Awesome Budget")
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       {:ok, show_live, html} = live(conn, ~p"/books/#{book.external_id}")
 
@@ -133,8 +134,8 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
 
   describe "PubSub Book Delete" do
     test "deletions redirect current viewing users to /books", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = CoreFactory.insert(:book, name: "My Awesome Budget")
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       {:ok, show_live, _html} = live(conn, ~p"/books/#{book.external_id}")
 
@@ -147,8 +148,8 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
 
   describe "Book retrieval errors" do
     test "handles book update with fetch error", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = CoreFactory.insert(:book, name: "My Awesome Budget")
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       {:ok, show_live, _html} = live(conn, ~p"/books/#{book.external_id}")
 
@@ -169,12 +170,12 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
     end
 
     test "handles book update with non-matching book data", %{conn: conn, user: user} do
-      book = BudgetingFactory.insert(:book, name: "My Awesome Budget")
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = CoreFactory.insert(:book, name: "My Awesome Budget")
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       {:ok, show_live, _html} = live(conn, ~p"/books/#{book.external_id}")
 
-      different_book = BudgetingFactory.insert(:book, name: "Different Book")
+      different_book = CoreFactory.insert(:book, name: "Different Book")
 
       Budgeting.broadcast_book(different_book, {:updated, different_book})
 

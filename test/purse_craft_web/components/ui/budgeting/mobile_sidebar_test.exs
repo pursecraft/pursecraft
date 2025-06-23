@@ -6,8 +6,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.MobileSidebarTest do
   setup :register_and_log_in_user
 
   setup %{user: user} do
-    book = PurseCraft.BudgetingFactory.insert(:book, name: "Test Budget Book")
-    PurseCraft.BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+    book = PurseCraft.CoreFactory.insert(:book, name: "Test Budget Book")
+    PurseCraft.CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
     %{book: book}
   end
 

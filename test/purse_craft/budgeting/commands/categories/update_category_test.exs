@@ -7,11 +7,12 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.PubSub.BroadcastBook
 
   setup do
-    book = BudgetingFactory.insert(:book)
+    book = CoreFactory.insert(:book)
     category = BudgetingFactory.insert(:category, book_id: book.id)
 
     %{
@@ -23,7 +24,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
   describe "call/5" do
     test "with string keys in attrs calls repository update correctly", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       updated_category = %{category | name: "Updated String Key Category"}
@@ -42,7 +43,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
 
     test "with authorization failure returns unauthorized error", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Updated Category"}
@@ -54,7 +55,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
 
     test "with repository error returns changeset error", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: ""}
@@ -70,7 +71,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
 
     test "with preload option preloads associations", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       updated_category = %{category | name: "Updated Category"}
@@ -90,7 +91,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
 
     test "without preload option returns category without loaded associations", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       updated_category = %{category | name: "Updated Category"}
@@ -108,7 +109,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
 
     test "invokes BroadcastBook with correct parameters", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       updated_category = %{category | name: "Broadcast Test Category"}
