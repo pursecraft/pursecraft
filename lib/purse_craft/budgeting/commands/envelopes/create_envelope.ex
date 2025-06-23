@@ -5,9 +5,9 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelope do
 
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
-  alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
+  alias PurseCraft.Core.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub
   alias PurseCraft.Utilities

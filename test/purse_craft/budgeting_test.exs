@@ -2,11 +2,11 @@ defmodule PurseCraft.BudgetingTest do
   use PurseCraft.DataCase, async: true
 
   alias PurseCraft.Budgeting
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.BookUser
   alias PurseCraft.IdentityFactory
   alias PurseCraft.Repo
 

@@ -3,8 +3,8 @@ defmodule PurseCraft.PubSub do
   The PubSub context for handling notifications and broadcasts.
   """
 
-  alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
+  alias PurseCraft.Core.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub.BroadcastBook
   alias PurseCraft.PubSub.BroadcastCategory

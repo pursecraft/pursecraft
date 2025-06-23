@@ -4,8 +4,8 @@ defmodule PurseCraft.Budgeting.Commands.Books.FetchBookByExternalId do
   """
 
   alias PurseCraft.Budgeting.Policy
-  alias PurseCraft.Budgeting.Repositories.BookRepository
-  alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Core.Repositories.BookRepository
+  alias PurseCraft.Core.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Utilities
 
@@ -39,7 +39,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.FetchBookByExternalId do
   def call(%Scope{} = scope, external_id, opts \\ []) do
     with :ok <- Policy.authorize(:book_read, scope, %{book: %Book{external_id: external_id}}) do
       external_id
-      |> BookRepository.get_by_external_id_with_options(opts)
+      |> BookRepository.get_by_external_id(opts)
       |> Utilities.to_result()
     end
   end

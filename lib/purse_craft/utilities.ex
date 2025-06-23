@@ -3,6 +3,7 @@ defmodule PurseCraft.Utilities do
   Provides utility functions that can be used across the application.
   """
 
+  alias PurseCraft.Utilities.MaybePreload
   alias PurseCraft.Utilities.Result
 
   @doc """
@@ -56,4 +57,22 @@ defmodule PurseCraft.Utilities do
   """
   @spec to_result(any()) :: {:ok, any()} | {:error, any()}
   defdelegate to_result(value), to: Result, as: :normalize
+
+  @doc """
+  Preloads associations on a struct if preloads are provided.
+
+  ## Examples
+
+      iex> PurseCraft.Utilities.maybe_preload(%User{}, [])
+      %User{}
+
+      iex> PurseCraft.Utilities.maybe_preload(%User{}, [:books])
+      %User{books: [...]}
+
+      iex> PurseCraft.Utilities.maybe_preload(nil, [:books])
+      nil
+
+  """
+  @spec maybe_preload(struct() | nil, list()) :: struct() | nil
+  defdelegate maybe_preload(struct, preloads), to: MaybePreload, as: :call
 end

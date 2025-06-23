@@ -3,11 +3,10 @@ defmodule PurseCraft.BudgetingFactory do
 
   use PurseCraft.FactoryTemplate
 
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
-  alias PurseCraft.Budgeting.Schemas.User
+  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.BookUser
 
   def book_factory do
     name = Faker.Pokemon.name()
@@ -54,12 +53,6 @@ defmodule PurseCraft.BudgetingFactory do
     envelope
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()
-  end
-
-  def user_factory do
-    %User{
-      email: valid_email()
-    }
   end
 
   defp generate_lowercase_position(1), do: "m"
