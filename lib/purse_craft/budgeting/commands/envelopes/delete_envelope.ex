@@ -3,12 +3,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelope do
   Deletes an envelope.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub
 
   @doc """
   Deletes an envelope.
@@ -27,7 +27,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelope do
   def call(%Scope{} = scope, %Book{} = book, %Envelope{} = envelope) do
     with :ok <- Policy.authorize(:envelope_delete, scope, %{book: book}),
          {:ok, %Envelope{} = envelope} <- EnvelopeRepository.delete(envelope) do
-      BroadcastBook.call(book, {:envelope_deleted, envelope})
+      PubSub.broadcast_book(book, {:envelope_deleted, envelope})
       {:ok, envelope}
     end
   end

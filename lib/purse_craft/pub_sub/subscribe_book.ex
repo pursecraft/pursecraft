@@ -1,4 +1,4 @@
-defmodule PurseCraft.Budgeting.Commands.PubSub.SubscribeBook do
+defmodule PurseCraft.PubSub.SubscribeBook do
   @moduledoc """
   Command for subscribing to notifications about changes for a specific book.
   """

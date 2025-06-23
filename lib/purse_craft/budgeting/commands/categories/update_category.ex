@@ -3,12 +3,12 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategory do
   Updates a category with the given attributes.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub
   alias PurseCraft.Types
   alias PurseCraft.Utilities
 
@@ -50,7 +50,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategory do
 
     with :ok <- Policy.authorize(:category_update, scope, %{book: book}),
          {:ok, category} <- CategoryRepository.update(category, attrs, opts) do
-      BroadcastBook.call(book, {:category_updated, category})
+      PubSub.broadcast_book(book, {:category_updated, category})
       {:ok, category}
     end
   end

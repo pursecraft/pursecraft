@@ -3,12 +3,12 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategory do
   Creates a category and associates it with the given `Book`.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub
   alias PurseCraft.Utilities
   alias PurseCraft.Utilities.FractionalIndexing
 
@@ -39,7 +39,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategory do
          {:ok, position} <- generate_top_position(first_position),
          attrs = build_attrs(attrs, book.id, position),
          {:ok, category} <- CategoryRepository.create(attrs) do
-      BroadcastBook.call(book, {:category_created, category})
+      PubSub.broadcast_book(book, {:category_created, category})
       {:ok, category}
     end
   end

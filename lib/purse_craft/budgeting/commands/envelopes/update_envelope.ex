@@ -3,12 +3,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.UpdateEnvelope do
   Updates an envelope with the given attributes.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub
   alias PurseCraft.Utilities
 
   @type attrs :: %{
@@ -37,7 +37,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.UpdateEnvelope do
 
     with :ok <- Policy.authorize(:envelope_update, scope, %{book: book}),
          {:ok, envelope} <- EnvelopeRepository.update(envelope, attrs) do
-      BroadcastBook.call(book, {:envelope_updated, envelope})
+      PubSub.broadcast_book(book, {:envelope_updated, envelope})
       {:ok, envelope}
     end
   end

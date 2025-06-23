@@ -4,11 +4,11 @@ defmodule PurseCraft.Budgeting.Commands.Books.UpdateBookTest do
   import Mimic
 
   alias PurseCraft.Budgeting.Commands.Books.UpdateBook
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.IdentityFactory
+  alias PurseCraft.PubSub.BroadcastBook
+  alias PurseCraft.PubSub.BroadcastUserBook
 
   setup do
     user = IdentityFactory.insert(:user)

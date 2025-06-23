@@ -4,11 +4,11 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
   import Mimic
 
   alias PurseCraft.Budgeting.Commands.Categories.UpdateCategory
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.IdentityFactory
+  alias PurseCraft.PubSub.BroadcastBook
 
   setup do
     book = BudgetingFactory.insert(:book)

@@ -3,12 +3,12 @@ defmodule PurseCraft.Budgeting.Commands.Categories.DeleteCategory do
   Deletes a category.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub
 
   @doc """
   Deletes a category.
@@ -27,7 +27,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.DeleteCategory do
   def call(%Scope{} = scope, %Book{} = book, %Category{} = category) do
     with :ok <- Policy.authorize(:category_delete, scope, %{book: book}),
          {:ok, %Category{} = category} <- CategoryRepository.delete(category) do
-      BroadcastBook.call(book, {:category_deleted, category})
+      PubSub.broadcast_book(book, {:category_deleted, category})
       {:ok, category}
     end
   end

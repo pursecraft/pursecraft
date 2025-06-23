@@ -1,4 +1,4 @@
-defmodule PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook do
+defmodule PurseCraft.PubSub.BroadcastUserBook do
   @moduledoc """
   Command for broadcasting notifications about book changes for a specific user.
   """

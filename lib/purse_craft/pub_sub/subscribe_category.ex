@@ -1,4 +1,4 @@
-defmodule PurseCraft.Budgeting.Commands.PubSub.SubscribeCategory do
+defmodule PurseCraft.PubSub.SubscribeCategory do
   @moduledoc """
   Subscribes to notifications about changes for a specific category.
   """

@@ -3,13 +3,13 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelope do
   Creates an envelope and associates it with the given `Category`.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub
   alias PurseCraft.Utilities
   alias PurseCraft.Utilities.FractionalIndexing
 
@@ -40,7 +40,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelope do
          {:ok, position} <- generate_top_position(first_position),
          attrs = build_attrs(attrs, category.id, position),
          {:ok, envelope} <- EnvelopeRepository.create(attrs) do
-      BroadcastBook.call(book, {:envelope_created, envelope})
+      PubSub.broadcast_book(book, {:envelope_created, envelope})
       {:ok, envelope}
     end
   end

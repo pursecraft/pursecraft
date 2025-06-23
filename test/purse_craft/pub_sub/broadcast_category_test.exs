@@ -1,9 +1,9 @@
-defmodule PurseCraft.Budgeting.Commands.PubSub.BroadcastCategoryTest do
+defmodule PurseCraft.PubSub.BroadcastCategoryTest do
   use PurseCraft.DataCase, async: true
 
   alias Phoenix.PubSub
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastCategory
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.PubSub.BroadcastCategory
 
   describe "call/2" do
     test "broadcasts envelope_repositioned message to category channel" do

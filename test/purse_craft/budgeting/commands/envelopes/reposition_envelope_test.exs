@@ -4,11 +4,11 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelopeTest do
   import Mimic
 
   alias PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastCategory
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.IdentityFactory
+  alias PurseCraft.PubSub.BroadcastCategory
 
   setup do
     book = BudgetingFactory.insert(:book)
