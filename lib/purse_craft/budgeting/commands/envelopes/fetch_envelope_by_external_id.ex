@@ -9,6 +9,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalId do
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Types
+  alias PurseCraft.Utilities
 
   @type option :: {:preload, Types.preload()}
   @type options :: [option()]
@@ -32,10 +33,9 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalId do
           {:ok, Envelope.t()} | {:error, :not_found | :unauthorized}
   def call(%Scope{} = scope, %Book{} = book, external_id, opts \\ []) do
     with :ok <- Policy.authorize(:envelope_read, scope, %{book: book}) do
-      case EnvelopeRepository.get_by_external_id_and_book_id(external_id, book.id, opts) do
-        nil -> {:error, :not_found}
-        envelope -> {:ok, envelope}
-      end
+      external_id
+      |> EnvelopeRepository.get_by_external_id_and_book_id(book.id, opts)
+      |> Utilities.to_result()
     end
   end
 end

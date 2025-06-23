@@ -7,6 +7,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.FetchBookByExternalId do
   alias PurseCraft.Budgeting.Repositories.BookRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.Utilities
 
   @doc """
   Fetches a book by its external ID with optional preloading of associations.
@@ -37,10 +38,9 @@ defmodule PurseCraft.Budgeting.Commands.Books.FetchBookByExternalId do
           {:ok, Book.t()} | {:error, :not_found | :unauthorized}
   def call(%Scope{} = scope, external_id, opts \\ []) do
     with :ok <- Policy.authorize(:book_read, scope, %{book: %Book{external_id: external_id}}) do
-      case BookRepository.get_by_external_id_with_options(external_id, opts) do
-        nil -> {:error, :not_found}
-        book -> {:ok, book}
-      end
+      external_id
+      |> BookRepository.get_by_external_id_with_options(opts)
+      |> Utilities.to_result()
     end
   end
 end

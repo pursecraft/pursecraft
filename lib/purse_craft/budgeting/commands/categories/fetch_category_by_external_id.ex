@@ -9,6 +9,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalId do
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Types
+  alias PurseCraft.Utilities
 
   @type option :: {:preload, Types.preload()}
   @type options :: [option()]
@@ -32,10 +33,9 @@ defmodule PurseCraft.Budgeting.Commands.Categories.FetchCategoryByExternalId do
           {:ok, Category.t()} | {:error, :not_found | :unauthorized}
   def call(%Scope{} = scope, %Book{} = book, external_id, opts \\ []) do
     with :ok <- Policy.authorize(:category_read, scope, %{book: book}) do
-      case CategoryRepository.get_by_external_id_and_book_id(external_id, book.id, opts) do
-        nil -> {:error, :not_found}
-        category -> {:ok, category}
-      end
+      external_id
+      |> CategoryRepository.get_by_external_id_and_book_id(book.id, opts)
+      |> Utilities.to_result()
     end
   end
 end

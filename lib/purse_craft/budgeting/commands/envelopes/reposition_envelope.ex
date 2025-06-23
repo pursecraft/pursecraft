@@ -10,6 +10,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope do
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub
   alias PurseCraft.Repo
+  alias PurseCraft.Utilities
   alias PurseCraft.Utilities.FractionalIndexing
 
   @max_retries 3
@@ -85,17 +86,15 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope do
   end
 
   defp validate_envelope(envelopes, envelope_id) do
-    case Map.get(envelopes, envelope_id) do
-      nil -> {:error, :not_found}
-      envelope -> {:ok, envelope}
-    end
+    envelopes
+    |> Map.get(envelope_id)
+    |> Utilities.to_result()
   end
 
   defp validate_target_category(categories, target_category_id) do
-    case Map.get(categories, target_category_id) do
-      nil -> {:error, :not_found}
-      category -> {:ok, category}
-    end
+    categories
+    |> Map.get(target_category_id)
+    |> Utilities.to_result()
   end
 
   defp validate_neighbor_envelopes(envelopes, prev_envelope_id, next_envelope_id, target_category_id) do

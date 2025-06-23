@@ -9,6 +9,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategory do
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub
   alias PurseCraft.Repo
+  alias PurseCraft.Utilities
   alias PurseCraft.Utilities.FractionalIndexing
 
   @max_retries 3
@@ -75,15 +76,13 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategory do
   end
 
   defp validate_and_extract_categories(categories_map, category_id, prev_category_id, next_category_id) do
-    case Map.get(categories_map, category_id) do
-      nil ->
-        {:error, :not_found}
-
-      category ->
-        with {:ok, prev_category} <- validate_optional_category(categories_map, prev_category_id, category.book_id),
-             {:ok, next_category} <- validate_optional_category(categories_map, next_category_id, category.book_id) do
-          {:ok, [category, prev_category, next_category]}
-        end
+    with {:ok, category} <-
+           categories_map
+           |> Map.get(category_id)
+           |> Utilities.to_result(),
+         {:ok, prev_category} <- validate_optional_category(categories_map, prev_category_id, category.book_id),
+         {:ok, next_category} <- validate_optional_category(categories_map, next_category_id, category.book_id) do
+      {:ok, [category, prev_category, next_category]}
     end
   end
 
