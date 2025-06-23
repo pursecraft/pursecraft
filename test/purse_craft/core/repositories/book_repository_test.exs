@@ -5,18 +5,19 @@ defmodule PurseCraft.Core.Repositories.BookRepositoryTest do
   alias PurseCraft.Core.Repositories.BookRepository
   alias PurseCraft.Core.Schemas.Book
   alias PurseCraft.Core.Schemas.BookUser
+  alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.Repo
 
   describe "list_by_user/1" do
     test "returns all books associated with a user" do
       user = IdentityFactory.insert(:user)
-      book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = CoreFactory.insert(:book)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       other_user = IdentityFactory.insert(:user)
-      other_book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: other_book.id, user_id: other_user.id)
+      other_book = CoreFactory.insert(:book)
+      CoreFactory.insert(:book_user, book_id: other_book.id, user_id: other_user.id)
 
       result = BookRepository.list_by_user(user.id)
       assert [returned_book] = result
@@ -40,7 +41,7 @@ defmodule PurseCraft.Core.Repositories.BookRepositoryTest do
 
   describe "get_by_external_id!/1" do
     test "with existing book returns the book" do
-      book = BudgetingFactory.insert(:book)
+      book = CoreFactory.insert(:book)
 
       result = BookRepository.get_by_external_id!(book.external_id)
       assert result.id == book.id
@@ -59,7 +60,7 @@ defmodule PurseCraft.Core.Repositories.BookRepositoryTest do
 
   describe "get_by_external_id/1" do
     test "with existing book returns the book" do
-      book = BudgetingFactory.insert(:book)
+      book = CoreFactory.insert(:book)
 
       result = BookRepository.get_by_external_id(book.external_id)
       assert result.id == book.id
@@ -76,7 +77,7 @@ defmodule PurseCraft.Core.Repositories.BookRepositoryTest do
 
   describe "get_by_external_id/2" do
     test "with existing book returns the book" do
-      book = BudgetingFactory.insert(:book)
+      book = CoreFactory.insert(:book)
 
       result = BookRepository.get_by_external_id(book.external_id)
       assert result.id == book.id
@@ -91,7 +92,7 @@ defmodule PurseCraft.Core.Repositories.BookRepositoryTest do
     end
 
     test "with preload option loads the association" do
-      book = BudgetingFactory.insert(:book)
+      book = CoreFactory.insert(:book)
       category1 = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
       category2 = BudgetingFactory.insert(:category, book_id: book.id, position: "h")
 
@@ -103,7 +104,7 @@ defmodule PurseCraft.Core.Repositories.BookRepositoryTest do
     end
 
     test "with empty preload list returns the book without preloading" do
-      book = BudgetingFactory.insert(:book)
+      book = CoreFactory.insert(:book)
       BudgetingFactory.insert(:category, book_id: book.id, position: "g")
 
       book_without_preload = BookRepository.get_by_external_id(book.external_id, preload: [])
@@ -137,7 +138,7 @@ defmodule PurseCraft.Core.Repositories.BookRepositoryTest do
 
   describe "update/2" do
     test "with valid data updates the book" do
-      book = BudgetingFactory.insert(:book, name: "Original Name")
+      book = CoreFactory.insert(:book, name: "Original Name")
       attrs = %{name: "Updated Name"}
 
       assert {:ok, updated_book} = BookRepository.update(book, attrs)
@@ -147,7 +148,7 @@ defmodule PurseCraft.Core.Repositories.BookRepositoryTest do
     end
 
     test "with invalid data returns error changeset" do
-      book = BudgetingFactory.insert(:book, name: "Original Name")
+      book = CoreFactory.insert(:book, name: "Original Name")
       attrs = %{name: ""}
 
       assert {:error, changeset} = BookRepository.update(book, attrs)
@@ -160,7 +161,7 @@ defmodule PurseCraft.Core.Repositories.BookRepositoryTest do
 
   describe "delete/1" do
     test "deletes the book successfully" do
-      book = BudgetingFactory.insert(:book)
+      book = CoreFactory.insert(:book)
 
       assert {:ok, deleted_book} = BookRepository.delete(book)
       assert deleted_book.id == book.id
@@ -168,12 +169,12 @@ defmodule PurseCraft.Core.Repositories.BookRepositoryTest do
     end
 
     test "deletes associated book_user records" do
-      book = BudgetingFactory.insert(:book)
+      book = CoreFactory.insert(:book)
       user1 = IdentityFactory.insert(:user)
       user2 = IdentityFactory.insert(:user)
 
-      book_user1 = BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user1.id, role: :owner)
-      book_user2 = BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user2.id, role: :editor)
+      book_user1 = CoreFactory.insert(:book_user, book_id: book.id, user_id: user1.id, role: :owner)
+      book_user2 = CoreFactory.insert(:book_user, book_id: book.id, user_id: user2.id, role: :editor)
 
       assert {:ok, _deleted_book} = BookRepository.delete(book)
 

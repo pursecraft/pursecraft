@@ -7,11 +7,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.PubSub.BroadcastBook
 
   setup do
-    book = BudgetingFactory.insert(:book)
+    book = CoreFactory.insert(:book)
     category = BudgetingFactory.insert(:category, book_id: book.id)
 
     %{
@@ -23,7 +24,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
   describe "call/4" do
     test "with string keys in attrs creates an envelope correctly", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "String Key Envelope", category_id: category.id}
@@ -44,7 +45,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
     test "with invalid data returns error changeset", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       changeset = %Ecto.Changeset{valid?: false}
@@ -62,7 +63,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
     test "with owner role (authorized scope) creates an envelope", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Owner Envelope", category_id: category.id}
@@ -83,7 +84,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
     test "with editor role (authorized scope) creates an envelope", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Editor Envelope", category_id: category.id}
@@ -104,7 +105,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
     test "with commenter role (unauthorized scope) returns error", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Commenter Envelope"}
@@ -123,7 +124,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
     test "invokes BroadcastBook when envelope is created successfully", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Broadcast Test Envelope", category_id: category.id}
@@ -143,7 +144,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
     test "assigns position before existing envelope", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "New Envelope", category_id: category.id}
@@ -162,7 +163,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
     test "returns error when cannot place at top", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(EnvelopeRepository, :get_first_position, fn _category_id -> "a" end)

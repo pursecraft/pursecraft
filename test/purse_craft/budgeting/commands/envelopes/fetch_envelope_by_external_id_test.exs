@@ -7,10 +7,11 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalIdTest 
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
 
   setup do
-    book = BudgetingFactory.insert(:book)
+    book = CoreFactory.insert(:book)
     category = BudgetingFactory.insert(:category, book_id: book.id)
 
     %{
@@ -22,7 +23,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalIdTest 
   describe "call/4" do
     test "with owner role (authorized scope) returns envelope", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Test Envelope", category_id: category.id, external_id: Ecto.UUID.generate()}
@@ -41,7 +42,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalIdTest 
       category: category
     } do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{
@@ -64,7 +65,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalIdTest 
 
     test "with invalid external_id returns not found error", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       external_id = Ecto.UUID.generate()
@@ -78,7 +79,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalIdTest 
 
     test "with editor role (authorized scope) returns envelope", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Editor Envelope", category_id: category.id, external_id: Ecto.UUID.generate()}
@@ -92,7 +93,7 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalIdTest 
 
     test "with commenter role (authorized scope) returns envelope", %{book: book, category: category} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Commenter Envelope", category_id: category.id, external_id: Ecto.UUID.generate()}
@@ -114,9 +115,9 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalIdTest 
     end
 
     test "with envelope from different book returns not found", %{category: category} do
-      different_book = BudgetingFactory.insert(:book)
+      different_book = CoreFactory.insert(:book)
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: different_book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: different_book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{

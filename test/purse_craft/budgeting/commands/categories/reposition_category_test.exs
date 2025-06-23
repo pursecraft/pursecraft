@@ -7,11 +7,12 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.PubSub.BroadcastBook
 
   setup do
-    book = BudgetingFactory.insert(:book)
+    book = CoreFactory.insert(:book)
 
     cat1 = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
     cat2 = BudgetingFactory.insert(:category, book_id: book.id, position: "m")
@@ -28,7 +29,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
   describe "call/4" do
     test "successfully repositions category between two others", %{book: book, cat1: cat1, cat2: cat2, cat3: cat3} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} = RepositionCategory.call(scope, cat3.external_id, cat1.external_id, cat2.external_id)
@@ -40,7 +41,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "repositions category to the beginning when prev_category_id is nil", %{book: book, cat1: cat1, cat3: cat3} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} = RepositionCategory.call(scope, cat3.external_id, nil, cat1.external_id)
@@ -51,7 +52,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "repositions category to the end when next_category_id is nil", %{book: book, cat1: cat1, cat3: cat3} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} = RepositionCategory.call(scope, cat1.external_id, cat3.external_id, nil)
@@ -62,7 +63,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "returns not_found when category doesn't exist", %{book: book, cat1: cat1, cat2: cat2} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} =
@@ -71,7 +72,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "returns not_found when prev_category doesn't exist", %{book: book, cat1: cat1, cat2: cat2} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} =
@@ -80,7 +81,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "returns not_found when next_category doesn't exist", %{book: book, cat1: cat1, cat2: cat2} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} =
@@ -89,10 +90,10 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "returns not_found when prev_category is from different book", %{book: book, cat1: cat1, cat2: cat2} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
-      other_book = BudgetingFactory.insert(:book)
+      other_book = CoreFactory.insert(:book)
       other_cat = BudgetingFactory.insert(:category, book_id: other_book.id, position: "a")
 
       assert {:error, :not_found} =
@@ -101,7 +102,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "returns unauthorized when user lacks permission", %{book: book, cat1: cat1, cat2: cat2, cat3: cat3} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} =
@@ -110,7 +111,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "returns error when fractional indexing fails", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       cat1 = BudgetingFactory.insert(:category, book_id: book.id, position: "z")
@@ -123,7 +124,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "broadcasts category_repositioned event on success", %{book: book, cat1: cat1, cat2: cat2, cat3: cat3} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       expect(BroadcastBook, :call, fn received_book, {:category_repositioned, received_category} ->
@@ -139,7 +140,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "handles unique constraint violation with retry", %{book: book, cat1: cat1, cat2: cat2, cat3: cat3} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} = RepositionCategory.call(scope, cat3.external_id, cat1.external_id, cat2.external_id)
@@ -151,7 +152,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "returns error after max retries", %{book: book, cat1: cat1, cat2: cat2, cat3: cat3} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(CategoryRepository, :update_position, fn _category, _position ->
@@ -170,7 +171,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategoryTest do
 
     test "handles non-position errors in changeset", %{book: book, cat1: cat1, cat2: cat2, cat3: cat3} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(CategoryRepository, :update_position, fn _category, _position ->

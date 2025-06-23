@@ -6,11 +6,12 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
   alias PurseCraft.Budgeting.Commands.Categories.CreateCategory
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.PubSub.BroadcastBook
 
   setup do
-    book = BudgetingFactory.insert(:book)
+    book = CoreFactory.insert(:book)
 
     %{
       book: book
@@ -20,7 +21,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
   describe "call/3" do
     test "with string keys in attrs creates a category correctly", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{"name" => "String Key Category"}
@@ -33,7 +34,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
 
     test "with invalid data returns error changeset", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: ""}
@@ -44,7 +45,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
 
     test "with owner role (authorized scope) creates a category", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Owner Category"}
@@ -56,7 +57,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
 
     test "with editor role (authorized scope) creates a category", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Editor Category"}
@@ -68,7 +69,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
 
     test "with commenter role (unauthorized scope) returns error", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Commenter Category"}
@@ -87,7 +88,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
 
     test "invokes BroadcastBook when category is created successfully", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       expect(BroadcastBook, :call, fn broadcast_book, {:category_created, broadcast_category} ->
@@ -105,7 +106,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
 
     test "assigns position 'm' for first category in a book", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "First Category"}
@@ -116,7 +117,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
 
     test "assigns position before existing categories", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       # Create first category
@@ -131,7 +132,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
 
     test "handles multiple categories being added at the top", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       # Create initial categories
@@ -148,7 +149,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.CreateCategoryTest do
 
     test "returns error when first category is already at 'a'", %{book: book} do
       user = IdentityFactory.insert(:user)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       # Create a category at the boundary

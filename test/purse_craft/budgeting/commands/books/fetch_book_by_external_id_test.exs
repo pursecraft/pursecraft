@@ -5,14 +5,15 @@ defmodule PurseCraft.Budgeting.Commands.Books.FetchBookByExternalIdTest do
   alias PurseCraft.Budgeting.Commands.Books.FetchBookByExternalId
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
 
   describe "call/3" do
     test "with associated book (authorized scope) returns ok tuple with book" do
       user = IdentityFactory.insert(:user)
       scope = IdentityFactory.build(:scope, user: user)
-      book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = CoreFactory.insert(:book)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
       assert {:ok, returned_book} = FetchBookByExternalId.call(scope, book.external_id)
       assert returned_book.id == book.id
@@ -21,11 +22,11 @@ defmodule PurseCraft.Budgeting.Commands.Books.FetchBookByExternalIdTest do
     test "supports preloading associations" do
       user = IdentityFactory.insert(:user)
       scope = IdentityFactory.build(:scope, user: user)
-      book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      book = CoreFactory.insert(:book)
+      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
 
-      category1 = BudgetingFactory.insert(:category, book_id: book.id)
-      category2 = BudgetingFactory.insert(:category, book_id: book.id)
+      category1 = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
+      category2 = BudgetingFactory.insert(:category, book_id: book.id, position: "m")
 
       assert {:ok, book_with_preloads} =
                FetchBookByExternalId.call(scope, book.external_id, preload: [:categories])
@@ -48,7 +49,7 @@ defmodule PurseCraft.Budgeting.Commands.Books.FetchBookByExternalIdTest do
     test "with unauthorized scope returns error tuple" do
       user = IdentityFactory.insert(:user)
       scope = IdentityFactory.build(:scope, user: user)
-      book = BudgetingFactory.insert(:book)
+      book = CoreFactory.insert(:book)
 
       assert {:error, :unauthorized} = FetchBookByExternalId.call(scope, book.external_id)
     end
