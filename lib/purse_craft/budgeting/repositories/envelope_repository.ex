@@ -7,6 +7,7 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Repo
   alias PurseCraft.Types
+  alias PurseCraft.Utilities
 
   @type get_option :: {:preload, Types.preload()}
   @type get_options :: [get_option()]
@@ -66,14 +67,7 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
     |> EnvelopeQuery.by_external_id()
     |> EnvelopeQuery.by_book_id(book_id)
     |> Repo.one()
-    |> case do
-      nil ->
-        nil
-
-      envelope ->
-        preloads = Keyword.get(opts, :preload, [])
-        if preloads == [], do: envelope, else: Repo.preload(envelope, preloads)
-    end
+    |> Utilities.maybe_preload(opts)
   end
 
   @doc """
@@ -148,13 +142,10 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
   """
   @spec list_by_external_ids([Ecto.UUID.t()], get_options()) :: [Envelope.t()]
   def list_by_external_ids(external_ids, opts \\ []) when is_list(external_ids) do
-    envelopes =
-      external_ids
-      |> EnvelopeQuery.by_external_ids()
-      |> Repo.all()
-
-    preloads = Keyword.get(opts, :preload, [])
-    if preloads == [], do: envelopes, else: Repo.preload(envelopes, preloads)
+    external_ids
+    |> EnvelopeQuery.by_external_ids()
+    |> Repo.all()
+    |> Utilities.maybe_preload(opts)
   end
 
   @doc """
