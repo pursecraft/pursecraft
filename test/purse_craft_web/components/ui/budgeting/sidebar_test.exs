@@ -3,6 +3,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
 
   import Phoenix.LiveViewTest
 
+  alias PurseCraft.AccountingFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraftWeb.Components.UI.Budgeting.Sidebar
 
@@ -19,7 +20,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
         render_component(Sidebar, %{
           id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
-          current_scope: scope
+          current_scope: scope,
+          accounts: []
         })
 
       assert result =~ "PurseCraft Logo"
@@ -38,7 +40,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
         render_component(Sidebar, %{
           id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
-          current_scope: scope
+          current_scope: scope,
+          accounts: []
         })
 
       assert budget_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/budget"[^>]*class="[^"]*bg-primary/
@@ -67,7 +70,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
         render_component(Sidebar, %{
           id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
-          current_scope: scope
+          current_scope: scope,
+          accounts: []
         })
 
       assert result =~ "<select"
@@ -77,27 +81,29 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
     end
 
     test "renders accounts lists in sidebar", %{scope: scope, book: book} do
+      # Create budget accounts (appear in BUDGET ACCOUNTS section)
+      checking_account = AccountingFactory.build(:account, name: "Checking", account_type: "checking")
+      savings_account = AccountingFactory.build(:account, name: "Savings", account_type: "savings")
+      
+      # Create tracking accounts (appear in TRACKING ACCOUNTS section)  
+      investment = AccountingFactory.build(:account, name: "Investment", account_type: "asset")
+
+      accounts = [checking_account, savings_account, investment]
+
       result =
         render_component(Sidebar, %{
           id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
-          current_scope: scope
+          current_scope: scope,
+          accounts: accounts
         })
 
       assert result =~ "BUDGET ACCOUNTS"
       assert result =~ "TRACKING ACCOUNTS"
 
-      assert result =~ "$5,240.82"
-      assert result =~ "$32,150.00"
-
       assert result =~ "Checking"
-      assert result =~ "$3,240.82"
       assert result =~ "Savings"
-      assert result =~ "$2,000.00"
       assert result =~ "Investment"
-      assert result =~ "$25,150.00"
-      assert result =~ "401(k)"
-      assert result =~ "$7,000.00"
 
       assert result =~ "Add Account"
       assert result =~ "hero-plus-small"
@@ -108,7 +114,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
         render_component(Sidebar, %{
           id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
-          current_scope: scope
+          current_scope: scope,
+          accounts: []
         })
 
       assert result =~ ~r/<a[^>]*href="\/users\/log-out"/
@@ -120,7 +127,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
         render_component(Sidebar, %{
           id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
-          current_scope: scope
+          current_scope: scope,
+          accounts: []
         })
 
       assert result =~ "T"
@@ -132,7 +140,8 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
         render_component(Sidebar, %{
           id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
-          current_scope: scope
+          current_scope: scope,
+          accounts: []
         })
 
       # Verify the sidebar has the hidden class initially

@@ -6,7 +6,6 @@ defmodule PurseCraft.Accounting.Commands.Accounts.ListAccounts do
   alias PurseCraft.Accounting.Policy
   alias PurseCraft.Accounting.Repositories.AccountRepository
   alias PurseCraft.Accounting.Schemas.Account
-  alias PurseCraft.Identity.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Types
 

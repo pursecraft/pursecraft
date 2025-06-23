@@ -4,18 +4,41 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   import Mimic
   import Phoenix.LiveViewTest
 
+  alias PurseCraft.Accounting
+  alias PurseCraft.AccountingFactory
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Commands.Categories.RepositionCategory
   alias PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.IdentityFactory
 
   setup :register_and_log_in_user
 
   setup %{user: user} do
-    book = BudgetingFactory.insert(:book, name: "Test Budget Book")
-    BudgetingFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+    book = IdentityFactory.insert(:book, name: "Test Budget Book")
+    IdentityFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+
+    # Create test accounts for sidebar
+    checking_account = AccountingFactory.insert(:account,
+      book_id: book.id,
+      name: "Chase Checking",
+      account_type: "checking",
+      position: "aa"
+    )
+    savings_account = AccountingFactory.insert(:account,
+      book_id: book.id,
+      name: "Ally Savings", 
+      account_type: "savings",
+      position: "ab"
+    )
+    investment = AccountingFactory.insert(:account,
+      book_id: book.id,
+      name: "Investment Portfolio",
+      account_type: "asset",
+      position: "ac"
+    )
 
     category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id)
     envelope = BudgetingFactory.insert(:envelope, name: "Rent", category_id: category.id)
@@ -23,6 +46,9 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     %{
       book: book,
+      checking_account: checking_account,
+      savings_account: savings_account,
+      investment: investment,
       category: category_with_envelope,
       envelope: envelope
     }
@@ -1394,6 +1420,128 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       updated_html = render(view)
       assert updated_html =~ "Housing"
       assert updated_html =~ "Rent"
+    end
+  end
+
+  describe "Sidebar Account Display" do
+    test "loads and displays accounts in sidebar", %{
+      conn: conn, 
+      book: book,
+      checking_account: checking,
+      savings_account: savings,
+      investment: investment
+    } do
+      {:ok, _view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      # Check that accounts are displayed in sidebar
+      assert html =~ "Chase Checking"
+      assert html =~ "Ally Savings" 
+      assert html =~ "Investment Portfolio"
+
+      # Check that accounts are grouped by type
+      assert html =~ "BUDGET ACCOUNTS"
+      assert html =~ "TRACKING ACCOUNTS"
+    end
+
+    test "groups cash and credit accounts under budget accounts", %{
+      conn: conn,
+      book: book
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      # Check that cash/credit accounts appear in budget accounts section
+      budget_accounts_section = view |> element("div", "BUDGET ACCOUNTS") |> render()
+      assert budget_accounts_section =~ "Chase Checking"
+      assert budget_accounts_section =~ "Ally Savings"
+    end
+
+    test "groups tracking accounts under tracking accounts section", %{
+      conn: conn,
+      book: book
+    } do
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      # Check that tracking accounts appear in tracking accounts section
+      tracking_accounts_section = view |> element("div", "TRACKING ACCOUNTS") |> render()
+      assert tracking_accounts_section =~ "Investment Portfolio"
+    end
+
+    test "receives real-time account updates via PubSub", %{
+      conn: conn,
+      book: book
+    } do
+      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      # Initially no "New Account" in sidebar
+      refute html =~ "New Account"
+
+      # Create a new account and send PubSub notification
+      new_account = AccountingFactory.insert(:account,
+        book_id: book.id,
+        name: "New Account",
+        account_type: "checking",
+        position: "az"
+      )
+
+      # Send the PubSub message that would be broadcast
+      send(view.pid, {:account_created, new_account})
+
+      # Check that the new account appears in sidebar
+      updated_html = render(view)
+      assert updated_html =~ "New Account"
+    end
+
+    test "handles account update PubSub messages", %{
+      conn: conn,
+      book: book,
+      checking_account: checking
+    } do
+      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      # Initially shows original name
+      assert html =~ "Chase Checking"
+
+      # Simulate account name update via PubSub
+      updated_account = %{checking | name: "Updated Checking"}
+      send(view.pid, {:account_updated, updated_account})
+
+      # Check that the updated name appears
+      updated_html = render(view)
+      assert updated_html =~ "Updated Checking"
+      refute updated_html =~ "Chase Checking"
+    end
+
+    test "handles account deletion PubSub messages", %{
+      conn: conn,
+      book: book,
+      checking_account: checking
+    } do
+      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      # Initially shows the account
+      assert html =~ "Chase Checking"
+
+      # Simulate account deletion via PubSub
+      send(view.pid, {:account_deleted, checking})
+
+      # Check that the account no longer appears
+      updated_html = render(view)
+      refute updated_html =~ "Chase Checking"
+    end
+
+    test "handles authorization errors when loading accounts", %{
+      conn: conn,
+      book: book
+    } do
+      # Stub the accounting list function to return unauthorized
+      stub(Accounting, :list_accounts, fn _scope, _book, _opts ->
+        {:error, :unauthorized}
+      end)
+
+      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+
+      # Should show error message or handle gracefully
+      assert has_element?(view, ".alert-error", "You don't have access to this book's accounts")
     end
   end
 end

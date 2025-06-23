@@ -5,6 +5,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
   use PurseCraftWeb, :live_component
 
   alias Phoenix.LiveView.JS
+  alias PurseCraftWeb.Components.UI.Budgeting.AccountSection
   alias PurseCraftWeb.Components.UI.Budgeting.Icon
 
   @impl Phoenix.LiveComponent
@@ -14,7 +15,19 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
 
   @impl Phoenix.LiveComponent
   def update(assigns, socket) do
-    {:ok, assign(socket, assigns)}
+    accounts = Map.get(assigns, :accounts, [])
+    
+    # Group accounts by type for display
+    {budget_accounts, tracking_accounts} = group_accounts_by_type(accounts)
+    
+    socket = 
+      socket
+      |> assign(assigns)
+      |> assign(:budget_accounts, budget_accounts)
+      |> assign(:tracking_accounts, tracking_accounts)
+      |> assign(:accounts, accounts)
+      
+    {:ok, socket}
   end
 
   @impl Phoenix.LiveComponent
@@ -75,59 +88,17 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
           </nav>
 
           <div class="space-y-4">
-            <div class="space-y-1">
-              <div class="flex justify-between items-center px-2 py-1">
-                <h3 class="text-xs font-semibold text-base-content/70">BUDGET ACCOUNTS</h3>
-                <span class="text-xs font-medium">$5,240.82</span>
-              </div>
-              <ul class="text-sm">
-                <li>
-                  <.link
-                    href={get_book_path(@current_path, "accounts")}
-                    class="flex justify-between py-1 px-2 hover:bg-base-300 rounded-lg"
-                  >
-                    <span>Checking</span>
-                    <span>$3,240.82</span>
-                  </.link>
-                </li>
-                <li>
-                  <.link
-                    href={get_book_path(@current_path, "accounts")}
-                    class="flex justify-between py-1 px-2 hover:bg-base-300 rounded-lg"
-                  >
-                    <span>Savings</span>
-                    <span>$2,000.00</span>
-                  </.link>
-                </li>
-              </ul>
-            </div>
+            <AccountSection.account_section
+              title="BUDGET ACCOUNTS"
+              accounts={@budget_accounts}
+              current_path={@current_path}
+            />
 
-            <div class="space-y-1">
-              <div class="flex justify-between items-center px-2 py-1">
-                <h3 class="text-xs font-semibold text-base-content/70">TRACKING ACCOUNTS</h3>
-                <span class="text-xs font-medium">$32,150.00</span>
-              </div>
-              <ul class="text-sm">
-                <li>
-                  <.link
-                    href={get_book_path(@current_path, "accounts")}
-                    class="flex justify-between py-1 px-2 hover:bg-base-300 rounded-lg"
-                  >
-                    <span>Investment</span>
-                    <span>$25,150.00</span>
-                  </.link>
-                </li>
-                <li>
-                  <.link
-                    href={get_book_path(@current_path, "accounts")}
-                    class="flex justify-between py-1 px-2 hover:bg-base-300 rounded-lg"
-                  >
-                    <span>401(k)</span>
-                    <span>$7,000.00</span>
-                  </.link>
-                </li>
-              </ul>
-            </div>
+            <AccountSection.account_section
+              title="TRACKING ACCOUNTS"
+              accounts={@tracking_accounts}
+              current_path={@current_path}
+            />
 
             <div class="mt-1 px-2">
               <.link
@@ -223,5 +194,11 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
         "/books"
         # coveralls-ignore-stop
     end
+  end
+
+  defp group_accounts_by_type(accounts) do
+    Enum.split_with(accounts, fn account ->
+      account.account_type in ["checking", "savings", "cash", "credit_card", "line_of_credit"]
+    end)
   end
 end

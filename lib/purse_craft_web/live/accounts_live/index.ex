@@ -3,19 +3,31 @@ defmodule PurseCraftWeb.AccountsLive.Index do
 
   use PurseCraftWeb, :live_view
 
+  alias PurseCraft.Accounting
   alias PurseCraft.Budgeting
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
     case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
       {:ok, book} ->
-        socket =
-          socket
-          |> assign(:page_title, "All Accounts - #{book.name}")
-          |> assign(:current_path, "/books/#{book.external_id}/accounts")
-          |> assign(:book, book)
+        # Load accounts for sidebar
+        case Accounting.list_accounts(socket.assigns.current_scope, book) do
+          {:error, :unauthorized} ->
+            {:ok,
+             socket
+             |> put_flash(:error, "You don't have access to this book's accounts")
+             |> push_navigate(to: ~p"/books")}
 
-        {:ok, socket}
+          accounts ->
+            socket =
+              socket
+              |> assign(:page_title, "All Accounts - #{book.name}")
+              |> assign(:current_path, "/books/#{book.external_id}/accounts")
+              |> assign(:book, book)
+              |> assign(:accounts, accounts)
+
+            {:ok, socket}
+        end
 
       {:error, :not_found} ->
         {:ok,
@@ -34,7 +46,7 @@ defmodule PurseCraftWeb.AccountsLive.Index do
   @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
-    <Layouts.budgeting flash={@flash} current_path={@current_path} current_scope={@current_scope}>
+    <Layouts.budgeting flash={@flash} current_path={@current_path} current_scope={@current_scope} accounts={@accounts}>
       <div class="space-y-6">
         <div class="flex justify-between items-center">
           <h1 class="text-2xl font-bold">All Accounts - {@book.name}</h1>

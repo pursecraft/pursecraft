@@ -21,58 +21,54 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
-    case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
-      {:ok, book} ->
-        case Budgeting.list_categories(socket.assigns.current_scope, book, preload: [:envelopes]) do
-          {:error, :unauthorized} ->
-            {:ok,
-             socket
-             |> put_flash(:error, "You don't have access to this book's categories")
-             |> push_navigate(to: ~p"/books")}
+    with {:ok, book} <- Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id),
+         categories when is_list(categories) <- Budgeting.list_categories(socket.assigns.current_scope, book, preload: [:envelopes]),
+         accounts when is_list(accounts) <- Accounting.list_accounts(socket.assigns.current_scope, book) do
+      
+      PubSub.subscribe_book(book)
+      subscribe_to_categories(categories)
 
-          categories ->
-            Budgeting.subscribe_book(book)
-            subscribe_to_categories(categories)
+      socket =
+        socket
+        |> assign(:page_title, "Budget - #{book.name}")
+        |> assign(:current_path, "/books/#{book.external_id}/budget")
+        |> assign(:book, book)
+        |> assign(:accounts, accounts)
+        |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
+        |> assign(
+          :envelope_form,
+          to_form(Budgeting.change_envelope(%Envelope{}))
+        )
+        |> assign(:category_modal_open, false)
+        |> assign(:envelope_modal_open, false)
+        |> assign(:delete_modal_open, false)
+        |> assign(:editing_category, nil)
+        |> assign(:editing_envelope, nil)
+        |> assign(:category_to_delete, nil)
+        |> assign(:envelope_to_delete, nil)
+        |> assign(:selected_category_for_envelope, nil)
+        |> assign(:envelope_modal_title, "Add New Envelope")
+        |> assign(:envelope_modal_action, "save_envelope")
+        |> assign(:envelope_modal_button, "Create")
+        |> assign(:modal_title, "Add New Category")
+        |> assign(:modal_action, "save_category")
+        |> assign(:modal_button, "Create")
+        |> stream_configure(:categories, dom_id: &"categories-#{&1.external_id}")
+        |> stream(:categories, categories)
 
-            socket =
-              socket
-              |> assign(:page_title, "Budget - #{book.name}")
-              |> assign(:current_path, "/books/#{book.external_id}/budget")
-              |> assign(:book, book)
-              |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
-              |> assign(
-                :envelope_form,
-                to_form(Budgeting.change_envelope(%Envelope{}))
-              )
-              |> assign(:category_modal_open, false)
-              |> assign(:envelope_modal_open, false)
-              |> assign(:delete_modal_open, false)
-              |> assign(:editing_category, nil)
-              |> assign(:editing_envelope, nil)
-              |> assign(:category_to_delete, nil)
-              |> assign(:envelope_to_delete, nil)
-              |> assign(:selected_category_for_envelope, nil)
-              |> assign(:envelope_modal_title, "Add New Envelope")
-              |> assign(:envelope_modal_action, "save_envelope")
-              |> assign(:envelope_modal_button, "Create")
-              |> assign(:modal_title, "Add New Category")
-              |> assign(:modal_action, "save_category")
-              |> assign(:modal_button, "Create")
-              |> stream_configure(:categories, dom_id: &"categories-#{&1.external_id}")
-              |> stream(:categories, categories)
-
-            {:ok, socket}
-        end
-
+      {:ok, socket}
+    else
       {:error, :not_found} ->
         {:ok,
          socket
+         |> assign(:accounts, [])
          |> put_flash(:error, "Book not found")
          |> push_navigate(to: ~p"/books")}
 
       {:error, :unauthorized} ->
         {:ok,
          socket
+         |> assign(:accounts, [])
          |> put_flash(:error, "You don't have access to this book")
          |> push_navigate(to: ~p"/books")}
     end
@@ -407,6 +403,24 @@ defmodule PurseCraftWeb.BudgetLive.Index do
       {:error, :not_found} ->
         {:noreply, socket}
     end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:account_created, _account}, socket) do
+    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
+    {:noreply, assign(socket, :accounts, accounts)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:account_updated, _account}, socket) do
+    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
+    {:noreply, assign(socket, :accounts, accounts)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:account_deleted, _account}, socket) do
+    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
+    {:noreply, assign(socket, :accounts, accounts)}
   end
 
   @impl Phoenix.LiveView
