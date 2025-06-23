@@ -3,6 +3,8 @@ defmodule PurseCraft.Utilities do
   Provides utility functions that can be used across the application.
   """
 
+  alias PurseCraft.Utilities.Result
+
   @doc """
   Converts string keys in a map to atom keys.
 
@@ -35,4 +37,23 @@ defmodule PurseCraft.Utilities do
       {key, value} -> {key, value}
     end)
   end
+
+  @doc """
+  Safely converts a result to a tuple format.
+  Useful for ensuring consistent API responses.
+
+  ## Examples
+
+      iex> PurseCraft.Utilities.to_result({:ok, %{}})
+      {:ok, %{}}
+
+      iex> PurseCraft.Utilities.to_result(nil)
+      {:error, :not_found}
+
+      iex> PurseCraft.Utilities.to_result(%{name: "test"})
+      {:ok, %{name: "test"}}
+
+  """
+  @spec to_result(any()) :: {:ok, any()} | {:error, any()}
+  defdelegate to_result(value), to: Result, as: :normalize
 end
