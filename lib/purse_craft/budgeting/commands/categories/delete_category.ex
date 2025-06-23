@@ -5,8 +5,8 @@ defmodule PurseCraft.Budgeting.Commands.Categories.DeleteCategory do
 
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
-  alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
+  alias PurseCraft.Core.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub
 

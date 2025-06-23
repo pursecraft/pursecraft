@@ -3,7 +3,7 @@ defmodule PurseCraftWeb.BookLive.Form do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Budgeting
-  alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Core.Schemas.Book
   alias PurseCraftWeb.CoreComponents
 
   @impl Phoenix.LiveView

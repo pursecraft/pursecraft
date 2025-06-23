@@ -4,8 +4,8 @@ defmodule PurseCraft.Budgeting.Commands.Books.DeleteBook do
   """
 
   alias PurseCraft.Budgeting.Policy
-  alias PurseCraft.Budgeting.Repositories.BookRepository
-  alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Core.Repositories.BookRepository
+  alias PurseCraft.Core.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub
 

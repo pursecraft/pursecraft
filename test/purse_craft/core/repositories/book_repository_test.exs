@@ -1,10 +1,10 @@
-defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
+defmodule PurseCraft.Core.Repositories.BookRepositoryTest do
   use PurseCraft.DataCase, async: true
 
-  alias PurseCraft.Budgeting.Repositories.BookRepository
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.Core.Repositories.BookRepository
+  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.BookUser
   alias PurseCraft.IdentityFactory
   alias PurseCraft.Repo
 
@@ -74,11 +74,11 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
     end
   end
 
-  describe "get_by_external_id_with_options/2" do
+  describe "get_by_external_id/2" do
     test "with existing book returns the book" do
       book = BudgetingFactory.insert(:book)
 
-      result = BookRepository.get_by_external_id_with_options(book.external_id)
+      result = BookRepository.get_by_external_id(book.external_id)
       assert result.id == book.id
       assert result.external_id == book.external_id
       assert result.name == book.name
@@ -87,15 +87,15 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
     test "with non-existent book returns nil" do
       non_existent_id = Ecto.UUID.generate()
 
-      assert BookRepository.get_by_external_id_with_options(non_existent_id) == nil
+      assert BookRepository.get_by_external_id(non_existent_id) == nil
     end
 
     test "with preload option loads the association" do
       book = BudgetingFactory.insert(:book)
-      category1 = BudgetingFactory.insert(:category, book_id: book.id)
-      category2 = BudgetingFactory.insert(:category, book_id: book.id)
+      category1 = BudgetingFactory.insert(:category, book_id: book.id, position: "g")
+      category2 = BudgetingFactory.insert(:category, book_id: book.id, position: "h")
 
-      book_with_categories = BookRepository.get_by_external_id_with_options(book.external_id, preload: [:categories])
+      book_with_categories = BookRepository.get_by_external_id(book.external_id, preload: [:categories])
 
       assert Enum.count(book_with_categories.categories) == 2
       assert Enum.any?(book_with_categories.categories, &(&1.id == category1.id))
@@ -104,9 +104,9 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
 
     test "with empty preload list returns the book without preloading" do
       book = BudgetingFactory.insert(:book)
-      BudgetingFactory.insert(:category, book_id: book.id)
+      BudgetingFactory.insert(:category, book_id: book.id, position: "g")
 
-      book_without_preload = BookRepository.get_by_external_id_with_options(book.external_id, preload: [])
+      book_without_preload = BookRepository.get_by_external_id(book.external_id, preload: [])
 
       assert book_without_preload.id == book.id
       assert match?(%Ecto.Association.NotLoaded{}, book_without_preload.categories)
@@ -121,7 +121,7 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepositoryTest do
       assert {:ok, book} = BookRepository.create(attrs, user.id)
       assert book.name == "Test Book"
 
-      book_user = PurseCraft.Repo.get_by(PurseCraft.Budgeting.Schemas.BookUser, book_id: book.id)
+      book_user = PurseCraft.Repo.get_by(PurseCraft.Core.Schemas.BookUser, book_id: book.id)
       assert book_user.user_id == user.id
       assert book_user.role == :owner
     end

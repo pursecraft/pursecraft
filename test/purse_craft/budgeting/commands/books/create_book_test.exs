@@ -4,8 +4,8 @@ defmodule PurseCraft.Budgeting.Commands.Books.CreateBookTest do
   import Mimic
 
   alias PurseCraft.Budgeting.Commands.Books.CreateBook
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.BookUser
   alias PurseCraft.IdentityFactory
   alias PurseCraft.PubSub.BroadcastUserBook
   alias PurseCraft.Repo

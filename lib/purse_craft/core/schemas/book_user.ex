@@ -1,4 +1,4 @@
-defmodule PurseCraft.Budgeting.Schemas.BookUser do
+defmodule PurseCraft.Core.Schemas.BookUser do
   @moduledoc """
   `BookUser` represents the relationship between a `Book` and a `User` (obviously).
 
@@ -11,8 +11,8 @@ defmodule PurseCraft.Budgeting.Schemas.BookUser do
 
   import Ecto.Changeset
 
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.User
+  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Identity.Schemas.User
 
   @type t :: %__MODULE__{
           __meta__: Ecto.Schema.Metadata.t(),

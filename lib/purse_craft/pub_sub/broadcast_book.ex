@@ -3,7 +3,7 @@ defmodule PurseCraft.PubSub.BroadcastBook do
   Command for broadcasting notifications about changes for a specific book.
   """
 
-  alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Core.Schemas.Book
 
   @doc """
   Sends notifications about any changes on the given book.

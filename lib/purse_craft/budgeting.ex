@@ -23,10 +23,10 @@ defmodule PurseCraft.Budgeting do
   alias PurseCraft.Budgeting.Commands.Envelopes.DeleteEnvelope
   alias PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalId
   alias PurseCraft.Budgeting.Commands.Envelopes.UpdateEnvelope
-  alias PurseCraft.Budgeting.Repositories.BookRepository
-  alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
+  alias PurseCraft.Core.Repositories.BookRepository
+  alias PurseCraft.Core.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub.BroadcastBook
   alias PurseCraft.PubSub.BroadcastUserBook

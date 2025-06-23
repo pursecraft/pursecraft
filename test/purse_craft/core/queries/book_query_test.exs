@@ -1,9 +1,9 @@
-defmodule PurseCraft.Budgeting.Queries.BookQueryTest do
+defmodule PurseCraft.Core.Queries.BookQueryTest do
   use PurseCraft.DataCase, async: true
 
-  alias PurseCraft.Budgeting.Queries.BookQuery
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Core.Queries.BookQuery
+  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.BookUser
 
   describe "by_user/1" do
     test "creates a query with join and filter by user_id" do
@@ -33,20 +33,6 @@ defmodule PurseCraft.Budgeting.Queries.BookQueryTest do
 
       [where_clause] = query.wheres
       assert where_clause.params == [{external_id, {0, :external_id}}]
-    end
-  end
-
-  describe "book_users_by_book_id/1" do
-    test "creates a query filtered by book_id" do
-      book_id = 456
-      query = BookQuery.book_users_by_book_id(book_id)
-
-      assert query.from.source == {"books_users", BookUser}
-
-      assert length(query.wheres) == 1
-
-      [where_clause] = query.wheres
-      assert where_clause.params == [{book_id, {0, :book_id}}]
     end
   end
 end

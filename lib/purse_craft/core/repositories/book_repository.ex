@@ -1,13 +1,15 @@
-defmodule PurseCraft.Budgeting.Repositories.BookRepository do
+defmodule PurseCraft.Core.Repositories.BookRepository do
   @moduledoc """
   Repository for `Book`.
   """
 
   alias Ecto.Multi
-  alias PurseCraft.Budgeting.Queries.BookQuery
-  alias PurseCraft.Budgeting.Schemas.Book
-  alias PurseCraft.Budgeting.Schemas.BookUser
+  alias PurseCraft.Core.Queries.BookQuery
+  alias PurseCraft.Core.Queries.BookUserQuery
+  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.BookUser
   alias PurseCraft.Repo
+  alias PurseCraft.Utilities
 
   @type preload_item :: atom() | {atom(), preload_item()} | [preload_item()]
   @type preload :: preload_item() | [preload_item()]
@@ -61,28 +63,7 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
   end
 
   @doc """
-  Gets a book by its external ID.
-
-  Returns `nil` if the Book does not exist.
-
-  ## Examples
-
-      iex> get_by_external_id("abcd-1234")
-      %Book{}
-
-      iex> get_by_external_id("non-existent-id")
-      nil
-
-  """
-  @spec get_by_external_id(Ecto.UUID.t()) :: Book.t() | nil
-  def get_by_external_id(external_id) do
-    external_id
-    |> BookQuery.by_external_id()
-    |> Repo.one()
-  end
-
-  @doc """
-  Gets a book by its external ID with options.
+  Gets a book by its external ID with optional preloading.
 
   Returns the book if it exists, or `nil` if not found.
 
@@ -95,23 +76,24 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
 
   ## Examples
 
-      iex> get_by_external_id_with_options("abcd-1234", preload: [:categories])
+      iex> get_by_external_id("abcd-1234")
+      %Book{}
+
+      iex> get_by_external_id("abcd-1234", preload: [:categories])
       %Book{categories: [...]}
 
-      iex> get_by_external_id_with_options("non-existent-id", preload: [:categories])
+      iex> get_by_external_id("non-existent-id")
       nil
 
   """
-  @spec get_by_external_id_with_options(Ecto.UUID.t(), get_book_options()) :: Book.t() | nil
-  def get_by_external_id_with_options(external_id, opts \\ []) do
-    case get_by_external_id(external_id) do
-      nil ->
-        nil
+  @spec get_by_external_id(Ecto.UUID.t(), get_book_options()) :: Book.t() | nil
+  def get_by_external_id(external_id, opts \\ []) do
+    preloads = Keyword.get(opts, :preload, [])
 
-      book ->
-        preloads = Keyword.get(opts, :preload, [])
-        if preloads == [], do: book, else: Repo.preload(book, preloads)
-    end
+    external_id
+    |> BookQuery.by_external_id()
+    |> Repo.one()
+    |> Utilities.maybe_preload(preloads)
   end
 
   @doc """
@@ -179,7 +161,7 @@ defmodule PurseCraft.Budgeting.Repositories.BookRepository do
   @spec delete(Book.t()) :: {:ok, Book.t()} | {:error, Ecto.Changeset.t()}
   def delete(%Book{} = book) do
     Multi.new()
-    |> Multi.delete_all(:delete_book_users, BookQuery.book_users_by_book_id(book.id))
+    |> Multi.delete_all(:delete_book_users, BookUserQuery.by_book_id(book.id))
     |> Multi.delete(:delete_book, book)
     |> Repo.transaction()
     |> case do

@@ -3,7 +3,7 @@ defmodule PurseCraft.PubSub.SubscribeBook do
   Command for subscribing to notifications about changes for a specific book.
   """
 
-  alias PurseCraft.Budgeting.Schemas.Book
+  alias PurseCraft.Core.Schemas.Book
 
   @doc """
   Subscribes to notifications about any changes on the given book.

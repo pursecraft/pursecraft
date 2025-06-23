@@ -4,8 +4,8 @@ defmodule PurseCraft.Budgeting.Commands.Books.DeleteBookTest do
   import Mimic
 
   alias PurseCraft.Budgeting.Commands.Books.DeleteBook
-  alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.Core.Schemas.Book
   alias PurseCraft.IdentityFactory
   alias PurseCraft.PubSub.BroadcastBook
   alias PurseCraft.PubSub.BroadcastUserBook
