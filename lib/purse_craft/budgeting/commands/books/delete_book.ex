@@ -3,12 +3,11 @@ defmodule PurseCraft.Budgeting.Commands.Books.DeleteBook do
   Deletes a book.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.BookRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub
 
   @doc """
   Deletes a book.
@@ -28,8 +27,8 @@ defmodule PurseCraft.Budgeting.Commands.Books.DeleteBook do
          {:ok, %Book{} = book} <- BookRepository.delete(book) do
       message = {:deleted, book}
 
-      BroadcastUserBook.call(scope, message)
-      BroadcastBook.call(book, message)
+      PubSub.broadcast_user_book(scope, message)
+      PubSub.broadcast_book(book, message)
 
       {:ok, book}
     end

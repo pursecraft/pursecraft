@@ -1,9 +1,9 @@
-defmodule PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBookTest do
+defmodule PurseCraft.PubSub.BroadcastUserBookTest do
   use PurseCraft.DataCase, async: true
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.IdentityFactory
+  alias PurseCraft.PubSub.BroadcastUserBook
 
   describe "call/2" do
     test "broadcasts message to user books PubSub channel" do

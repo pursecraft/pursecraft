@@ -9,6 +9,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
+  alias PurseCraft.PubSub
   alias PurseCraftWeb.BudgetLive.Components.BudgetHeader
   alias PurseCraftWeb.BudgetLive.Components.CategorySection
   alias PurseCraftWeb.BudgetLive.Components.EnvelopeRow
@@ -29,7 +30,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
              |> push_navigate(to: ~p"/books")}
 
           categories ->
-            Budgeting.subscribe_book(book)
+            PubSub.subscribe_book(book)
             subscribe_to_categories(categories)
 
             socket =
@@ -567,7 +568,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   defp subscribe_to_categories(categories) do
     Enum.each(categories, fn category ->
-      Budgeting.subscribe_category(category.external_id)
+      PubSub.subscribe_category(category.external_id)
     end)
   end
 end

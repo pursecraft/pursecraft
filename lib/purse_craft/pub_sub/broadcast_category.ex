@@ -1,4 +1,4 @@
-defmodule PurseCraft.Budgeting.Commands.PubSub.BroadcastCategory do
+defmodule PurseCraft.PubSub.BroadcastCategory do
   @moduledoc """
   Broadcasts category-specific events to subscribed users.
   """

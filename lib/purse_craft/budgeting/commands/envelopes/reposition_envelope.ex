@@ -3,12 +3,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope do
   Repositions an envelope within or between categories using fractional indexing.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastCategory
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub
   alias PurseCraft.Repo
   alias PurseCraft.Utilities.FractionalIndexing
 
@@ -70,10 +70,10 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope do
 
       case result do
         {:ok, updated} ->
-          BroadcastCategory.call(target_category, {:envelope_repositioned, updated})
+          PubSub.broadcast_category(target_category, {:envelope_repositioned, updated})
 
           if envelope.category_id != target_category.id do
-            BroadcastCategory.call(envelope.category, {:envelope_removed, envelope})
+            PubSub.broadcast_category(envelope.category, {:envelope_removed, envelope})
           end
 
           {:ok, updated}

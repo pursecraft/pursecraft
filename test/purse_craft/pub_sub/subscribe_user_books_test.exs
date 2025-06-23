@@ -1,9 +1,9 @@
-defmodule PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooksTest do
+defmodule PurseCraft.PubSub.SubscribeUserBooksTest do
   use PurseCraft.DataCase, async: true
 
-  alias PurseCraft.Budgeting.Commands.PubSub.SubscribeUserBooks
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.IdentityFactory
+  alias PurseCraft.PubSub.SubscribeUserBooks
 
   describe "call/1" do
     test "subscribes to user books PubSub channel" do

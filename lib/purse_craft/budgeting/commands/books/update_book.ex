@@ -3,12 +3,11 @@ defmodule PurseCraft.Budgeting.Commands.Books.UpdateBook do
   Updates a book.
   """
 
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastBook
-  alias PurseCraft.Budgeting.Commands.PubSub.BroadcastUserBook
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.BookRepository
   alias PurseCraft.Budgeting.Schemas.Book
   alias PurseCraft.Identity.Schemas.Scope
+  alias PurseCraft.PubSub
 
   @doc """
   Updates a book.
@@ -32,8 +31,8 @@ defmodule PurseCraft.Budgeting.Commands.Books.UpdateBook do
          {:ok, %Book{} = updated_book} <- BookRepository.update(book, attrs) do
       message = {:updated, updated_book}
 
-      BroadcastUserBook.call(scope, message)
-      BroadcastBook.call(updated_book, message)
+      PubSub.broadcast_user_book(scope, message)
+      PubSub.broadcast_book(updated_book, message)
 
       {:ok, updated_book}
     end
