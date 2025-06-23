@@ -7,6 +7,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Repo
   alias PurseCraft.Types
+  alias PurseCraft.Utilities
 
   @type get_option :: {:preload, Types.preload()}
   @type get_options :: [get_option()]
@@ -47,13 +48,10 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   """
   @spec list_by_book_id(integer(), list_options()) :: list(Category.t())
   def list_by_book_id(book_id, opts \\ []) do
-    categories =
-      book_id
-      |> CategoryQuery.by_book_id()
-      |> Repo.all()
-
-    preloads = Keyword.get(opts, :preload, [])
-    if preloads == [], do: categories, else: Repo.preload(categories, preloads)
+    book_id
+    |> CategoryQuery.by_book_id()
+    |> Repo.all()
+    |> Utilities.maybe_preload(opts)
   end
 
   @doc """
@@ -101,14 +99,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
     |> CategoryQuery.by_external_id()
     |> CategoryQuery.by_book_id(book_id)
     |> Repo.one()
-    |> case do
-      nil ->
-        nil
-
-      category ->
-        preloads = Keyword.get(opts, :preload, [])
-        if preloads == [], do: category, else: Repo.preload(category, preloads)
-    end
+    |> Utilities.maybe_preload(opts)
   end
 
   @doc """
@@ -138,9 +129,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
            category
            |> Category.changeset(attrs)
            |> Repo.update() do
-      preloads = Keyword.get(opts, :preload, [])
-      updated_category = if preloads == [], do: updated_category, else: Repo.preload(updated_category, preloads)
-      {:ok, updated_category}
+      {:ok, Utilities.maybe_preload(updated_category, opts)}
     end
   end
 
@@ -235,9 +224,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
         {:error, :not_found}
 
       category ->
-        preloads = Keyword.get(opts, :preload, [])
-        category = if preloads == [], do: category, else: Repo.preload(category, preloads)
-        {:ok, category}
+        {:ok, Utilities.maybe_preload(category, opts)}
     end
   end
 
@@ -261,12 +248,9 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   """
   @spec list_by_external_ids([Ecto.UUID.t()], list_options()) :: [Category.t()]
   def list_by_external_ids(external_ids, opts \\ []) when is_list(external_ids) do
-    categories =
-      external_ids
-      |> CategoryQuery.by_external_ids()
-      |> Repo.all()
-
-    preloads = Keyword.get(opts, :preload, [])
-    if preloads == [], do: categories, else: Repo.preload(categories, preloads)
+    external_ids
+    |> CategoryQuery.by_external_ids()
+    |> Repo.all()
+    |> Utilities.maybe_preload(opts)
   end
 end

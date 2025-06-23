@@ -59,20 +59,23 @@ defmodule PurseCraft.Utilities do
   defdelegate to_result(value), to: Result, as: :normalize
 
   @doc """
-  Preloads associations on a struct if preloads are provided.
+  Preloads associations on a struct or list of structs if preloads are provided in options.
 
   ## Examples
 
       iex> PurseCraft.Utilities.maybe_preload(%User{}, [])
       %User{}
 
-      iex> PurseCraft.Utilities.maybe_preload(%User{}, [:books])
+      iex> PurseCraft.Utilities.maybe_preload(%User{}, preload: [:books])
       %User{books: [...]}
 
-      iex> PurseCraft.Utilities.maybe_preload(nil, [:books])
+      iex> PurseCraft.Utilities.maybe_preload([%User{}], preload: [:books])
+      [%User{books: [...]}]
+
+      iex> PurseCraft.Utilities.maybe_preload(nil, preload: [:books])
       nil
 
   """
-  @spec maybe_preload(struct() | nil, list()) :: struct() | nil
-  defdelegate maybe_preload(struct, preloads), to: MaybePreload, as: :call
+  @spec maybe_preload(struct() | [struct()] | nil, keyword()) :: struct() | [struct()] | nil
+  defdelegate maybe_preload(data, opts), to: MaybePreload, as: :call
 end

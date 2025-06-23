@@ -88,12 +88,10 @@ defmodule PurseCraft.Core.Repositories.BookRepository do
   """
   @spec get_by_external_id(Ecto.UUID.t(), get_book_options()) :: Book.t() | nil
   def get_by_external_id(external_id, opts \\ []) do
-    preloads = Keyword.get(opts, :preload, [])
-
     external_id
     |> BookQuery.by_external_id()
     |> Repo.one()
-    |> Utilities.maybe_preload(preloads)
+    |> Utilities.maybe_preload(opts)
   end
 
   @doc """
