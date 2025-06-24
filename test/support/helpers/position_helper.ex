@@ -1,19 +1,19 @@
 defmodule PurseCraft.TestHelpers.PositionHelper do
   @moduledoc """
   Test helpers for generating fractional positions used in drag-and-drop ordering.
-  
+
   Provides consistent position generation logic across all factories that need
   fractional positioning (categories, envelopes, accounts).
   """
 
   @doc """
   Generates lowercase letter positions for fractional indexing.
-  
+
   Starts with "m" as the middle position, then alternates between positions
   before and after "m" to create a balanced distribution.
-  
+
   ## Examples
-  
+
       iex> PositionHelper.generate_lowercase_position(1)
       "m"
       
@@ -22,7 +22,7 @@ defmodule PurseCraft.TestHelpers.PositionHelper do
       
       iex> PositionHelper.generate_lowercase_position(3)
       "n"
-  
+
   """
   @spec generate_lowercase_position(pos_integer()) :: String.t()
   def generate_lowercase_position(1), do: "m"

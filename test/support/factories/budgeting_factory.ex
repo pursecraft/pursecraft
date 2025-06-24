@@ -36,5 +36,4 @@ defmodule PurseCraft.BudgetingFactory do
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()
   end
-
 end
