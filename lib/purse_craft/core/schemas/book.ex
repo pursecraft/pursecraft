@@ -12,6 +12,7 @@ defmodule PurseCraft.Core.Schemas.Book do
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Core.Schemas.BookUser
   alias PurseCraft.Identity.Schemas.User
+  alias PurseCraft.Utilities
   alias PurseCraft.Utilities.EncryptedBinary
   alias PurseCraft.Utilities.HashedHMAC
 
@@ -47,21 +48,7 @@ defmodule PurseCraft.Core.Schemas.Book do
   def changeset(book, attrs) do
     book
     |> cast(attrs, [:name])
-    |> put_hashed_fields()
+    |> Utilities.put_hashed_field(:name)
     |> validate_required([:name])
-  end
-
-  defp put_hashed_fields(changeset) do
-    case get_field(changeset, :name) do
-      nil ->
-        changeset
-
-      name when is_binary(name) ->
-        put_change(changeset, :name_hash, name)
-
-      _other ->
-        # coveralls-ignore-next-line
-        changeset
-    end
   end
 end

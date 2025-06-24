@@ -4,6 +4,7 @@ defmodule PurseCraft.Utilities do
   """
 
   alias PurseCraft.Utilities.MaybePreload
+  alias PurseCraft.Utilities.PutHashedField
   alias PurseCraft.Utilities.Result
 
   @doc """
@@ -18,13 +19,13 @@ defmodule PurseCraft.Utilities do
 
   ## Examples
 
-      iex> PurseCraft.Utilities.atomize_keys(%{"name" => "Test", "age" => 30})
+      iex> Utilities.atomize_keys(%{"name" => "Test", "age" => 30})
       %{name: "Test", age: 30}
 
-      iex> PurseCraft.Utilities.atomize_keys(%{name: "Test", "age" => 30})
+      iex> Utilities.atomize_keys(%{name: "Test", "age" => 30})
       %{name: "Test", age: 30}
 
-      iex> PurseCraft.Utilities.atomize_keys(nil)
+      iex> Utilities.atomize_keys(nil)
       nil
 
   """
@@ -45,13 +46,13 @@ defmodule PurseCraft.Utilities do
 
   ## Examples
 
-      iex> PurseCraft.Utilities.to_result({:ok, %{}})
+      iex> Utilities.to_result({:ok, %{}})
       {:ok, %{}}
 
-      iex> PurseCraft.Utilities.to_result(nil)
+      iex> Utilities.to_result(nil)
       {:error, :not_found}
 
-      iex> PurseCraft.Utilities.to_result(%{name: "test"})
+      iex> Utilities.to_result(%{name: "test"})
       {:ok, %{name: "test"}}
 
   """
@@ -63,19 +64,34 @@ defmodule PurseCraft.Utilities do
 
   ## Examples
 
-      iex> PurseCraft.Utilities.maybe_preload(%User{}, [])
+      iex> Utilities.maybe_preload(%User{}, [])
       %User{}
 
-      iex> PurseCraft.Utilities.maybe_preload(%User{}, preload: [:books])
+      iex> Utilities.maybe_preload(%User{}, preload: [:books])
       %User{books: [...]}
 
-      iex> PurseCraft.Utilities.maybe_preload([%User{}], preload: [:books])
+      iex> Utilities.maybe_preload([%User{}], preload: [:books])
       [%User{books: [...]}]
 
-      iex> PurseCraft.Utilities.maybe_preload(nil, preload: [:books])
+      iex> Utilities.maybe_preload(nil, preload: [:books])
       nil
 
   """
   @spec maybe_preload(struct() | [struct()] | nil, keyword()) :: struct() | [struct()] | nil
   defdelegate maybe_preload(data, opts), to: MaybePreload, as: :call
+
+  @doc """
+  Puts hash values for encrypted fields in a changeset.
+
+  ## Examples
+
+      iex> Utilities.put_hashed_field(changeset, [:name, :email])
+      %Ecto.Changeset{}
+
+      iex> Utilities.put_hashed_field(changeset, :name)
+      %Ecto.Changeset{}
+
+  """
+  @spec put_hashed_field(Ecto.Changeset.t(), [atom()] | atom()) :: Ecto.Changeset.t()
+  defdelegate put_hashed_field(changeset, fields), to: PutHashedField, as: :call
 end

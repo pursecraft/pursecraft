@@ -1,7 +1,6 @@
 defmodule PurseCraft.PubSub.SubscribeBookTest do
   use PurseCraft.DataCase, async: true
 
-  alias PurseCraft.BudgetingFactory
   alias PurseCraft.CoreFactory
   alias PurseCraft.PubSub.SubscribeBook
 

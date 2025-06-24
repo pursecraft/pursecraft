@@ -5,7 +5,6 @@ defmodule PurseCraftWeb.BookLive.ShowTest do
   import Phoenix.LiveViewTest
 
   alias PurseCraft.Budgeting
-  alias PurseCraft.BudgetingFactory
   alias PurseCraft.CoreFactory
   alias PurseCraft.Repo
 

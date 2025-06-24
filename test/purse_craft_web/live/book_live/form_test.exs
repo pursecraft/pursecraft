@@ -5,7 +5,6 @@ defmodule PurseCraftWeb.BookLive.FormTest do
   import Phoenix.LiveViewTest
 
   alias PurseCraft.Budgeting.Policy
-  alias PurseCraft.BudgetingFactory
   alias PurseCraft.CoreFactory
 
   setup :register_and_log_in_user
