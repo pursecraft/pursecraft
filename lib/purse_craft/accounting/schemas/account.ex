@@ -35,10 +35,10 @@ defmodule PurseCraft.Accounting.Schemas.Account do
         }
 
   @type create_changeset_attrs :: %{
-          required(:name) => String.t(),
-          required(:account_type) => String.t(),
-          required(:book_id) => integer(),
-          required(:position) => String.t(),
+          optional(:name) => String.t(),
+          optional(:account_type) => String.t(),
+          optional(:book_id) => integer(),
+          optional(:position) => String.t(),
           optional(:description) => String.t()
         }
 
