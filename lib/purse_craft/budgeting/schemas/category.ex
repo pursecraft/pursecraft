@@ -12,6 +12,7 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
   alias Ecto.Association.NotLoaded
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Utilities
   alias PurseCraft.Utilities.EncryptedBinary
   alias PurseCraft.Utilities.HashedHMAC
 
@@ -52,7 +53,7 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
   def changeset(category, attrs) do
     category
     |> cast(attrs, [:name, :position, :book_id])
-    |> put_hashed_fields()
+    |> Utilities.put_hashed_field(:name)
     |> validate_required([:name, :position, :book_id])
   end
 
@@ -64,19 +65,5 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
     |> validate_required([:position])
     |> validate_format(:position, ~r/^[a-z]+$/, message: "must contain only lowercase letters")
     |> unique_constraint(:position, name: :categories_book_id_position_index)
-  end
-
-  defp put_hashed_fields(changeset) do
-    case get_field(changeset, :name) do
-      nil ->
-        changeset
-
-      name when is_binary(name) ->
-        put_change(changeset, :name_hash, name)
-
-      _other ->
-        # coveralls-ignore-next-line
-        changeset
-    end
   end
 end

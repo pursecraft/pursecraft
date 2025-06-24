@@ -4,7 +4,6 @@ defmodule PurseCraftWeb.ReportsLive.IndexTest do
   import Mimic
   import Phoenix.LiveViewTest
 
-  alias PurseCraft.BudgetingFactory
   alias PurseCraft.CoreFactory
 
   setup :register_and_log_in_user

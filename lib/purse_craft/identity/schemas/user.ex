@@ -8,6 +8,7 @@ defmodule PurseCraft.Identity.Schemas.User do
   import Ecto.Changeset
 
   alias PurseCraft.Identity.Schemas.User
+  alias PurseCraft.Utilities
   alias PurseCraft.Utilities.ChangesetHelpers
   alias PurseCraft.Utilities.EncryptedBinary
   alias PurseCraft.Utilities.HashedHMAC
@@ -68,7 +69,7 @@ defmodule PurseCraft.Identity.Schemas.User do
   def email_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:email])
-    |> put_hashed_fields()
+    |> Utilities.put_hashed_field(:email)
     |> validate_email(opts)
   end
 
@@ -174,20 +175,5 @@ defmodule PurseCraft.Identity.Schemas.User do
   def valid_password?(_user, _password) do
     Bcrypt.no_user_verify()
     false
-  end
-
-  defp put_hashed_fields(changeset) do
-    case get_field(changeset, :email) do
-      nil ->
-        changeset
-
-      email when is_binary(email) ->
-        normalized_email = String.downcase(email)
-        put_change(changeset, :email_hash, normalized_email)
-
-      _other ->
-        # coveralls-ignore-next-line
-        changeset
-    end
   end
 end

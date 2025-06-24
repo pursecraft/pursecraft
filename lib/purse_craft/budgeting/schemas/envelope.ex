@@ -10,6 +10,7 @@ defmodule PurseCraft.Budgeting.Schemas.Envelope do
   import Ecto.Changeset
 
   alias PurseCraft.Budgeting.Schemas.Category
+  alias PurseCraft.Utilities
   alias PurseCraft.Utilities.EncryptedBinary
   alias PurseCraft.Utilities.HashedHMAC
 
@@ -48,7 +49,7 @@ defmodule PurseCraft.Budgeting.Schemas.Envelope do
   def changeset(envelope, attrs) do
     envelope
     |> cast(attrs, [:name, :category_id, :position])
-    |> put_hashed_fields()
+    |> Utilities.put_hashed_field(:name)
     |> validate_required([:name, :category_id, :position])
     |> unique_constraint(:position, name: :envelopes_category_id_position_index)
   end
@@ -61,19 +62,5 @@ defmodule PurseCraft.Budgeting.Schemas.Envelope do
     |> validate_required([:position, :category_id])
     |> validate_format(:position, ~r/^[a-z]+$/, message: "must contain only lowercase letters")
     |> unique_constraint(:position, name: :envelopes_category_id_position_index)
-  end
-
-  defp put_hashed_fields(changeset) do
-    case get_field(changeset, :name) do
-      nil ->
-        changeset
-
-      name when is_binary(name) ->
-        put_change(changeset, :name_hash, name)
-
-      _other ->
-        # coveralls-ignore-next-line
-        changeset
-    end
   end
 end
