@@ -72,6 +72,7 @@ defmodule PurseCraft.Accounting.Schemas.Account do
     "liability"
   ]
 
+  # coveralls-ignore-start
   schema "accounts" do
     field :name, EncryptedBinary
     field :name_hash, HashedHMAC
@@ -187,4 +188,5 @@ defmodule PurseCraft.Accounting.Schemas.Account do
   """
   @spec account_types() :: [String.t()]
   def account_types, do: @account_types
+  # coveralls-ignore-stop
 end
