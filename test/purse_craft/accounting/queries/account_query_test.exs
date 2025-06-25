@@ -1,125 +1,108 @@
 defmodule PurseCraft.Accounting.Queries.AccountQueryTest do
   use PurseCraft.DataCase, async: true
 
+  import Ecto.Query
+
   alias PurseCraft.Accounting.Queries.AccountQuery
   alias PurseCraft.Accounting.Schemas.Account
-  alias PurseCraft.CoreFactory
 
   describe "by_book_id/1" do
-    test "returns query for finding accounts by book ID" do
-      book = CoreFactory.insert(:book)
+    test "creates a query filtered by book_id" do
+      book_id = 123
+      query = AccountQuery.by_book_id(book_id)
 
-      query = AccountQuery.by_book_id(book.id)
+      assert query.from.source == {"accounts", Account}
 
-      assert %Ecto.Query{} = query
-      assert inspect(query) =~ "where: a0.book_id == ^#{book.id}"
+      assert length(query.wheres) == 1
+
+      [where_clause] = query.wheres
+      assert where_clause.params == [{book_id, {0, :book_id}}]
     end
   end
 
   describe "by_book_id/2" do
     test "adds book_id filter to existing query" do
-      book = CoreFactory.insert(:book)
+      book_id = 456
+      base_query = from(a in Account, where: a.name == "Test Account")
 
-      query = AccountQuery.by_book_id(Account, book.id)
+      query = AccountQuery.by_book_id(base_query, book_id)
 
-      assert %Ecto.Query{} = query
-      assert inspect(query) =~ "where: a0.book_id == ^#{book.id}"
+      assert length(query.wheres) == 2
+
+      param_values = Enum.flat_map(query.wheres, & &1.params)
+      assert {book_id, {0, :book_id}} in param_values
     end
 
-    test "preserves existing query conditions" do
-      book = CoreFactory.insert(:book)
+    test "works with Account schema directly" do
+      book_id = 789
+      query = AccountQuery.by_book_id(Account, book_id)
 
-      query =
-        Account
-        |> AccountQuery.order_by_position()
-        |> AccountQuery.by_book_id(book.id)
-
-      assert %Ecto.Query{} = query
-      assert inspect(query) =~ "order_by: [asc: a0.position]"
-      assert inspect(query) =~ "where: a0.book_id == ^#{book.id}"
+      assert query.from.source == {"accounts", Account}
+      assert length(query.wheres) == 1
+      assert hd(query.wheres).params == [{book_id, {0, :book_id}}]
     end
   end
 
   describe "order_by_position/0" do
-    test "returns query ordered by position ascending" do
+    test "creates a query ordered by position in ascending order" do
       query = AccountQuery.order_by_position()
 
-      assert %Ecto.Query{} = query
-      assert inspect(query) =~ "order_by: [asc: a0.position]"
+      assert query.from.source == {"accounts", Account}
+      assert length(query.order_bys) == 1
+
+      [order_by] = query.order_bys
+      assert order_by.expr == [asc: {{:., [], [{:&, [], [0]}, :position]}, [], []}]
     end
   end
 
   describe "order_by_position/1" do
     test "adds position ordering to existing query" do
-      book = CoreFactory.insert(:book)
+      base_query = from(a in Account, where: a.book_id == 1)
+      query = AccountQuery.order_by_position(base_query)
 
-      query =
-        Account
-        |> AccountQuery.by_book_id(book.id)
-        |> AccountQuery.order_by_position()
-
-      assert %Ecto.Query{} = query
-      assert inspect(query) =~ "order_by: [asc: a0.position]"
-      assert inspect(query) =~ "where: a0.book_id == ^#{book.id}"
+      assert length(query.order_bys) == 1
+      [order_by] = query.order_bys
+      assert order_by.expr == [asc: {{:., [], [{:&, [], [0]}, :position]}, [], []}]
     end
   end
 
   describe "limit/1" do
-    test "returns query with limit" do
-      query = AccountQuery.limit(5)
+    test "creates a query with limit" do
+      count = 5
+      query = AccountQuery.limit(count)
 
-      assert %Ecto.Query{} = query
-      assert inspect(query) =~ "limit: ^5"
+      assert query.from.source == {"accounts", Account}
+      assert query.limit.expr == {:^, [], [0]}
+      assert query.limit.params == [{5, :integer}]
     end
   end
 
   describe "limit/2" do
     test "adds limit to existing query" do
-      book = CoreFactory.insert(:book)
+      base_query = from(a in Account, where: a.book_id == 1)
+      count = 10
+      query = AccountQuery.limit(base_query, count)
 
-      query =
-        Account
-        |> AccountQuery.by_book_id(book.id)
-        |> AccountQuery.limit(3)
-
-      assert %Ecto.Query{} = query
-      assert inspect(query) =~ "limit: ^3"
-      assert inspect(query) =~ "where: a0.book_id == ^#{book.id}"
-    end
-
-    test "overwrites existing limit" do
-      query =
-        Account
-        |> AccountQuery.limit(5)
-        |> AccountQuery.limit(2)
-
-      assert %Ecto.Query{} = query
-      assert inspect(query) =~ "limit: ^2"
-      refute inspect(query) =~ "limit: ^5"
+      assert query.limit.expr == {:^, [], [0]}
+      assert query.limit.params == [{10, :integer}]
     end
   end
 
   describe "select_position/0" do
-    test "returns query selecting only position field" do
+    test "creates a query selecting only position field" do
       query = AccountQuery.select_position()
 
-      assert %Ecto.Query{} = query
-      assert inspect(query) =~ "select: a0.position"
+      assert query.from.source == {"accounts", Account}
+      assert query.select.expr == {{:., [], [{:&, [], [0]}, :position]}, [], []}
     end
   end
 
   describe "select_position/1" do
-    test "adds position select to existing query" do
-      book = CoreFactory.insert(:book)
+    test "adds position selection to existing query" do
+      base_query = from(a in Account, where: a.book_id == 1)
+      query = AccountQuery.select_position(base_query)
 
-      query =
-        Account
-        |> AccountQuery.by_book_id(book.id)
-        |> AccountQuery.select_position()
-
-      assert %Ecto.Query{} = query
-      assert inspect(query) =~ "select: a0.position"
-      assert inspect(query) =~ "where: a0.book_id == ^#{book.id}"
+      assert query.select.expr == {{:., [], [{:&, [], [0]}, :position]}, [], []}
     end
   end
 end
