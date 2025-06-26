@@ -8,5 +8,12 @@ defmodule PurseCraft.Accounting.Policy do
       allow role: :editor
       desc "Create a new Account"
     end
+
+    action :read do
+      allow role: :owner
+      allow role: :editor
+      allow role: :commenter
+      desc "Read Account details"
+    end
   end
 end
