@@ -4,6 +4,7 @@ defmodule PurseCraft.Accounting do
   """
 
   alias PurseCraft.Accounting.Commands.Accounts.CreateAccount
+  alias PurseCraft.Accounting.Commands.Accounts.DeleteAccount
   alias PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalId
   alias PurseCraft.Accounting.Commands.Accounts.ListAccounts
   alias PurseCraft.Accounting.Commands.Accounts.UpdateAccount
@@ -69,4 +70,19 @@ defmodule PurseCraft.Accounting do
   """
   # coveralls-ignore-next-line
   defdelegate update_account(scope, book, external_id, attrs), to: UpdateAccount, as: :call
+
+  @doc """
+  Deletes an account for a book.
+
+  ## Examples
+
+      iex> delete_account(scope, book, "account-uuid")
+      {:ok, %Account{}}
+
+      iex> delete_account(scope, book, "invalid-uuid")
+      {:error, :not_found}
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate delete_account(scope, book, external_id), to: DeleteAccount, as: :call
 end

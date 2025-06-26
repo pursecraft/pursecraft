@@ -347,4 +347,24 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert updated_account.name == "Updated Name"
     end
   end
+
+  describe "delete/1" do
+    test "with valid account deletes successfully", %{book: book} do
+      account = AccountingFactory.insert(:account, book: book)
+
+      assert {:ok, deleted_account} = AccountRepository.delete(account)
+      assert deleted_account.id == account.id
+
+      assert AccountRepository.get_by_external_id(account.external_id, active_only: false) == nil
+    end
+
+    test "with already deleted account returns error", %{book: book} do
+      account = AccountingFactory.insert(:account, book: book)
+
+      assert {:ok, _deleted_account} = AccountRepository.delete(account)
+
+      assert {:error, changeset} = AccountRepository.delete(account)
+      assert changeset.errors[:id] == {"is stale", [stale: true]}
+    end
+  end
 end

@@ -67,6 +67,23 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
   end
 
   @doc """
+  Deletes an account (hard delete).
+
+  ## Examples
+
+      iex> delete(account)
+      {:ok, %Account{}}
+
+      iex> delete(stale_account)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec delete(Account.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def delete(%Account{} = account) do
+    Repo.delete(account, stale_error_field: :id)
+  end
+
+  @doc """
   Gets the position of the first account in a book (ordered by position).
 
   Returns the position as a string, or nil if no accounts exist.
