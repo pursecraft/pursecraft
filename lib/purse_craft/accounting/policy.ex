@@ -21,5 +21,11 @@ defmodule PurseCraft.Accounting.Policy do
       allow role: :editor
       desc "Update Account details"
     end
+
+    action :delete do
+      allow role: :owner
+      allow role: :editor
+      desc "Delete Account"
+    end
   end
 end
