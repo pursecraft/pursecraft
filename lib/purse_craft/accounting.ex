@@ -6,6 +6,7 @@ defmodule PurseCraft.Accounting do
   alias PurseCraft.Accounting.Commands.Accounts.CreateAccount
   alias PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalId
   alias PurseCraft.Accounting.Commands.Accounts.ListAccounts
+  alias PurseCraft.Accounting.Commands.Accounts.UpdateAccount
 
   @doc """
   Creates an account and associates it with the given `Book`.
@@ -53,4 +54,19 @@ defmodule PurseCraft.Accounting do
   """
   # coveralls-ignore-next-line
   defdelegate list_accounts(scope, book, opts \\ []), to: ListAccounts, as: :call
+
+  @doc """
+  Updates an account for a book.
+
+  ## Examples
+
+      iex> update_account(scope, book, "account-uuid", %{name: "New Name"})
+      {:ok, %Account{}}
+
+      iex> update_account(scope, book, "account-uuid", %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate update_account(scope, book, external_id, attrs), to: UpdateAccount, as: :call
 end
