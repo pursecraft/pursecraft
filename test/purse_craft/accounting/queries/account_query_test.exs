@@ -105,4 +105,59 @@ defmodule PurseCraft.Accounting.Queries.AccountQueryTest do
       assert query.select.expr == {{:., [], [{:&, [], [0]}, :position]}, [], []}
     end
   end
+
+  describe "by_external_id/1" do
+    test "creates a query filtered by external_id" do
+      external_id = Ecto.UUID.generate()
+      query = AccountQuery.by_external_id(external_id)
+
+      assert query.from.source == {"accounts", Account}
+      assert length(query.wheres) == 1
+
+      [where_clause] = query.wheres
+      assert where_clause.params == [{external_id, {0, :external_id}}]
+    end
+  end
+
+  describe "by_external_id/2" do
+    test "adds external_id filter to existing query" do
+      external_id = Ecto.UUID.generate()
+      base_query = from(a in Account, where: a.book_id == 1)
+
+      query = AccountQuery.by_external_id(base_query, external_id)
+
+      assert length(query.wheres) == 2
+
+      param_values = Enum.flat_map(query.wheres, & &1.params)
+      assert {external_id, {0, :external_id}} in param_values
+    end
+  end
+
+  describe "active/0" do
+    test "creates a query filtering for active accounts" do
+      query = AccountQuery.active()
+
+      assert query.from.source == {"accounts", Account}
+      assert length(query.wheres) == 1
+
+      [where_clause] = query.wheres
+      assert where_clause.expr == {:is_nil, [], [{{:., [], [{:&, [], [0]}, :closed_at]}, [], []}]}
+    end
+  end
+
+  describe "active/1" do
+    test "adds active filter to existing query" do
+      base_query = from(a in Account, where: a.book_id == 1)
+      query = AccountQuery.active(base_query)
+
+      assert length(query.wheres) == 2
+
+      active_where =
+        Enum.find(query.wheres, fn w ->
+          w.expr == {:is_nil, [], [{{:., [], [{:&, [], [0]}, :closed_at]}, [], []}]}
+        end)
+
+      assert active_where != nil
+    end
+  end
 end
