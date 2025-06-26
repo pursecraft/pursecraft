@@ -1,0 +1,97 @@
+defmodule PurseCraft.Accounting.Queries.AccountQuery do
+  @moduledoc """
+  Query functions for `Account`.
+  """
+
+  import Ecto.Query
+
+  alias PurseCraft.Accounting.Schemas.Account
+
+  @doc """
+  Returns a query for finding accounts by book ID.
+
+  ## Examples
+
+      iex> by_book_id(1)
+      #Ecto.Query<...>
+
+      iex> Account |> by_book_id(1)
+      #Ecto.Query<...>
+
+  """
+  @spec by_book_id(integer()) :: Ecto.Query.t()
+  def by_book_id(book_id) do
+    by_book_id(Account, book_id)
+  end
+
+  @spec by_book_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
+  def by_book_id(queryable, book_id) do
+    from(a in queryable, where: a.book_id == ^book_id)
+  end
+
+  @doc """
+  Orders accounts by position in ascending order.
+
+  ## Examples
+
+      iex> order_by_position()
+      #Ecto.Query<...>
+
+      iex> Account |> by_book_id(1) |> order_by_position()
+      #Ecto.Query<...>
+
+  """
+  @spec order_by_position() :: Ecto.Query.t()
+  def order_by_position do
+    order_by_position(Account)
+  end
+
+  @spec order_by_position(Ecto.Queryable.t()) :: Ecto.Query.t()
+  def order_by_position(queryable) do
+    from(a in queryable, order_by: [asc: a.position])
+  end
+
+  @doc """
+  Limits the query to a specific number of results.
+
+  ## Examples
+
+      iex> limit(1)
+      #Ecto.Query<...>
+
+      iex> Account |> by_book_id(1) |> limit(5)
+      #Ecto.Query<...>
+
+  """
+  @spec limit(integer()) :: Ecto.Query.t()
+  def limit(count) do
+    from(Account, limit: ^count)
+  end
+
+  @spec limit(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
+  def limit(queryable, count) do
+    from(queryable, limit: ^count)
+  end
+
+  @doc """
+  Selects only the position field.
+
+  ## Examples
+
+      iex> select_position()
+      #Ecto.Query<...>
+
+      iex> Account |> by_book_id(1) |> select_position()
+      #Ecto.Query<...>
+
+  """
+  @spec select_position() :: Ecto.Query.t()
+  def select_position do
+    select_position(Account)
+  end
+
+  @spec select_position(Ecto.Queryable.t()) :: Ecto.Query.t()
+  def select_position(queryable) do
+    from(a in queryable, select: a.position)
+  end
+end
