@@ -15,5 +15,11 @@ defmodule PurseCraft.Accounting.Policy do
       allow role: :commenter
       desc "Read Account details"
     end
+
+    action :update do
+      allow role: :owner
+      allow role: :editor
+      desc "Update Account details"
+    end
   end
 end
