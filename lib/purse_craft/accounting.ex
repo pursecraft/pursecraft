@@ -5,6 +5,7 @@ defmodule PurseCraft.Accounting do
 
   alias PurseCraft.Accounting.Commands.Accounts.CreateAccount
   alias PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalId
+  alias PurseCraft.Accounting.Commands.Accounts.ListAccounts
 
   @doc """
   Creates an account and associates it with the given `Book`.
@@ -37,4 +38,19 @@ defmodule PurseCraft.Accounting do
   defdelegate fetch_account_by_external_id(scope, book, external_id, opts \\ []),
     to: FetchAccountByExternalId,
     as: :call
+
+  @doc """
+  Lists all accounts for a book.
+
+  ## Examples
+
+      iex> list_accounts(scope, book)
+      [%Account{}, %Account{}]
+
+      iex> list_accounts(scope, book, preload: [:book])
+      [%Account{book: %Book{}}, %Account{book: %Book{}}]
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate list_accounts(scope, book, opts \\ []), to: ListAccounts, as: :call
 end

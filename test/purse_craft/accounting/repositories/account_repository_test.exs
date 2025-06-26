@@ -1,6 +1,7 @@
 defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
   use PurseCraft.DataCase, async: true
 
+  alias Ecto.Association.NotLoaded
   alias PurseCraft.Accounting.Repositories.AccountRepository
   alias PurseCraft.Accounting.Schemas.Account
   alias PurseCraft.AccountingFactory
@@ -164,7 +165,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       result = AccountRepository.get_by_external_id(account.external_id, preload: [:book])
 
       assert result.id == account.id
-      assert %Ecto.Association.NotLoaded{} != result.book
+      assert %NotLoaded{} != result.book
       assert result.book.id == account.book_id
     end
 
@@ -182,6 +183,91 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       result = AccountRepository.get_by_external_id(closed_account.external_id, active_only: false)
 
       assert result.id == closed_account.id
+    end
+  end
+
+  describe "list_by_book/2" do
+    test "returns all accounts for a book ordered by position", %{book: book} do
+      account1 = AccountingFactory.insert(:account, book: book, position: "bbbb")
+      account2 = AccountingFactory.insert(:account, book: book, position: "aaaa")
+      account3 = AccountingFactory.insert(:account, book: book, position: "cccc")
+
+      result = AccountRepository.list_by_book(book.id)
+
+      assert length(result) == 3
+      assert [first, second, third] = result
+      assert first.id == account2.id
+      assert second.id == account1.id
+      assert third.id == account3.id
+    end
+
+    test "returns empty list when no accounts exist", %{book: book} do
+      result = AccountRepository.list_by_book(book.id)
+
+      assert result == []
+    end
+
+    test "returns accounts with preloaded associations", %{book: book} do
+      AccountingFactory.insert(:account, book: book, position: "aaaa")
+
+      result = AccountRepository.list_by_book(book.id, preload: [:book])
+
+      assert [account] = result
+      assert %NotLoaded{} != account.book
+      assert account.book.id == book.id
+    end
+
+    test "filters closed accounts when active_only is true (default)", %{book: book} do
+      AccountingFactory.insert(:account, book: book, position: "aaaa")
+      AccountingFactory.insert(:account, book: book, position: "bbbb", closed_at: DateTime.utc_now())
+
+      result = AccountRepository.list_by_book(book.id)
+
+      assert length(result) == 1
+    end
+
+    test "includes closed accounts when active_only is false", %{book: book} do
+      active_account = AccountingFactory.insert(:account, book: book, position: "aaaa")
+      closed_account = AccountingFactory.insert(:account, book: book, position: "bbbb", closed_at: DateTime.utc_now())
+
+      result = AccountRepository.list_by_book(book.id, active_only: false)
+
+      assert length(result) == 2
+      assert [first, second] = result
+      assert first.id == active_account.id
+      assert second.id == closed_account.id
+    end
+
+    test "only returns accounts for specified book", %{book: book} do
+      other_book = CoreFactory.insert(:book)
+      AccountingFactory.insert(:account, book: book, position: "aaaa")
+      AccountingFactory.insert(:account, book: other_book, position: "aaaa")
+
+      result = AccountRepository.list_by_book(book.id)
+
+      assert length(result) == 1
+      assert [account] = result
+      assert account.book_id == book.id
+    end
+
+    test "handles multiple options together", %{book: book} do
+      active_account = AccountingFactory.insert(:account, book: book, position: "aaaa")
+      AccountingFactory.insert(:account, book: book, position: "bbbb", closed_at: DateTime.utc_now())
+
+      result = AccountRepository.list_by_book(book.id, preload: [:book], active_only: true)
+
+      assert length(result) == 1
+      assert [account] = result
+      assert account.id == active_account.id
+      assert %NotLoaded{} != account.book
+    end
+
+    test "handles book with no accounts returns empty list" do
+      non_existent_book_id = 999_999
+
+      result = AccountRepository.list_by_book(non_existent_book_id)
+
+      assert result == []
     end
   end
 end

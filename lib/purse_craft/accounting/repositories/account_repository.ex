@@ -20,6 +20,9 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
   @type get_option :: {:preload, Types.preload()} | {:active_only, boolean()}
   @type get_options :: [get_option()]
 
+  @type list_option :: {:preload, Types.preload()} | {:active_only, boolean()}
+  @type list_options :: [list_option()]
+
   @doc """
   Creates an account for a book.
 
@@ -92,6 +95,39 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
     |> AccountQuery.by_external_id()
     |> maybe_active_only(opts)
     |> Repo.one()
+    |> Utilities.maybe_preload(opts)
+  end
+
+  @doc """
+  Lists all accounts for a book.
+
+  ## Options
+
+  * `:preload` - List of associations to preload. Defaults to `[]`.
+  * `:active_only` - Whether to only return active accounts (not closed). Defaults to `true`.
+
+  ## Examples
+
+      iex> list_by_book(1)
+      [%Account{}, %Account{}]
+
+      iex> list_by_book(1, preload: [:book])
+      [%Account{book: %Book{}}, %Account{book: %Book{}}]
+
+      iex> list_by_book(1, active_only: false)
+      [%Account{}, %Account{closed_at: ~U[2024-01-01 00:00:00Z]}]
+
+      iex> list_by_book(999)
+      []
+
+  """
+  @spec list_by_book(integer(), list_options()) :: list(Account.t())
+  def list_by_book(book_id, opts \\ []) do
+    book_id
+    |> AccountQuery.by_book_id()
+    |> maybe_active_only(opts)
+    |> AccountQuery.order_by_position()
+    |> Repo.all()
     |> Utilities.maybe_preload(opts)
   end
 
