@@ -84,6 +84,25 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
   end
 
   @doc """
+  Closes an account by setting the closed_at timestamp.
+
+  ## Examples
+
+      iex> close(account)
+      {:ok, %Account{closed_at: ~U[2024-01-01 00:00:00Z]}}
+
+      iex> close(already_closed_account)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec close(Account.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def close(%Account{} = account) do
+    account
+    |> Account.close_changeset(%{closed_at: DateTime.utc_now()})
+    |> Repo.update()
+  end
+
+  @doc """
   Gets the position of the first account in a book (ordered by position).
 
   Returns the position as a string, or nil if no accounts exist.
