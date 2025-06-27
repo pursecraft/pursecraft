@@ -3,6 +3,7 @@ defmodule PurseCraft.Accounting do
   The Accounting context.
   """
 
+  alias PurseCraft.Accounting.Commands.Accounts.CloseAccount
   alias PurseCraft.Accounting.Commands.Accounts.CreateAccount
   alias PurseCraft.Accounting.Commands.Accounts.DeleteAccount
   alias PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalId
@@ -85,4 +86,19 @@ defmodule PurseCraft.Accounting do
   """
   # coveralls-ignore-next-line
   defdelegate delete_account(scope, book, external_id), to: DeleteAccount, as: :call
+
+  @doc """
+  Closes an account for a book by setting the closed_at timestamp.
+
+  ## Examples
+
+      iex> close_account(scope, book, "account-uuid")
+      {:ok, %Account{closed_at: ~U[2024-01-01 00:00:00Z]}}
+
+      iex> close_account(scope, book, "invalid-uuid")
+      {:error, :not_found}
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate close_account(scope, book, external_id), to: CloseAccount, as: :call
 end

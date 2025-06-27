@@ -367,4 +367,24 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert changeset.errors[:id] == {"is stale", [stale: true]}
     end
   end
+
+  describe "close/1" do
+    test "with valid account closes successfully", %{book: book} do
+      account = AccountingFactory.insert(:account, book: book, closed_at: nil)
+
+      assert {:ok, closed_account} = AccountRepository.close(account)
+      assert closed_account.id == account.id
+      assert closed_account.closed_at != nil
+    end
+
+    test "verifies closed account persists in database", %{book: book} do
+      account = AccountingFactory.insert(:account, book: book, closed_at: nil)
+
+      assert {:ok, closed_account} = AccountRepository.close(account)
+
+      retrieved_account = AccountRepository.get_by_external_id(account.external_id, active_only: false)
+      assert retrieved_account != nil
+      assert retrieved_account.closed_at == closed_account.closed_at
+    end
+  end
 end
