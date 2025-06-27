@@ -160,4 +160,32 @@ defmodule PurseCraft.Accounting.Queries.AccountQueryTest do
       assert active_where != nil
     end
   end
+
+  describe "by_external_ids/1" do
+    test "creates a query filtering by external IDs" do
+      external_ids = [Ecto.UUID.generate(), Ecto.UUID.generate()]
+      query = AccountQuery.by_external_ids(external_ids)
+
+      assert query.from.source == {"accounts", Account}
+      assert length(query.wheres) == 1
+
+      [where_clause] = query.wheres
+      param_values = where_clause.params
+      assert {external_ids, {:in, {0, :external_id}}} in param_values
+    end
+  end
+
+  describe "by_external_ids/2" do
+    test "adds external IDs filter to existing query" do
+      external_ids = [Ecto.UUID.generate(), Ecto.UUID.generate()]
+      base_query = from(a in Account, where: a.book_id == 1)
+
+      query = AccountQuery.by_external_ids(base_query, external_ids)
+
+      assert length(query.wheres) == 2
+
+      param_values = Enum.flat_map(query.wheres, & &1.params)
+      assert {external_ids, {:in, {0, :external_id}}} in param_values
+    end
+  end
 end

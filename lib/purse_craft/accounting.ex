@@ -8,6 +8,7 @@ defmodule PurseCraft.Accounting do
   alias PurseCraft.Accounting.Commands.Accounts.DeleteAccount
   alias PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalId
   alias PurseCraft.Accounting.Commands.Accounts.ListAccounts
+  alias PurseCraft.Accounting.Commands.Accounts.RepositionAccount
   alias PurseCraft.Accounting.Commands.Accounts.UpdateAccount
 
   @doc """
@@ -101,4 +102,19 @@ defmodule PurseCraft.Accounting do
   """
   # coveralls-ignore-next-line
   defdelegate close_account(scope, book, external_id), to: CloseAccount, as: :call
+
+  @doc """
+  Repositions an account between two other accounts using fractional indexing.
+
+  ## Examples
+
+      iex> reposition_account(scope, "acc-123", "acc-456", "acc-789")
+      {:ok, %Account{position: "m"}}
+
+      iex> reposition_account(scope, "acc-123", nil, "acc-456")
+      {:ok, %Account{position: "g"}}
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate reposition_account(scope, account_id, prev_account_id, next_account_id), to: RepositionAccount, as: :call
 end
