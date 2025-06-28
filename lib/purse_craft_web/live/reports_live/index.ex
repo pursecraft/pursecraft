@@ -3,17 +3,21 @@ defmodule PurseCraftWeb.ReportsLive.Index do
 
   use PurseCraftWeb, :live_view
 
+  alias PurseCraft.Accounting
   alias PurseCraft.Budgeting
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
     case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
       {:ok, book} ->
+        accounts = Accounting.list_accounts(socket.assigns.current_scope, book)
+
         socket =
           socket
           |> assign(:page_title, "Reports - #{book.name}")
           |> assign(:current_path, "/books/#{book.external_id}/reports")
           |> assign(:book, book)
+          |> assign(:accounts, accounts)
 
         {:ok, socket}
 
@@ -34,7 +38,12 @@ defmodule PurseCraftWeb.ReportsLive.Index do
   @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
-    <Layouts.budgeting flash={@flash} current_path={@current_path} current_scope={@current_scope}>
+    <Layouts.budgeting
+      flash={@flash}
+      current_path={@current_path}
+      current_scope={@current_scope}
+      accounts={@accounts}
+    >
       <div class="space-y-6">
         <div class="flex justify-between items-center">
           <h1 class="text-2xl font-bold">Reports - {@book.name}</h1>

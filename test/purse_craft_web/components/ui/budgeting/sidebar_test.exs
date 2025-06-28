@@ -128,6 +128,70 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "hero-chart-bar"
     end
 
+    test "renders credit accounts when provided", %{scope: scope, book: book} do
+      accounts = [
+        %{
+          name: "Credit Card",
+          account_type: "credit_card",
+          external_id: "credit-123",
+          closed_at: nil
+        },
+        %{
+          name: "Line of Credit",
+          account_type: "line_of_credit",
+          external_id: "loc-456",
+          closed_at: nil
+        }
+      ]
+
+      result =
+        render_component(Sidebar, %{
+          id: "sidebar-test",
+          current_path: "/books/#{book.external_id}/budget",
+          current_scope: scope,
+          accounts: accounts
+        })
+
+      assert result =~ "CREDIT"
+      refute result =~ "CASH"
+      refute result =~ "LOANS"
+      refute result =~ "TRACKING"
+      assert result =~ "Credit Card"
+      assert result =~ "Line of Credit"
+    end
+
+    test "renders loan accounts when provided", %{scope: scope, book: book} do
+      accounts = [
+        %{
+          name: "Mortgage",
+          account_type: "mortgage",
+          external_id: "mortgage-123",
+          closed_at: nil
+        },
+        %{
+          name: "Auto Loan",
+          account_type: "auto_loan",
+          external_id: "auto-456",
+          closed_at: nil
+        }
+      ]
+
+      result =
+        render_component(Sidebar, %{
+          id: "sidebar-test",
+          current_path: "/books/#{book.external_id}/budget",
+          current_scope: scope,
+          accounts: accounts
+        })
+
+      assert result =~ "LOANS"
+      refute result =~ "CASH"
+      refute result =~ "CREDIT"
+      refute result =~ "TRACKING"
+      assert result =~ "Mortgage"
+      assert result =~ "Auto Loan"
+    end
+
     test "handles logout link", %{scope: scope, book: book} do
       result =
         render_component(Sidebar, %{

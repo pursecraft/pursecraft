@@ -211,5 +211,36 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.AccountSectionTest do
       assert Enum.count(result.loans) == 1
       assert Enum.count(result.tracking) == 1
     end
+
+    test "handles unknown account type by defaulting to tracking" do
+      accounts = [
+        %{account_type: "unknown_type", closed_at: nil}
+      ]
+
+      result = AccountSection.group_accounts_by_type(accounts)
+
+      assert result.cash == []
+      assert result.credit == []
+      assert result.loans == []
+      assert Enum.count(result.tracking) == 1
+    end
+
+    test "handles invalid current_path by redirecting to books" do
+      account = %{external_id: "test-account-id", name: "Test Account", account_type: "checking", closed_at: nil}
+      invalid_path = "/invalid/path"
+
+      assigns = %{
+        id: "test-accounts",
+        title: "TEST ACCOUNTS",
+        accounts: [account],
+        current_path: invalid_path,
+        total: "$0.00"
+      }
+
+      result = render_component(&AccountSection.account_section/1, assigns)
+
+      assert result =~ "TEST ACCOUNTS"
+      assert result =~ "href=\"/books\""
+    end
   end
 end

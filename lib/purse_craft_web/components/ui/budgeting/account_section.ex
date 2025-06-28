@@ -79,7 +79,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.AccountSection do
         "/books/#{book_external_id}/accounts/#{account.external_id}"
 
       _no_match ->
-        "/accounts/#{account.external_id}"
+        "/books"
     end
   end
 end

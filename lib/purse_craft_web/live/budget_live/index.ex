@@ -413,36 +413,6 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   end
 
   @impl Phoenix.LiveView
-  def handle_info({:account_created, _account}, socket) do
-    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
-    {:noreply, assign(socket, :accounts, accounts)}
-  end
-
-  @impl Phoenix.LiveView
-  def handle_info({:account_updated, _account}, socket) do
-    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
-    {:noreply, assign(socket, :accounts, accounts)}
-  end
-
-  @impl Phoenix.LiveView
-  def handle_info({:account_deleted, _account}, socket) do
-    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
-    {:noreply, assign(socket, :accounts, accounts)}
-  end
-
-  @impl Phoenix.LiveView
-  def handle_info({:account_closed, _account}, socket) do
-    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
-    {:noreply, assign(socket, :accounts, accounts)}
-  end
-
-  @impl Phoenix.LiveView
-  def handle_info({:account_repositioned, _account}, socket) do
-    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
-    {:noreply, assign(socket, :accounts, accounts)}
-  end
-
-  @impl Phoenix.LiveView
   def handle_info({_event, _data}, socket) do
     {:noreply, socket}
   end
