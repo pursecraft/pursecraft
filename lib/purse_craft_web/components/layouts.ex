@@ -76,6 +76,7 @@ defmodule PurseCraftWeb.Layouts do
         id="sidebar"
         current_path={@current_path}
         current_scope={@current_scope}
+        accounts={@accounts}
       />
 
       <main class="flex-1 overflow-y-auto">

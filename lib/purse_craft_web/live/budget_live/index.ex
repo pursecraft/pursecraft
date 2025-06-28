@@ -3,6 +3,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   use PurseCraftWeb, :live_view
 
+  alias PurseCraft.Accounting
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Commands.Categories.RepositionCategory
   alias PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope
@@ -33,11 +34,14 @@ defmodule PurseCraftWeb.BudgetLive.Index do
             PubSub.subscribe_book(book)
             subscribe_to_categories(categories)
 
+            accounts = Accounting.list_accounts(socket.assigns.current_scope, book)
+
             socket =
               socket
               |> assign(:page_title, "Budget - #{book.name}")
               |> assign(:current_path, "/books/#{book.external_id}/budget")
               |> assign(:book, book)
+              |> assign(:accounts, accounts)
               |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
               |> assign(
                 :envelope_form,
@@ -406,6 +410,36 @@ defmodule PurseCraftWeb.BudgetLive.Index do
       {:error, :not_found} ->
         {:noreply, socket}
     end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:account_created, _account}, socket) do
+    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
+    {:noreply, assign(socket, :accounts, accounts)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:account_updated, _account}, socket) do
+    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
+    {:noreply, assign(socket, :accounts, accounts)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:account_deleted, _account}, socket) do
+    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
+    {:noreply, assign(socket, :accounts, accounts)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:account_closed, _account}, socket) do
+    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
+    {:noreply, assign(socket, :accounts, accounts)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:account_repositioned, _account}, socket) do
+    accounts = Accounting.list_accounts(socket.assigns.current_scope, socket.assigns.book)
+    {:noreply, assign(socket, :accounts, accounts)}
   end
 
   @impl Phoenix.LiveView

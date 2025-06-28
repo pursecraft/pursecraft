@@ -1,4 +1,9 @@
-<Layouts.budgeting flash={@flash} current_path={@current_path} current_scope={@current_scope}>
+<Layouts.budgeting
+  flash={@flash}
+  current_path={@current_path}
+  current_scope={@current_scope}
+  accounts={@accounts}
+>
   <div class="space-y-6 w-full max-w-7xl mx-auto">
     <BudgetHeader.budget_header
       book_name={@book.name}

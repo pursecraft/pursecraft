@@ -80,26 +80,52 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
         render_component(Sidebar, %{
           id: "sidebar-test",
           current_path: "/books/#{book.external_id}/budget",
-          current_scope: scope
+          current_scope: scope,
+          accounts: []
         })
 
-      assert result =~ "BUDGET ACCOUNTS"
-      assert result =~ "TRACKING ACCOUNTS"
-
-      assert result =~ "$5,240.82"
-      assert result =~ "$32,150.00"
-
-      assert result =~ "Checking"
-      assert result =~ "$3,240.82"
-      assert result =~ "Savings"
-      assert result =~ "$2,000.00"
-      assert result =~ "Investment"
-      assert result =~ "$25,150.00"
-      assert result =~ "401(k)"
-      assert result =~ "$7,000.00"
+      # When no accounts provided, no sections should appear due to :if conditions
+      refute result =~ "CASH"
+      refute result =~ "CREDIT"
+      refute result =~ "LOANS"
+      refute result =~ "TRACKING"
+      refute result =~ "$0.00"
 
       assert result =~ "Add Account"
       assert result =~ "hero-plus-small"
+    end
+
+    test "renders actual accounts when provided", %{scope: scope, book: book} do
+      accounts = [
+        %{
+          name: "Checking Account",
+          account_type: "checking",
+          external_id: "checking-123",
+          closed_at: nil
+        },
+        %{
+          name: "Investment Account",
+          account_type: "asset",
+          external_id: "asset-456",
+          closed_at: nil
+        }
+      ]
+
+      result =
+        render_component(Sidebar, %{
+          id: "sidebar-test",
+          current_path: "/books/#{book.external_id}/budget",
+          current_scope: scope,
+          accounts: accounts
+        })
+
+      assert result =~ "CASH"
+      assert result =~ "TRACKING"
+      refute result =~ "CREDIT"
+      refute result =~ "LOANS"
+      assert result =~ "Checking Account"
+      assert result =~ "Investment Account"
+      assert result =~ "hero-chart-bar"
     end
 
     test "handles logout link", %{scope: scope, book: book} do

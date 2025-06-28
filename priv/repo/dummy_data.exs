@@ -12,10 +12,11 @@
 
 import Ecto.Changeset
 
-alias PurseCraft.Core.Schemas.Book
-alias PurseCraft.Core.Schemas.BookUser
+alias PurseCraft.Accounting.Schemas.Account
 alias PurseCraft.Budgeting.Schemas.Category
 alias PurseCraft.Budgeting.Schemas.Envelope
+alias PurseCraft.Core.Schemas.Book
+alias PurseCraft.Core.Schemas.BookUser
 alias PurseCraft.Identity.Schemas.User
 alias PurseCraft.Repo
 alias PurseCraft.Utilities.FractionalIndexing
@@ -174,6 +175,45 @@ category_names
     })
     |> Repo.insert!()
   end)
+end)
+
+account_data = [
+  # Cash accounts
+  %{name: "Checking", account_type: "checking", description: "Primary checking account"},
+  %{name: "Savings", account_type: "savings", description: "High-yield savings account"},
+  %{name: "Cash", account_type: "cash", description: "Physical cash on hand"},
+
+  # Credit accounts
+  %{name: "Credit Card", account_type: "credit_card", description: "Rewards credit card"},
+  %{name: "Line of Credit", account_type: "line_of_credit", description: "Personal line of credit"},
+
+  # Loan accounts
+  %{name: "Mortgage", account_type: "mortgage", description: "Home mortgage"},
+  %{name: "Auto Loan", account_type: "auto_loan", description: "Car loan"},
+  %{name: "Student Loan", account_type: "student_loan", description: "Student loans"},
+  %{name: "Personal Loan", account_type: "personal_loan", description: "Personal loan"},
+  %{name: "Medical Debt", account_type: "medical_debt", description: "Medical bills"},
+  %{name: "Other Debt", account_type: "other_debt", description: "Other debt"},
+
+  # Tracking accounts
+  %{name: "Asset", account_type: "asset", description: "Investment or property"},
+  %{name: "Liability", account_type: "liability", description: "Other liabilities"}
+]
+
+{:ok, account_positions} = FractionalIndexing.initial_positions(length(account_data))
+
+account_data
+|> Enum.zip(account_positions)
+|> Enum.each(fn {account_attrs, position} ->
+  %Account{}
+  |> Account.create_changeset(%{
+    name: account_attrs.name,
+    account_type: account_attrs.account_type,
+    description: account_attrs.description,
+    book_id: dummy_book.id,
+    position: position
+  })
+  |> Repo.insert!()
 end)
 
 Process.sleep(1)
