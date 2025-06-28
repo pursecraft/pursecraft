@@ -3,6 +3,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   use PurseCraftWeb, :live_view
 
+  alias PurseCraft.Accounting
   alias PurseCraft.Budgeting
   alias PurseCraft.Budgeting.Commands.Categories.RepositionCategory
   alias PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope
@@ -33,11 +34,14 @@ defmodule PurseCraftWeb.BudgetLive.Index do
             PubSub.subscribe_book(book)
             subscribe_to_categories(categories)
 
+            accounts = Accounting.list_accounts(socket.assigns.current_scope, book)
+
             socket =
               socket
               |> assign(:page_title, "Budget - #{book.name}")
               |> assign(:current_path, "/books/#{book.external_id}/budget")
               |> assign(:book, book)
+              |> assign(:accounts, accounts)
               |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
               |> assign(
                 :envelope_form,

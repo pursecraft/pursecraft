@@ -5,6 +5,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
   use PurseCraftWeb, :live_component
 
   alias Phoenix.LiveView.JS
+  alias PurseCraftWeb.Components.UI.Budgeting.AccountSection
   alias PurseCraftWeb.Components.UI.Budgeting.Icon
 
   @impl Phoenix.LiveComponent
@@ -14,7 +15,20 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
 
   @impl Phoenix.LiveComponent
   def update(assigns, socket) do
-    {:ok, assign(socket, assigns)}
+    grouped_accounts =
+      assigns
+      |> Map.get(:accounts, [])
+      |> AccountSection.group_accounts_by_type()
+
+    socket =
+      socket
+      |> assign(assigns)
+      |> assign(:cash_accounts, grouped_accounts.cash)
+      |> assign(:credit_accounts, grouped_accounts.credit)
+      |> assign(:loan_accounts, grouped_accounts.loans)
+      |> assign(:tracking_accounts, grouped_accounts.tracking)
+
+    {:ok, socket}
   end
 
   @impl Phoenix.LiveComponent
@@ -75,59 +89,41 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
           </nav>
 
           <div class="space-y-4">
-            <div class="space-y-1">
-              <div class="flex justify-between items-center px-2 py-1">
-                <h3 class="text-xs font-semibold text-base-content/70">BUDGET ACCOUNTS</h3>
-                <span class="text-xs font-medium">$5,240.82</span>
-              </div>
-              <ul class="text-sm">
-                <li>
-                  <.link
-                    href={get_book_path(@current_path, "accounts")}
-                    class="flex justify-between py-1 px-2 hover:bg-base-300 rounded-lg"
-                  >
-                    <span>Checking</span>
-                    <span>$3,240.82</span>
-                  </.link>
-                </li>
-                <li>
-                  <.link
-                    href={get_book_path(@current_path, "accounts")}
-                    class="flex justify-between py-1 px-2 hover:bg-base-300 rounded-lg"
-                  >
-                    <span>Savings</span>
-                    <span>$2,000.00</span>
-                  </.link>
-                </li>
-              </ul>
-            </div>
+            <AccountSection.account_section
+              :if={@cash_accounts != []}
+              id="cash-accounts"
+              title="CASH"
+              accounts={@cash_accounts}
+              current_path={@current_path}
+              total="$0.00"
+            />
 
-            <div class="space-y-1">
-              <div class="flex justify-between items-center px-2 py-1">
-                <h3 class="text-xs font-semibold text-base-content/70">TRACKING ACCOUNTS</h3>
-                <span class="text-xs font-medium">$32,150.00</span>
-              </div>
-              <ul class="text-sm">
-                <li>
-                  <.link
-                    href={get_book_path(@current_path, "accounts")}
-                    class="flex justify-between py-1 px-2 hover:bg-base-300 rounded-lg"
-                  >
-                    <span>Investment</span>
-                    <span>$25,150.00</span>
-                  </.link>
-                </li>
-                <li>
-                  <.link
-                    href={get_book_path(@current_path, "accounts")}
-                    class="flex justify-between py-1 px-2 hover:bg-base-300 rounded-lg"
-                  >
-                    <span>401(k)</span>
-                    <span>$7,000.00</span>
-                  </.link>
-                </li>
-              </ul>
-            </div>
+            <AccountSection.account_section
+              :if={@credit_accounts != []}
+              id="credit-accounts"
+              title="CREDIT"
+              accounts={@credit_accounts}
+              current_path={@current_path}
+              total="$0.00"
+            />
+
+            <AccountSection.account_section
+              :if={@loan_accounts != []}
+              id="loan-accounts"
+              title="LOANS"
+              accounts={@loan_accounts}
+              current_path={@current_path}
+              total="$0.00"
+            />
+
+            <AccountSection.account_section
+              :if={@tracking_accounts != []}
+              id="tracking-accounts"
+              title="TRACKING"
+              accounts={@tracking_accounts}
+              current_path={@current_path}
+              total="$0.00"
+            />
 
             <div class="mt-1 px-2">
               <.link
