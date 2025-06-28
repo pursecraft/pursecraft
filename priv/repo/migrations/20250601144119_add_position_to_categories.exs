@@ -6,6 +6,6 @@ defmodule PurseCraft.Repo.Migrations.AddPositionToCategories do
       add :position, :string, null: false
     end
 
-    create unique_index(:categories, [:book_id, :position])
+    create unique_index(:categories, [:workspace_id, :position])
   end
 end

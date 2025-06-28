@@ -10,7 +10,7 @@ defmodule PurseCraft.Repo.Migrations.CreateAccounts do
       add :account_type_hash, :binary, null: false
       add :description, :binary
       add :description_hash, :binary
-      add :book_id, references(:books, on_delete: :delete_all), null: false
+      add :workspace_id, references(:workspaces, on_delete: :delete_all), null: false
       add :position, :string, null: false
       add :closed_at, :utc_datetime
 
@@ -18,7 +18,7 @@ defmodule PurseCraft.Repo.Migrations.CreateAccounts do
     end
 
     create unique_index(:accounts, [:external_id])
-    create unique_index(:accounts, [:book_id, :position])
+    create unique_index(:accounts, [:workspace_id, :position])
     create index(:accounts, [:account_type_hash])
   end
 end

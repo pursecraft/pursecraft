@@ -1,8 +1,8 @@
-defmodule PurseCraft.Repo.Migrations.CreateBooks do
+defmodule PurseCraft.Repo.Migrations.CreateWorkspaces do
   use Ecto.Migration
 
   def change do
-    create table(:books) do
+    create table(:workspaces) do
       add :external_id, :uuid, null: false
       add :name, :binary, null: false
       add :name_hash, :binary, null: false
@@ -10,6 +10,6 @@ defmodule PurseCraft.Repo.Migrations.CreateBooks do
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:books, [:external_id])
+    create unique_index(:workspaces, [:external_id])
   end
 end
