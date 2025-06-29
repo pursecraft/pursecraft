@@ -1,40 +1,40 @@
 defmodule PurseCraft.Accounting.Commands.Accounts.CloseAccount do
   @moduledoc """
-  Closes an account for a book by setting the closed_at timestamp.
+  Closes an account for a workspace by setting the closed_at timestamp.
   """
 
   alias PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalId
   alias PurseCraft.Accounting.Policy
   alias PurseCraft.Accounting.Repositories.AccountRepository
   alias PurseCraft.Accounting.Schemas.Account
-  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub
 
   @doc """
-  Closes an account for a book.
+  Closes an account for a workspace.
 
   Uses the :account_update authorization policy since closing is a form of update.
 
   ## Examples
 
-      iex> CloseAccount.call(authorized_scope, book, "account-uuid")
+      iex> CloseAccount.call(authorized_scope, workspace, "account-uuid")
       {:ok, %Account{closed_at: ~U[2024-01-01 00:00:00Z]}}
 
-      iex> CloseAccount.call(unauthorized_scope, book, "account-uuid")
+      iex> CloseAccount.call(unauthorized_scope, workspace, "account-uuid")
       {:error, :unauthorized}
 
-      iex> CloseAccount.call(authorized_scope, book, "invalid-uuid")
+      iex> CloseAccount.call(authorized_scope, workspace, "invalid-uuid")
       {:error, :not_found}
 
   """
-  @spec call(Scope.t(), Book.t(), String.t()) ::
+  @spec call(Scope.t(), Workspace.t(), String.t()) ::
           {:ok, Account.t()} | {:error, :unauthorized | :not_found | Ecto.Changeset.t()}
-  def call(%Scope{} = scope, %Book{} = book, external_id) do
-    with :ok <- Policy.authorize(:account_update, scope, %{book: book}),
-         {:ok, account} <- FetchAccountByExternalId.call(scope, book, external_id),
+  def call(%Scope{} = scope, %Workspace{} = workspace, external_id) do
+    with :ok <- Policy.authorize(:account_update, scope, %{workspace: workspace}),
+         {:ok, account} <- FetchAccountByExternalId.call(scope, workspace, external_id),
          {:ok, closed_account} <- AccountRepository.close(account) do
-      PubSub.broadcast_book(book, {:account_closed, closed_account})
+      PubSub.broadcast_workspace(workspace, {:account_closed, closed_account})
 
       {:ok, closed_account}
     end

@@ -74,12 +74,12 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.AccountSection do
   end
 
   defp get_account_path(current_path, account) do
-    case Regex.run(~r"/books/([a-zA-Z0-9-]+)", current_path) do
-      [_match, book_external_id] ->
-        "/books/#{book_external_id}/accounts/#{account.external_id}"
+    case Regex.run(~r"/workspaces/([a-zA-Z0-9-]+)", current_path) do
+      [_match, workspace_external_id] ->
+        "/workspaces/#{workspace_external_id}/accounts/#{account.external_id}"
 
       _no_match ->
-        "/books"
+        "/workspaces"
     end
   end
 end

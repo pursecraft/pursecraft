@@ -8,16 +8,16 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
   setup do
     user = PurseCraft.IdentityFactory.build(:user, email: "test@example.com")
     scope = PurseCraft.IdentityFactory.build(:scope, user: user)
-    book = PurseCraft.CoreFactory.build(:book, external_id: "abcd1234-5678-90ab-cdef-1234567890ab")
-    %{user: user, scope: scope, book: book}
+    workspace = PurseCraft.CoreFactory.build(:workspace, external_id: "abcd1234-5678-90ab-cdef-1234567890ab")
+    %{user: user, scope: scope, workspace: workspace}
   end
 
   describe "LiveComponent" do
-    test "renders the sidebar with navigation links", %{scope: scope, book: book} do
+    test "renders the sidebar with navigation links", %{scope: scope, workspace: workspace} do
       result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/budget",
+          current_path: "/workspaces/#{workspace.external_id}/budget",
           current_scope: scope
         })
 
@@ -32,40 +32,42 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "Settings"
     end
 
-    test "highlights the active route", %{scope: scope, book: book} do
+    test "highlights the active route", %{scope: scope, workspace: workspace} do
       budget_result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/budget",
+          current_path: "/workspaces/#{workspace.external_id}/budget",
           current_scope: scope
         })
 
-      assert budget_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/budget"[^>]*class="[^"]*bg-primary/
+      assert budget_result =~ ~r/<a[^>]*href="\/workspaces\/#{workspace.external_id}\/budget"[^>]*class="[^"]*bg-primary/
 
       reports_result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/reports",
+          current_path: "/workspaces/#{workspace.external_id}/reports",
           current_scope: scope
         })
 
-      assert reports_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/reports"[^>]*class="[^"]*bg-primary/
+      assert reports_result =~
+               ~r/<a[^>]*href="\/workspaces\/#{workspace.external_id}\/reports"[^>]*class="[^"]*bg-primary/
 
       accounts_result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/accounts",
+          current_path: "/workspaces/#{workspace.external_id}/accounts",
           current_scope: scope
         })
 
-      assert accounts_result =~ ~r/<a[^>]*href="\/books\/#{book.external_id}\/accounts"[^>]*class="[^"]*bg-primary/
+      assert accounts_result =~
+               ~r/<a[^>]*href="\/workspaces\/#{workspace.external_id}\/accounts"[^>]*class="[^"]*bg-primary/
     end
 
-    test "renders book selection dropdown", %{scope: scope, book: book} do
+    test "renders workspace selection dropdown", %{scope: scope, workspace: workspace} do
       result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/budget",
+          current_path: "/workspaces/#{workspace.external_id}/budget",
           current_scope: scope
         })
 
@@ -75,11 +77,11 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "+ Create New Budget"
     end
 
-    test "renders accounts lists in sidebar", %{scope: scope, book: book} do
+    test "renders accounts lists in sidebar", %{scope: scope, workspace: workspace} do
       result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/budget",
+          current_path: "/workspaces/#{workspace.external_id}/budget",
           current_scope: scope,
           accounts: []
         })
@@ -95,7 +97,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "hero-plus-small"
     end
 
-    test "renders actual accounts when provided", %{scope: scope, book: book} do
+    test "renders actual accounts when provided", %{scope: scope, workspace: workspace} do
       accounts = [
         %{
           name: "Checking Account",
@@ -114,7 +116,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/budget",
+          current_path: "/workspaces/#{workspace.external_id}/budget",
           current_scope: scope,
           accounts: accounts
         })
@@ -128,7 +130,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "hero-chart-bar"
     end
 
-    test "renders credit accounts when provided", %{scope: scope, book: book} do
+    test "renders credit accounts when provided", %{scope: scope, workspace: workspace} do
       accounts = [
         %{
           name: "Credit Card",
@@ -147,7 +149,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/budget",
+          current_path: "/workspaces/#{workspace.external_id}/budget",
           current_scope: scope,
           accounts: accounts
         })
@@ -160,7 +162,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "Line of Credit"
     end
 
-    test "renders loan accounts when provided", %{scope: scope, book: book} do
+    test "renders loan accounts when provided", %{scope: scope, workspace: workspace} do
       accounts = [
         %{
           name: "Mortgage",
@@ -179,7 +181,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/budget",
+          current_path: "/workspaces/#{workspace.external_id}/budget",
           current_scope: scope,
           accounts: accounts
         })
@@ -192,11 +194,11 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "Auto Loan"
     end
 
-    test "handles logout link", %{scope: scope, book: book} do
+    test "handles logout link", %{scope: scope, workspace: workspace} do
       result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/budget",
+          current_path: "/workspaces/#{workspace.external_id}/budget",
           current_scope: scope
         })
 
@@ -204,11 +206,11 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "hero-arrow-right-on-rectangle"
     end
 
-    test "renders user initial in avatar", %{scope: scope, book: book} do
+    test "renders user initial in avatar", %{scope: scope, workspace: workspace} do
       result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/budget",
+          current_path: "/workspaces/#{workspace.external_id}/budget",
           current_scope: scope
         })
 
@@ -216,11 +218,11 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.SidebarTest do
       assert result =~ "avatar"
     end
 
-    test "renders sidebar with hidden mobile class by default", %{scope: scope, book: book} do
+    test "renders sidebar with hidden mobile class by default", %{scope: scope, workspace: workspace} do
       result =
         render_component(Sidebar, %{
           id: "sidebar-test",
-          current_path: "/books/#{book.external_id}/budget",
+          current_path: "/workspaces/#{workspace.external_id}/budget",
           current_scope: scope
         })
 

@@ -16,7 +16,7 @@ defmodule PurseCraftWeb.MarketingLive.Home do
           </p>
           <div class="flex flex-col md:flex-row gap-4 justify-center">
             <%= if @current_scope do %>
-              <.link href={~p"/books"} class="btn btn-primary btn-lg">Go to Books</.link>
+              <.link href={~p"/workspaces"} class="btn btn-primary btn-lg">Go to Workspaces</.link>
             <% else %>
               <.link href={~p"/users/register"} class="btn btn-primary btn-lg">
                 Start your free trial
@@ -218,7 +218,9 @@ defmodule PurseCraftWeb.MarketingLive.Home do
                   </li>
                 </ul>
                 <%= if @current_scope do %>
-                  <.link href={~p"/books"} class="btn btn-primary btn-lg">Go to Books</.link>
+                  <.link href={~p"/workspaces"} class="btn btn-primary btn-lg">
+                    Go to Workspaces
+                  </.link>
                 <% else %>
                   <.link href={~p"/users/register"} class="btn btn-primary btn-lg">
                     Start your free trial

@@ -4,64 +4,64 @@ defmodule PurseCraft.PubSub do
   """
 
   alias PurseCraft.Budgeting.Schemas.Category
-  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Identity.Schemas.Scope
-  alias PurseCraft.PubSub.BroadcastBook
   alias PurseCraft.PubSub.BroadcastCategory
-  alias PurseCraft.PubSub.BroadcastUserBook
-  alias PurseCraft.PubSub.SubscribeBook
+  alias PurseCraft.PubSub.BroadcastUserWorkspace
+  alias PurseCraft.PubSub.BroadcastWorkspace
   alias PurseCraft.PubSub.SubscribeCategory
-  alias PurseCraft.PubSub.SubscribeUserBooks
+  alias PurseCraft.PubSub.SubscribeUserWorkspaces
+  alias PurseCraft.PubSub.SubscribeWorkspace
 
   @doc """
-  Subscribes to notifications about any book changes associated with the scoped user.
+  Subscribes to notifications about any workspace changes associated with the scoped user.
 
   The broadcasted messages match the pattern:
 
-    * {:created, %Book{}}
-    * {:updated, %Book{}}
-    * {:deleted, %Book{}}
+    * {:created, %Workspace{}}
+    * {:updated, %Workspace{}}
+    * {:deleted, %Workspace{}}
 
   """
-  @spec subscribe_user_books(Scope.t()) :: :ok | {:error, term()}
-  defdelegate subscribe_user_books(scope), to: SubscribeUserBooks, as: :call
+  @spec subscribe_user_workspaces(Scope.t()) :: :ok | {:error, term()}
+  defdelegate subscribe_user_workspaces(scope), to: SubscribeUserWorkspaces, as: :call
 
   @doc """
-  Sends notifications about any book changes associated with the scoped user.
+  Sends notifications about any workspace changes associated with the scoped user.
 
   The broadcasted messages match the pattern:
 
-    * {:created, %Book{}}
-    * {:updated, %Book{}}
-    * {:deleted, %Book{}}
+    * {:created, %Workspace{}}
+    * {:updated, %Workspace{}}
+    * {:deleted, %Workspace{}}
 
   """
-  @spec broadcast_user_book(Scope.t(), tuple()) :: :ok | {:error, term()}
-  defdelegate broadcast_user_book(scope, message), to: BroadcastUserBook, as: :call
+  @spec broadcast_user_workspace(Scope.t(), tuple()) :: :ok | {:error, term()}
+  defdelegate broadcast_user_workspace(scope, message), to: BroadcastUserWorkspace, as: :call
 
   @doc """
-  Subscribes to notifications about any changes on the given book.
+  Subscribes to notifications about any changes on the given workspace.
 
   The broadcasted messages match the pattern:
 
-    * {:updated, %Book{}}
-    * {:deleted, %Book{}}
+    * {:updated, %Workspace{}}
+    * {:deleted, %Workspace{}}
 
   """
-  @spec subscribe_book(Book.t()) :: :ok | {:error, term()}
-  defdelegate subscribe_book(book), to: SubscribeBook, as: :call
+  @spec subscribe_workspace(Workspace.t()) :: :ok | {:error, term()}
+  defdelegate subscribe_workspace(workspace), to: SubscribeWorkspace, as: :call
 
   @doc """
-  Sends notifications about any changes on the given book
+  Sends notifications about any changes on the given workspace
 
   The broadcasted messages match the pattern:
 
-    * {:updated, %Book{}}
-    * {:deleted, %Book{}}
+    * {:updated, %Workspace{}}
+    * {:deleted, %Workspace{}}
 
   """
-  @spec broadcast_book(Book.t(), tuple()) :: :ok | {:error, term()}
-  defdelegate broadcast_book(book, message), to: BroadcastBook, as: :call
+  @spec broadcast_workspace(Workspace.t(), tuple()) :: :ok | {:error, term()}
+  defdelegate broadcast_workspace(workspace, message), to: BroadcastWorkspace, as: :call
 
   @doc """
   Subscribes to notifications about changes for a specific category.

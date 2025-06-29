@@ -31,31 +31,31 @@ defmodule PurseCraft.Budgeting.Queries.EnvelopeQuery do
   end
 
   @doc """
-  Returns a query for finding envelopes by book ID (through category relationship).
+  Returns a query for finding envelopes by workspace ID (through category relationship).
 
   ## Examples
 
-      iex> by_book_id(1)
+      iex> by_workspace_id(1)
       #Ecto.Query<...>
 
-      iex> Envelope |> by_book_id(1)
+      iex> Envelope |> by_workspace_id(1)
       #Ecto.Query<...>
 
   """
-  @spec by_book_id(integer()) :: Ecto.Query.t()
+  @spec by_workspace_id(integer()) :: Ecto.Query.t()
   # coveralls-ignore-start
-  def by_book_id(book_id) do
-    by_book_id(Envelope, book_id)
+  def by_workspace_id(workspace_id) do
+    by_workspace_id(Envelope, workspace_id)
   end
 
   # coveralls-ignore-stop
 
-  @spec by_book_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
-  def by_book_id(queryable, book_id) do
+  @spec by_workspace_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
+  def by_workspace_id(queryable, workspace_id) do
     from(e in queryable,
       join: c in Category,
       on: e.category_id == c.id,
-      where: c.book_id == ^book_id
+      where: c.workspace_id == ^workspace_id
     )
   end
 

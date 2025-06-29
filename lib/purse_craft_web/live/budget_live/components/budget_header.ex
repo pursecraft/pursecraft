@@ -7,7 +7,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.BudgetHeader do
 
   alias PurseCraftWeb.Components.UI.Budgeting.Icon
 
-  attr :book_name, :string, required: true
+  attr :workspace_name, :string, required: true
   attr :current_month, :string, default: "May 2025"
   attr :on_add_category, :string, default: "open_category_modal"
   attr :on_auto_assign, :string, default: nil
@@ -16,7 +16,7 @@ defmodule PurseCraftWeb.BudgetLive.Components.BudgetHeader do
     ~H"""
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
       <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-        <h1 class="text-2xl font-bold">Budget - {@book_name}</h1>
+        <h1 class="text-2xl font-bold">Budget - {@workspace_name}</h1>
         <div class="flex items-center">
           <button class="btn btn-ghost btn-sm">
             <Icon.icon name="hero-chevron-left" class="h-4 w-4" />

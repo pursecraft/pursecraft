@@ -10,38 +10,39 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.BudgetingFactory
+  alias PurseCraft.Core.Commands.Workspaces.FetchWorkspaceByExternalId
   alias PurseCraft.CoreFactory
 
   setup :register_and_log_in_user
 
   setup %{user: user} do
-    book = CoreFactory.insert(:book, name: "Test Budget Book")
-    CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+    workspace = CoreFactory.insert(:workspace, name: "Test Budget Workspace")
+    CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
 
-    category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id)
+    category = BudgetingFactory.insert(:category, name: "Housing", workspace_id: workspace.id)
     envelope = BudgetingFactory.insert(:envelope, name: "Rent", category_id: category.id)
     category_with_envelope = %{category | envelopes: [envelope]}
 
     %{
-      book: book,
+      workspace: workspace,
       category: category_with_envelope,
       envelope: envelope
     }
   end
 
   describe "Budget page" do
-    test "renders budget page elements", %{conn: conn, book: book} do
-      {:ok, _view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "renders budget page elements", %{conn: conn, workspace: workspace} do
+      {:ok, _view, html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      assert html =~ "Budget - #{book.name}"
+      assert html =~ "Budget - #{workspace.name}"
       assert html =~ "Ready to Assign"
       assert html =~ "Assigned this Month"
       assert html =~ "Activity this Month"
       assert html =~ "May 2025"
     end
 
-    test "has functioning sidebar links", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "has functioning sidebar links", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       assert has_element?(view, "a", "Budget")
       assert has_element?(view, "a", "Reports")
@@ -51,14 +52,14 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert render(budget_link) =~ "bg-primary"
     end
 
-    test "renders user email in sidebar", %{conn: conn, book: book, user: user} do
-      {:ok, _view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "renders user email in sidebar", %{conn: conn, workspace: workspace, user: user} do
+      {:ok, _view, html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       assert html =~ user.email
     end
 
-    test "shows budget category and envelope from database", %{conn: conn, book: book, category: category} do
-      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "shows budget category and envelope from database", %{conn: conn, workspace: workspace, category: category} do
+      {:ok, view, html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       assert has_element?(view, "h3", "Housing")
       assert has_element?(view, "span.font-medium", "Rent")
@@ -69,8 +70,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert html =~ ~r/id="categories-#{category.external_id}"/
     end
 
-    test "shows action buttons", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "shows action buttons", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       assert has_element?(view, "button", "Add Category")
       assert has_element?(view, "button", "Auto-Assign")
@@ -78,8 +79,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   end
 
   describe "Category Creation" do
-    test "opens and closes category modal", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "opens and closes category modal", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       refute has_element?(view, ".modal-open")
 
@@ -109,8 +110,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       refute has_element?(view, ".modal-open")
     end
 
-    test "creates new category through modal", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "creates new category through modal", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button", "Add Category")
@@ -127,8 +128,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, "h3", "Test Category")
     end
 
-    test "handles form validation errors for empty name", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "handles form validation errors for empty name", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button", "Add Category")
@@ -141,8 +142,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".modal-open")
     end
 
-    test "handles unauthorized category creation", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "handles unauthorized category creation", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button", "Add Category")
@@ -163,8 +164,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   end
 
   describe "Category Editing" do
-    test "when edit button is clicked opens modal", %{conn: conn, book: book, category: category} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "when edit button is clicked opens modal", %{conn: conn, workspace: workspace, category: category} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='edit_category'][phx-value-id='#{category.external_id}']")
@@ -177,8 +178,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, "button[type='submit']", "Update")
     end
 
-    test "updates category when submitting edit form", %{conn: conn, book: book, category: category} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "updates category when submitting edit form", %{conn: conn, workspace: workspace, category: category} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='edit_category'][phx-value-id='#{category.external_id}']")
@@ -193,8 +194,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, "h3", "Updated Housing")
     end
 
-    test "handles validation errors when updating category", %{conn: conn, book: book, category: category} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "handles validation errors when updating category", %{conn: conn, workspace: workspace, category: category} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='edit_category'][phx-value-id='#{category.external_id}']")
@@ -207,8 +208,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".modal-open")
     end
 
-    test "handles unauthorized category update", %{conn: conn, book: book, category: category} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "handles unauthorized category update", %{conn: conn, workspace: workspace, category: category} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='edit_category'][phx-value-id='#{category.external_id}']")
@@ -226,8 +227,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       refute has_element?(view, ".modal-open")
     end
 
-    test "correctly resets form when canceling edit", %{conn: conn, book: book, category: category} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "correctly resets form when canceling edit", %{conn: conn, workspace: workspace, category: category} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='edit_category'][phx-value-id='#{category.external_id}']")
@@ -248,11 +249,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, "form[phx-submit='save_category']")
     end
 
-    test "shows error when category is not found during edit", %{conn: conn, book: book} do
+    test "shows error when category is not found during edit", %{conn: conn, workspace: workspace} do
       non_existent_id = Ecto.UUID.generate()
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id ->
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _workspace, _external_id ->
         {:error, :not_found}
       end)
 
@@ -261,10 +262,10 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".alert-error", "Category not found")
     end
 
-    test "shows error when unauthorized to edit category", %{conn: conn, book: book, category: category} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "shows error when unauthorized to edit category", %{conn: conn, workspace: workspace, category: category} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id ->
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _workspace, _external_id ->
         {:error, :unauthorized}
       end)
 
@@ -275,19 +276,19 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   end
 
   describe "Category Deletion" do
-    setup %{book: book} do
-      empty_category = BudgetingFactory.insert(:category, name: "Empty Category", book_id: book.id)
+    setup %{workspace: workspace} do
+      empty_category = BudgetingFactory.insert(:category, name: "Empty Category", workspace_id: workspace.id)
 
       %{empty_category: empty_category}
     end
 
     test "delete button only appears for categories without envelopes", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category_with_envelope,
       empty_category: empty_category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       refute has_element?(
                view,
@@ -302,10 +303,10 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "opens delete confirmation modal when delete button is clicked", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       empty_category: empty_category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='delete_category_confirm'][phx-value-id='#{empty_category.external_id}']")
@@ -320,10 +321,10 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "cancels deletion when cancel button is clicked", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       empty_category: empty_category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='delete_category_confirm'][phx-value-id='#{empty_category.external_id}']")
@@ -340,10 +341,10 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "successfully deletes category when confirmed", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       empty_category: empty_category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='delete_category_confirm'][phx-value-id='#{empty_category.external_id}']")
@@ -359,16 +360,16 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles unauthorized category deletion", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       empty_category: empty_category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='delete_category_confirm'][phx-value-id='#{empty_category.external_id}']")
       |> render_click()
 
-      stub(Budgeting, :delete_category, fn _scope, _book, _category ->
+      stub(Budgeting, :delete_category, fn _scope, _workspace, _category ->
         {:error, :unauthorized}
       end)
 
@@ -381,16 +382,16 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles general error when deleting category", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       empty_category: empty_category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='delete_category_confirm'][phx-value-id='#{empty_category.external_id}']")
       |> render_click()
 
-      stub(Budgeting, :delete_category, fn _scope, _book, _category ->
+      stub(Budgeting, :delete_category, fn _scope, _workspace, _category ->
         {:error, %Ecto.Changeset{}}
       end)
 
@@ -401,11 +402,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".alert-error", "Error deleting category")
     end
 
-    test "shows error when category is not found during delete_category_confirm", %{conn: conn, book: book} do
+    test "shows error when category is not found during delete_category_confirm", %{conn: conn, workspace: workspace} do
       non_existent_id = Ecto.UUID.generate()
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id, _opts ->
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _workspace, _external_id, _opts ->
         {:error, :not_found}
       end)
 
@@ -414,10 +415,14 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".alert-error", "Category not found")
     end
 
-    test "shows error when unauthorized to open delete modal", %{conn: conn, book: book, empty_category: empty_category} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "shows error when unauthorized to open delete modal", %{
+      conn: conn,
+      workspace: workspace,
+      empty_category: empty_category
+    } do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id, _opts ->
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _workspace, _external_id, _opts ->
         {:error, :unauthorized}
       end)
 
@@ -430,13 +435,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   describe "Envelope Deletion" do
     test "opens delete confirmation modal when delete button is clicked", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, external_id, _opts ->
         if external_id == envelope.external_id do
           {:ok, %{envelope | category: category}}
         else
@@ -457,13 +462,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "cancels deletion when cancel button is clicked", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, external_id, _opts ->
         if external_id == envelope.external_id do
           {:ok, %{envelope | category: category}}
         else
@@ -486,13 +491,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "successfully deletes envelope when confirmed", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, external_id, _opts ->
         if external_id == envelope.external_id do
           {:ok, %{envelope | category: category}}
         else
@@ -504,7 +509,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       |> element("button[phx-click='delete_envelope_confirm'][phx-value-id='#{envelope.external_id}']")
       |> render_click()
 
-      stub(Budgeting, :delete_envelope, fn _scope, _book, _envelope ->
+      stub(Budgeting, :delete_envelope, fn _scope, _workspace, _envelope ->
         # Return successful deletion
         {:ok, envelope}
       end)
@@ -519,13 +524,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles unauthorized envelope deletion", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, external_id, _opts ->
         if external_id == envelope.external_id do
           {:ok, %{envelope | category: category}}
         else
@@ -537,7 +542,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       |> element("button[phx-click='delete_envelope_confirm'][phx-value-id='#{envelope.external_id}']")
       |> render_click()
 
-      stub(Budgeting, :delete_envelope, fn _scope, _book, _envelope ->
+      stub(Budgeting, :delete_envelope, fn _scope, _workspace, _envelope ->
         {:error, :unauthorized}
       end)
 
@@ -550,13 +555,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles general error when deleting envelope", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, external_id, _opts ->
         if external_id == envelope.external_id do
           {:ok, %{envelope | category: category}}
         else
@@ -568,7 +573,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       |> element("button[phx-click='delete_envelope_confirm'][phx-value-id='#{envelope.external_id}']")
       |> render_click()
 
-      stub(Budgeting, :delete_envelope, fn _scope, _book, _envelope ->
+      stub(Budgeting, :delete_envelope, fn _scope, _workspace, _envelope ->
         {:error, %Ecto.Changeset{}}
       end)
 
@@ -581,12 +586,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "shows error when envelope is not found during delete_envelope_confirm", %{
       conn: conn,
-      book: book
+      workspace: workspace
     } do
       non_existent_id = Ecto.UUID.generate()
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book, _external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace, _external_id, _opts ->
         {:error, :not_found}
       end)
 
@@ -597,12 +602,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "shows error when unauthorized to open delete envelope modal", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book, _external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace, _external_id, _opts ->
         {:error, :unauthorized}
       end)
 
@@ -615,13 +620,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   describe "Envelope Editing" do
     test "when edit button is clicked opens edit modal", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, external_id, _opts ->
         if external_id == envelope.external_id do
           {:ok, %{envelope | category: category}}
         else
@@ -642,13 +647,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "updates envelope when submitting edit form", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, external_id, _opts ->
         if external_id == envelope.external_id do
           {:ok, %{envelope | category: category}}
         else
@@ -660,7 +665,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       |> element("button[phx-click='edit_envelope'][phx-value-id='#{envelope.external_id}']")
       |> render_click()
 
-      stub(Budgeting, :update_envelope, fn _scope, _book_param, _envelope, envelope_params ->
+      stub(Budgeting, :update_envelope, fn _scope, _workspace_param, _envelope, envelope_params ->
         updated_envelope = %{envelope | name: envelope_params[:name]}
         {:ok, updated_envelope}
       end)
@@ -675,13 +680,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles validation errors when updating envelope", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, external_id, _opts ->
         if external_id == envelope.external_id do
           {:ok, %{envelope | category: category}}
         else
@@ -693,7 +698,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       |> element("button[phx-click='edit_envelope'][phx-value-id='#{envelope.external_id}']")
       |> render_click()
 
-      stub(Budgeting, :update_envelope, fn _scope, _book_param, _envelope, _envelope_params ->
+      stub(Budgeting, :update_envelope, fn _scope, _workspace_param, _envelope, _envelope_params ->
         changeset = Ecto.Changeset.change(envelope)
         changeset = Ecto.Changeset.add_error(changeset, :name, "can't be blank")
         {:error, changeset}
@@ -708,13 +713,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles unauthorized envelope update", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, external_id, _opts ->
         if external_id == envelope.external_id do
           {:ok, %{envelope | category: category}}
         else
@@ -726,7 +731,7 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       |> element("button[phx-click='edit_envelope'][phx-value-id='#{envelope.external_id}']")
       |> render_click()
 
-      stub(Budgeting, :update_envelope, fn _scope, _book_param, _envelope, _envelope_params ->
+      stub(Budgeting, :update_envelope, fn _scope, _workspace_param, _envelope, _envelope_params ->
         {:error, :unauthorized}
       end)
 
@@ -738,11 +743,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       refute has_element?(view, ".modal-open")
     end
 
-    test "shows error when envelope is not found during edit", %{conn: conn, book: book} do
+    test "shows error when envelope is not found during edit", %{conn: conn, workspace: workspace} do
       non_existent_id = Ecto.UUID.generate()
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, _external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, _external_id, _opts ->
         {:error, :not_found}
       end)
 
@@ -753,12 +758,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "shows error when unauthorized to edit envelope", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, _external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, _external_id, _opts ->
         {:error, :unauthorized}
       end)
 
@@ -769,13 +774,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "correctly resets form when canceling edit", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category,
       envelope: envelope
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _book_param, external_id, _opts ->
+      stub(Budgeting, :fetch_envelope_by_external_id, fn _scope, _workspace_param, external_id, _opts ->
         if external_id == envelope.external_id do
           {:ok, %{envelope | category: category}}
         else
@@ -809,10 +814,10 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   describe "Envelope Creation" do
     test "opens envelope modal when + button is clicked", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
@@ -826,10 +831,10 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "closes envelope modal when cancel button is clicked", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
@@ -846,10 +851,10 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "closes envelope modal when clicking backdrop", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
@@ -864,8 +869,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       refute has_element?(view, ".modal-open")
     end
 
-    test "creates a new envelope successfully", %{conn: conn, book: book, category: category} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "creates a new envelope successfully", %{conn: conn, workspace: workspace, category: category} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
@@ -882,10 +887,10 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles validation errors when creating an envelope", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
@@ -900,10 +905,10 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles unauthorized envelope creation", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       view
       |> element("button[phx-click='new_envelope'][phx-value-id='#{category.external_id}']")
@@ -921,11 +926,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       refute has_element?(view, ".modal-open")
     end
 
-    test "shows error when category is not found during new_envelope", %{conn: conn, book: book} do
+    test "shows error when category is not found during new_envelope", %{conn: conn, workspace: workspace} do
       non_existent_id = Ecto.UUID.generate()
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id, _opts ->
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _workspace, _external_id, _opts ->
         {:error, :not_found}
       end)
 
@@ -936,12 +941,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "shows error when unauthorized to open envelope modal", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category: category
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _book, _external_id, _opts ->
+      stub(Budgeting, :fetch_category_by_external_id, fn _scope, _workspace, _external_id, _opts ->
         {:error, :unauthorized}
       end)
 
@@ -952,22 +957,22 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   end
 
   describe "Category Repositioning" do
-    setup %{book: book} do
-      cat1 = BudgetingFactory.insert(:category, name: "Category 1", book_id: book.id, position: "ca")
-      cat2 = BudgetingFactory.insert(:category, name: "Category 2", book_id: book.id, position: "cb")
-      cat3 = BudgetingFactory.insert(:category, name: "Category 3", book_id: book.id, position: "cc")
+    setup %{workspace: workspace} do
+      cat1 = BudgetingFactory.insert(:category, name: "Category 1", workspace_id: workspace.id, position: "ca")
+      cat2 = BudgetingFactory.insert(:category, name: "Category 2", workspace_id: workspace.id, position: "cb")
+      cat3 = BudgetingFactory.insert(:category, name: "Category 3", workspace_id: workspace.id, position: "cc")
 
       %{cat1: cat1, cat2: cat2, cat3: cat3}
     end
 
     test "successfully repositions category between two others", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       cat1: cat1,
       cat2: cat2,
       cat3: cat3
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
         {:ok, cat3}
@@ -986,8 +991,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert result =~ "success"
     end
 
-    test "successfully repositions category to the beginning", %{conn: conn, book: book, cat2: cat2, cat3: cat3} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "successfully repositions category to the beginning", %{conn: conn, workspace: workspace, cat2: cat2, cat3: cat3} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
         {:ok, cat3}
@@ -1006,8 +1011,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert result =~ "success"
     end
 
-    test "successfully repositions category to the end", %{conn: conn, book: book, cat1: cat1, cat3: cat3} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "successfully repositions category to the end", %{conn: conn, workspace: workspace, cat1: cat1, cat3: cat3} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
         {:ok, cat1}
@@ -1026,8 +1031,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert result =~ "success"
     end
 
-    test "handles unauthorized category repositioning", %{conn: conn, book: book, cat1: cat1, cat2: cat2} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "handles unauthorized category repositioning", %{conn: conn, workspace: workspace, cat1: cat1, cat2: cat2} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
         {:error, :unauthorized}
@@ -1044,8 +1049,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".alert-error", "You don't have permission to reposition categories")
     end
 
-    test "handles category not found error", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "handles category not found error", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
       non_existent_id = Ecto.UUID.generate()
 
       stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
@@ -1063,8 +1068,8 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".alert-error", "Category not found")
     end
 
-    test "handles general repositioning error", %{conn: conn, book: book, cat1: cat1} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "handles general repositioning error", %{conn: conn, workspace: workspace, cat1: cat1} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       stub(RepositionCategory, :call, fn _scope, _category_id, _prev_id, _next_id ->
         {:error, :database_error}
@@ -1081,13 +1086,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
       assert has_element?(view, ".alert-error", "Failed to save category position. Please try again.")
     end
 
-    test "refreshes categories on category_repositioned event", %{conn: conn, book: book, cat1: cat1} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "refreshes categories on category_repositioned event", %{conn: conn, workspace: workspace, cat1: cat1} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
-      new_category = BudgetingFactory.insert(:category, name: "New Category", book_id: book.id, position: "zz")
+      new_category = BudgetingFactory.insert(:category, name: "New Category", workspace_id: workspace.id, position: "zz")
       new_category_with_envelopes = %{new_category | envelopes: []}
 
-      stub(Budgeting, :list_categories, fn _scope, _book, _opts ->
+      stub(Budgeting, :list_categories, fn _scope, _workspace, _opts ->
         [new_category_with_envelopes]
       end)
 
@@ -1098,50 +1103,53 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   end
 
   describe "Error handling" do
-    test "redirects to books page when book doesn't exist with not_found error", %{conn: conn} do
+    test "redirects to workspaces page when workspace doesn't exist with not_found error", %{conn: conn} do
       non_existent_id = Ecto.UUID.generate()
 
-      stub(Policy, :authorize, fn :book_read, _scope, _book ->
+      stub(PurseCraft.Core.Policy, :authorize, fn :workspace_read, _scope, _workspace ->
         :ok
       end)
 
-      assert {:error, {:live_redirect, %{to: "/books", flash: %{"error" => "Book not found"}}}} =
-               live(conn, ~p"/books/#{non_existent_id}/budget")
+      assert {:error, {:live_redirect, %{to: "/workspaces", flash: %{"error" => "Workspace not found"}}}} =
+               live(conn, ~p"/workspaces/#{non_existent_id}/budget")
     end
 
-    test "redirects to books page when book doesn't exist", %{conn: conn} do
+    test "redirects to workspaces page when workspace doesn't exist", %{conn: conn} do
       non_existent_id = Ecto.UUID.generate()
 
-      assert {:error, {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book"}}}} =
-               live(conn, ~p"/books/#{non_existent_id}/budget")
+      assert {:error,
+              {:live_redirect, %{to: "/workspaces", flash: %{"error" => "You don't have access to this workspace"}}}} =
+               live(conn, ~p"/workspaces/#{non_existent_id}/budget")
     end
 
-    test "redirects to books page when unauthorized", %{conn: conn} do
-      book = CoreFactory.insert(:book, name: "Someone Else's Budget")
+    test "redirects to workspaces page when unauthorized", %{conn: conn} do
+      workspace = CoreFactory.insert(:workspace, name: "Someone Else's Budget")
 
-      assert {:error, {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book"}}}} =
-               live(conn, ~p"/books/#{book.external_id}/budget")
+      assert {:error,
+              {:live_redirect, %{to: "/workspaces", flash: %{"error" => "You don't have access to this workspace"}}}} =
+               live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
     end
 
-    test "redirects when categories access is unauthorized", %{conn: conn, book: book} do
-      stub(Budgeting, :fetch_book_by_external_id, fn _scope, _external_id ->
-        {:ok, book}
+    test "redirects when categories access is unauthorized", %{conn: conn, workspace: workspace} do
+      stub(FetchWorkspaceByExternalId, :call, fn _scope, _external_id ->
+        {:ok, workspace}
       end)
 
-      stub(Budgeting, :list_categories, fn _scope, _book, _opts ->
+      stub(Budgeting, :list_categories, fn _scope, _workspace, _opts ->
         {:error, :unauthorized}
       end)
 
       assert {:error,
-              {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book's categories"}}}} =
-               live(conn, ~p"/books/#{book.external_id}/budget")
+              {:live_redirect,
+               %{to: "/workspaces", flash: %{"error" => "You don't have access to this workspace's categories"}}}} =
+               live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
     end
   end
 
   describe "Envelope Repositioning" do
-    setup %{book: book} do
-      category1 = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id, position: "ea")
-      category2 = BudgetingFactory.insert(:category, name: "Transportation", book_id: book.id, position: "eb")
+    setup %{workspace: workspace} do
+      category1 = BudgetingFactory.insert(:category, name: "Housing", workspace_id: workspace.id, position: "ea")
+      category2 = BudgetingFactory.insert(:category, name: "Transportation", workspace_id: workspace.id, position: "eb")
 
       env1 = BudgetingFactory.insert(:envelope, name: "Rent", category_id: category1.id, position: "ed")
       env2 = BudgetingFactory.insert(:envelope, name: "Utilities", category_id: category1.id, position: "eh")
@@ -1158,13 +1166,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "successfully repositions envelope within same category", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category1: category1,
       env1: env1,
       env2: env2,
       env3: env3
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       stub(RepositionEnvelope, :call, fn _scope, _envelope_id, _target_category_id, _prev_id, _next_id ->
         {:ok, env3}
@@ -1186,11 +1194,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "successfully repositions envelope to different category", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category2: category2,
       env1: env1
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       stub(RepositionEnvelope, :call, fn _scope, _envelope_id, _target_category_id, _prev_id, _next_id ->
         {:ok, env1}
@@ -1212,12 +1220,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles unauthorized envelope repositioning", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category1: category1,
       env1: env1,
       env2: env2
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       stub(RepositionEnvelope, :call, fn _scope, _envelope_id, _target_category_id, _prev_id, _next_id ->
         {:error, :unauthorized}
@@ -1237,10 +1245,10 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles envelope not found error", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category1: category1
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
       non_existent_id = Ecto.UUID.generate()
 
       stub(RepositionEnvelope, :call, fn _scope, _envelope_id, _target_category_id, _prev_id, _next_id ->
@@ -1261,11 +1269,11 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles general repositioning error", %{
       conn: conn,
-      book: book,
+      workspace: workspace,
       category1: category1,
       env1: env1
     } do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       stub(RepositionEnvelope, :call, fn _scope, _envelope_id, _target_category_id, _prev_id, _next_id ->
         {:error, :database_error}
@@ -1287,13 +1295,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
   describe "Envelope PubSub Events" do
     test "handles envelope_repositioned message with successful category fetch", %{
       conn: conn,
-      book: book
+      workspace: workspace
     } do
-      category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id, position: "aa")
+      category = BudgetingFactory.insert(:category, name: "Housing", workspace_id: workspace.id, position: "aa")
       envelope1 = BudgetingFactory.insert(:envelope, name: "Rent", category_id: category.id, position: "a")
       envelope2 = BudgetingFactory.insert(:envelope, name: "Utilities", category_id: category.id, position: "b")
 
-      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       assert html =~ "Housing"
       assert html =~ "Rent"
@@ -1321,12 +1329,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles envelope_repositioned message with category not found", %{
       conn: conn,
-      book: book
+      workspace: workspace
     } do
-      category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id, position: "ab")
+      category = BudgetingFactory.insert(:category, name: "Housing", workspace_id: workspace.id, position: "ab")
       BudgetingFactory.insert(:envelope, name: "Rent", category_id: category.id)
 
-      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       assert html =~ "Housing"
       assert html =~ "Rent"
@@ -1344,13 +1352,13 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles envelope_removed message with successful category fetch", %{
       conn: conn,
-      book: book
+      workspace: workspace
     } do
-      category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id, position: "ac")
+      category = BudgetingFactory.insert(:category, name: "Housing", workspace_id: workspace.id, position: "ac")
       envelope1 = BudgetingFactory.insert(:envelope, name: "Rent", category_id: category.id)
       BudgetingFactory.insert(:envelope, name: "Utilities", category_id: category.id)
 
-      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       assert html =~ "Housing"
       assert html =~ "Rent"
@@ -1376,12 +1384,12 @@ defmodule PurseCraftWeb.BudgetLive.IndexTest do
 
     test "handles envelope_removed message with category not found", %{
       conn: conn,
-      book: book
+      workspace: workspace
     } do
-      category = BudgetingFactory.insert(:category, name: "Housing", book_id: book.id, position: "ad")
+      category = BudgetingFactory.insert(:category, name: "Housing", workspace_id: workspace.id, position: "ad")
       BudgetingFactory.insert(:envelope, name: "Rent", category_id: category.id)
 
-      {:ok, view, html} = live(conn, ~p"/books/#{book.external_id}/budget")
+      {:ok, view, html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       assert html =~ "Housing"
       assert html =~ "Rent"

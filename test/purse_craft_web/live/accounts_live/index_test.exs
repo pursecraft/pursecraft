@@ -9,24 +9,24 @@ defmodule PurseCraftWeb.AccountsLive.IndexTest do
   setup :register_and_log_in_user
 
   setup %{user: user} do
-    book = CoreFactory.insert(:book, name: "Test Accounts Book")
-    CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
-    %{book: book}
+    workspace = CoreFactory.insert(:workspace, name: "Test Accounts Workspace")
+    CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
+    %{workspace: workspace}
   end
 
   describe "Accounts page" do
-    test "renders transactions page elements", %{conn: conn, book: book} do
-      {:ok, _view, html} = live(conn, ~p"/books/#{book.external_id}/accounts")
+    test "renders transactions page elements", %{conn: conn, workspace: workspace} do
+      {:ok, _view, html} = live(conn, ~p"/workspaces/#{workspace.external_id}/accounts")
 
-      assert html =~ "All Accounts - #{book.name}"
+      assert html =~ "All Accounts - #{workspace.name}"
       assert html =~ "Budget Accounts"
       assert html =~ "Tracking Accounts"
       assert html =~ "Net Worth"
       assert html =~ "Recent Transactions"
     end
 
-    test "has functioning sidebar links", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/accounts")
+    test "has functioning sidebar links", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/accounts")
 
       # Check sidebar links are present
       assert has_element?(view, "a", "Budget")
@@ -38,21 +38,21 @@ defmodule PurseCraftWeb.AccountsLive.IndexTest do
       assert render(accounts_link) =~ "bg-primary"
     end
 
-    test "renders user email in sidebar", %{conn: conn, user: user, book: book} do
-      {:ok, _view, html} = live(conn, ~p"/books/#{book.external_id}/accounts")
+    test "renders user email in sidebar", %{conn: conn, user: user, workspace: workspace} do
+      {:ok, _view, html} = live(conn, ~p"/workspaces/#{workspace.external_id}/accounts")
 
       assert html =~ user.email
     end
 
-    test "shows add account and reconcile buttons", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/accounts")
+    test "shows add account and reconcile buttons", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/accounts")
 
       assert has_element?(view, "button", "Add Account")
       assert has_element?(view, "button", "Reconcile")
     end
 
-    test "displays account cards", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/accounts")
+    test "displays account cards", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/accounts")
 
       assert has_element?(view, "h4", "Checking")
       assert has_element?(view, "h4", "Savings")
@@ -60,8 +60,8 @@ defmodule PurseCraftWeb.AccountsLive.IndexTest do
       assert has_element?(view, "h4", "401(k)")
     end
 
-    test "shows transaction table", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/accounts")
+    test "shows transaction table", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/accounts")
 
       assert has_element?(view, "table")
       assert has_element?(view, "th", "Date")
@@ -77,29 +77,31 @@ defmodule PurseCraftWeb.AccountsLive.IndexTest do
   end
 
   describe "Error handling" do
-    test "redirects to books page when book doesn't exist with not_found error", %{conn: conn} do
+    test "redirects to workspaces page when workspace doesn't exist with not_found error", %{conn: conn} do
       non_existent_id = Ecto.UUID.generate()
 
-      stub(PurseCraft.Budgeting.Policy, :authorize, fn :book_read, _scope, _book ->
+      stub(PurseCraft.Core.Policy, :authorize, fn :workspace_read, _scope, _workspace ->
         :ok
       end)
 
-      assert {:error, {:live_redirect, %{to: "/books", flash: %{"error" => "Book not found"}}}} =
-               live(conn, ~p"/books/#{non_existent_id}/accounts")
+      assert {:error, {:live_redirect, %{to: "/workspaces", flash: %{"error" => "Workspace not found"}}}} =
+               live(conn, ~p"/workspaces/#{non_existent_id}/accounts")
     end
 
-    test "redirects to books page when book doesn't exist", %{conn: conn} do
+    test "redirects to workspaces page when workspace doesn't exist", %{conn: conn} do
       non_existent_id = Ecto.UUID.generate()
 
-      assert {:error, {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book"}}}} =
-               live(conn, ~p"/books/#{non_existent_id}/accounts")
+      assert {:error,
+              {:live_redirect, %{to: "/workspaces", flash: %{"error" => "You don't have access to this workspace"}}}} =
+               live(conn, ~p"/workspaces/#{non_existent_id}/accounts")
     end
 
-    test "redirects to books page when unauthorized", %{conn: conn} do
-      book = CoreFactory.insert(:book, name: "Someone Else's Budget")
+    test "redirects to workspaces page when unauthorized", %{conn: conn} do
+      workspace = CoreFactory.insert(:workspace, name: "Someone Else's Budget")
 
-      assert {:error, {:live_redirect, %{to: "/books", flash: %{"error" => "You don't have access to this book"}}}} =
-               live(conn, ~p"/books/#{book.external_id}/accounts")
+      assert {:error,
+              {:live_redirect, %{to: "/workspaces", flash: %{"error" => "You don't have access to this workspace"}}}} =
+               live(conn, ~p"/workspaces/#{workspace.external_id}/accounts")
     end
   end
 end

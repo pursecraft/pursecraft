@@ -3,22 +3,22 @@ defmodule PurseCraft.CoreFactory do
 
   use PurseCraft.FactoryTemplate
 
-  alias PurseCraft.Core.Schemas.Book
-  alias PurseCraft.Core.Schemas.BookUser
+  alias PurseCraft.Core.Schemas.Workspace
+  alias PurseCraft.Core.Schemas.WorkspaceUser
 
-  def book_factory do
+  def workspace_factory do
     name = Faker.Pokemon.name()
 
-    book =
-      %Book{}
-      |> Book.changeset(%{name: name})
+    workspace =
+      %Workspace{}
+      |> Workspace.changeset(%{name: name})
       |> Ecto.Changeset.apply_changes()
 
-    book
+    workspace
   end
 
-  def book_user_factory do
-    %BookUser{
+  def workspace_user_factory do
+    %WorkspaceUser{
       role: Enum.random([:owner, :editor, :commenter])
     }
   end

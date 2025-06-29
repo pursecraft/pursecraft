@@ -57,14 +57,14 @@ defmodule PurseCraftWeb.Router do
 
     live_session :require_authenticated_user,
       on_mount: [{PurseCraftWeb.UserAuth, :require_authenticated}] do
-      live "/books", BookLive.Index, :index
-      live "/books/new", BookLive.Form, :new
-      live "/books/:external_id", BookLive.Show, :show
-      live "/books/:external_id/edit", BookLive.Form, :edit
+      live "/workspaces", WorkspaceLive.Index, :index
+      live "/workspaces/new", WorkspaceLive.Form, :new
+      live "/workspaces/:external_id", WorkspaceLive.Show, :show
+      live "/workspaces/:external_id/edit", WorkspaceLive.Form, :edit
 
-      live "/books/:external_id/budget", BudgetLive.Index, :index
-      live "/books/:external_id/reports", ReportsLive.Index, :index
-      live "/books/:external_id/accounts", AccountsLive.Index, :index
+      live "/workspaces/:external_id/budget", BudgetLive.Index, :index
+      live "/workspaces/:external_id/reports", ReportsLive.Index, :index
+      live "/workspaces/:external_id/accounts", AccountsLive.Index, :index
 
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email

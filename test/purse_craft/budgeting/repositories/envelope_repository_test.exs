@@ -7,8 +7,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
 
   describe "create/1" do
     test "with valid data creates an envelope" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       attrs = %{name: "Test Envelope", category_id: category.id, position: "m"}
 
       assert {:ok, envelope} = EnvelopeRepository.create(attrs)
@@ -27,8 +27,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "with duplicate position within same category returns error" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
 
       attrs = %{name: "Duplicate Position", category_id: category.id, position: "m"}
@@ -38,9 +38,9 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "allows same position in different categories" do
-      book = CoreFactory.insert(:book)
-      category1 = BudgetingFactory.insert(:category, book_id: book.id)
-      category2 = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category1 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
+      category2 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       BudgetingFactory.insert(:envelope, category_id: category1.id, position: "m")
 
       attrs = %{name: "Same Position Different Category", category_id: category2.id, position: "m"}
@@ -51,43 +51,44 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
   end
 
-  describe "get_by_external_id_and_book_id/3" do
+  describe "get_by_external_id_and_workspace_id/3" do
     test "returns envelope when found" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
 
-      result = EnvelopeRepository.get_by_external_id_and_book_id(envelope.external_id, book.id)
+      result = EnvelopeRepository.get_by_external_id_and_workspace_id(envelope.external_id, workspace.id)
 
       assert result.id == envelope.id
       assert result.name == envelope.name
     end
 
     test "returns nil when envelope not found" do
-      book = CoreFactory.insert(:book)
+      workspace = CoreFactory.insert(:workspace)
 
-      result = EnvelopeRepository.get_by_external_id_and_book_id(Ecto.UUID.generate(), book.id)
+      result = EnvelopeRepository.get_by_external_id_and_workspace_id(Ecto.UUID.generate(), workspace.id)
 
       assert result == nil
     end
 
-    test "returns nil when envelope exists but in different book" do
-      book1 = CoreFactory.insert(:book)
-      book2 = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book1.id)
+    test "returns nil when envelope exists but in different workspace" do
+      workspace1 = CoreFactory.insert(:workspace)
+      workspace2 = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace1.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
 
-      result = EnvelopeRepository.get_by_external_id_and_book_id(envelope.external_id, book2.id)
+      result = EnvelopeRepository.get_by_external_id_and_workspace_id(envelope.external_id, workspace2.id)
 
       assert result == nil
     end
 
     test "with preload option returns envelope with preloaded associations" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
 
-      result = EnvelopeRepository.get_by_external_id_and_book_id(envelope.external_id, book.id, preload: [:category])
+      result =
+        EnvelopeRepository.get_by_external_id_and_workspace_id(envelope.external_id, workspace.id, preload: [:category])
 
       assert result.id == envelope.id
       assert result.category.id == category.id
@@ -97,8 +98,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
 
   describe "update/2" do
     test "with valid data updates an envelope" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id, name: "Original Name")
       attrs = %{name: "Updated Name"}
 
@@ -109,8 +110,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "with invalid data returns error changeset" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
       attrs = %{name: ""}
 
@@ -121,8 +122,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
 
   describe "delete/1" do
     test "deletes an envelope" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
 
       assert {:ok, deleted_envelope} = EnvelopeRepository.delete(envelope)
@@ -132,8 +133,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
 
   describe "get_first_position/1" do
     test "returns the position of the first envelope in a category" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
       BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
       BudgetingFactory.insert(:envelope, category_id: category.id, position: "s")
@@ -144,8 +145,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "returns nil when category has no envelopes" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
       result = EnvelopeRepository.get_first_position(category.id)
 
@@ -153,8 +154,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "returns correct position when only one envelope exists" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
 
       result = EnvelopeRepository.get_first_position(category.id)
@@ -163,8 +164,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "returns correct position with complex ordering" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       BudgetingFactory.insert(:envelope, category_id: category.id, position: "mm")
       BudgetingFactory.insert(:envelope, category_id: category.id, position: "ma")
       BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
@@ -178,8 +179,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
 
   describe "list_by_external_ids/2" do
     test "returns envelopes matching the given external IDs" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       env1 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
       env2 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
       env3 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "t")
@@ -201,8 +202,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "returns subset when only some external IDs match" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       env1 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
 
       external_ids = [env1.external_id, Ecto.UUID.generate(), Ecto.UUID.generate()]
@@ -213,9 +214,9 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "with preload option returns envelopes with preloaded associations" do
-      book = CoreFactory.insert(:book)
-      category1 = BudgetingFactory.insert(:category, book_id: book.id)
-      category2 = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category1 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
+      category2 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       env1 = BudgetingFactory.insert(:envelope, category_id: category1.id, position: "g")
       env2 = BudgetingFactory.insert(:envelope, category_id: category2.id, position: "m")
 
@@ -240,8 +241,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
 
   describe "update_position/2" do
     test "updates the position of an envelope with valid position" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
 
       assert {:ok, updated_envelope} = EnvelopeRepository.update_position(envelope, "m", category.id)
@@ -251,8 +252,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "returns error changeset with invalid position format" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
 
       assert {:error, changeset} = EnvelopeRepository.update_position(envelope, "ABC", category.id)
@@ -260,8 +261,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "returns error changeset with empty position" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
 
       assert {:error, changeset} = EnvelopeRepository.update_position(envelope, "", category.id)
@@ -269,8 +270,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "returns error changeset when position violates unique constraint" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
       env2 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
 
@@ -279,9 +280,9 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "allows same position in different categories" do
-      book = CoreFactory.insert(:book)
-      category1 = BudgetingFactory.insert(:category, book_id: book.id)
-      category2 = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category1 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
+      category2 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       BudgetingFactory.insert(:envelope, category_id: category1.id, position: "g")
       env2 = BudgetingFactory.insert(:envelope, category_id: category2.id, position: "m")
 
@@ -290,8 +291,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     end
 
     test "allows updating position to same position" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
 
       assert {:ok, updated_envelope} = EnvelopeRepository.update_position(envelope, "g", category.id)

@@ -17,7 +17,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
 
   @type create_attrs :: %{
           optional(:name) => String.t(),
-          required(:book_id) => integer(),
+          required(:workspace_id) => integer(),
           required(:position) => String.t()
         }
 
@@ -29,7 +29,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   @type update_options :: [update_option()]
 
   @doc """
-  Lists all categories for a given book ID.
+  Lists all categories for a given workspace ID.
 
   ## Options
 
@@ -39,30 +39,30 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
 
   ## Examples
 
-      iex> list_by_book_id(1)
+      iex> list_by_workspace_id(1)
       [%Category{}, ...]
 
-      iex> list_by_book_id(1, preload: [:envelopes])
+      iex> list_by_workspace_id(1, preload: [:envelopes])
       [%Category{envelopes: [%Envelope{}, ...]}, ...]
 
   """
-  @spec list_by_book_id(integer(), list_options()) :: list(Category.t())
-  def list_by_book_id(book_id, opts \\ []) do
-    book_id
-    |> CategoryQuery.by_book_id()
+  @spec list_by_workspace_id(integer(), list_options()) :: list(Category.t())
+  def list_by_workspace_id(workspace_id, opts \\ []) do
+    workspace_id
+    |> CategoryQuery.by_workspace_id()
     |> Repo.all()
     |> Utilities.maybe_preload(opts)
   end
 
   @doc """
-  Creates a category for a book.
+  Creates a category for a workspace.
 
   ## Examples
 
-      iex> create(%{name: "Monthly Bills", book_id: 1})
+      iex> create(%{name: "Monthly Bills", workspace_id: 1})
       {:ok, %Category{}}
 
-      iex> create(%{name: "", book_id: 1})
+      iex> create(%{name: "", workspace_id: 1})
       {:error, %Ecto.Changeset{}}
 
   """
@@ -74,7 +74,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   end
 
   @doc """
-  Gets a category by its external ID and book ID with options.
+  Gets a category by its external ID and workspace ID with options.
 
   Returns the category if it exists, or `nil` if not found.
 
@@ -86,18 +86,18 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
 
   ## Examples
 
-      iex> get_by_external_id_and_book_id("abcd-1234", 1, preload: [:envelopes])
+      iex> get_by_external_id_and_workspace_id("abcd-1234", 1, preload: [:envelopes])
       %Category{envelopes: [...]}
 
-      iex> get_by_external_id_and_book_id("non-existent-id", 1, preload: [:envelopes])
+      iex> get_by_external_id_and_workspace_id("non-existent-id", 1, preload: [:envelopes])
       nil
 
   """
-  @spec get_by_external_id_and_book_id(Ecto.UUID.t(), integer(), get_options()) :: Category.t() | nil
-  def get_by_external_id_and_book_id(external_id, book_id, opts \\ []) do
+  @spec get_by_external_id_and_workspace_id(Ecto.UUID.t(), integer(), get_options()) :: Category.t() | nil
+  def get_by_external_id_and_workspace_id(external_id, workspace_id, opts \\ []) do
     external_id
     |> CategoryQuery.by_external_id()
-    |> CategoryQuery.by_book_id(book_id)
+    |> CategoryQuery.by_workspace_id(workspace_id)
     |> Repo.one()
     |> Utilities.maybe_preload(opts)
   end
@@ -170,7 +170,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
   end
 
   @doc """
-  Gets the position of the first category in a book (ordered by position).
+  Gets the position of the first category in a workspace (ordered by position).
 
   Returns the position as a string, or nil if no categories exist.
 
@@ -184,9 +184,9 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
 
   """
   @spec get_first_position(integer()) :: String.t() | nil
-  def get_first_position(book_id) do
-    book_id
-    |> CategoryQuery.by_book_id()
+  def get_first_position(workspace_id) do
+    workspace_id
+    |> CategoryQuery.by_workspace_id()
     |> CategoryQuery.order_by_position()
     |> CategoryQuery.limit(1)
     |> CategoryQuery.select_position()
@@ -207,8 +207,8 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
       iex> fetch(1)
       {:ok, %Category{}}
 
-      iex> fetch(1, preload: [:book])
-      {:ok, %Category{book: %Book{}}}
+      iex> fetch(1, preload: [:workspace])
+      {:ok, %Category{workspace: %Workspace{}}}
 
       iex> fetch(999)
       {:error, :not_found}
@@ -242,8 +242,8 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepository do
       iex> list_by_external_ids(["id1", "id2", "id3"])
       [%Category{}, %Category{}]
 
-      iex> list_by_external_ids(["id1", "id2"], preload: [:book])
-      [%Category{book: %Book{}}, %Category{book: %Book{}}]
+      iex> list_by_external_ids(["id1", "id2"], preload: [:workspace])
+      [%Category{workspace: %Workspace{}}, %Category{workspace: %Workspace{}}]
 
   """
   @spec list_by_external_ids([Ecto.UUID.t()], list_options()) :: [Category.t()]

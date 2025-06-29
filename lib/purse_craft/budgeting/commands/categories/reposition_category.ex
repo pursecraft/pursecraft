@@ -45,7 +45,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategory do
       |> Enum.filter(&(&1 != nil))
       |> Enum.uniq()
 
-    categories = CategoryRepository.list_by_external_ids(ids_to_fetch, preload: [:book])
+    categories = CategoryRepository.list_by_external_ids(ids_to_fetch, preload: [:workspace])
     categories_map = Map.new(categories, &{&1.external_id, &1})
 
     with {:ok, [category, prev_category, next_category]} <-
@@ -55,7 +55,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategory do
              prev_category_id,
              next_category_id
            ),
-         :ok <- Policy.authorize(:category_update, scope, %{book: category.book}) do
+         :ok <- Policy.authorize(:category_update, scope, %{workspace: category.workspace}) do
       result =
         Repo.transaction(fn ->
           case attempt_reposition(category, prev_category, next_category, @max_retries) do
@@ -66,7 +66,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategory do
 
       case result do
         {:ok, updated} ->
-          PubSub.broadcast_book(category.book, {:category_repositioned, updated})
+          PubSub.broadcast_workspace(category.workspace, {:category_repositioned, updated})
           {:ok, updated}
 
         {:error, reason} ->
@@ -80,21 +80,21 @@ defmodule PurseCraft.Budgeting.Commands.Categories.RepositionCategory do
            categories_map
            |> Map.get(category_id)
            |> Utilities.to_result(),
-         {:ok, prev_category} <- validate_optional_category(categories_map, prev_category_id, category.book_id),
-         {:ok, next_category} <- validate_optional_category(categories_map, next_category_id, category.book_id) do
+         {:ok, prev_category} <- validate_optional_category(categories_map, prev_category_id, category.workspace_id),
+         {:ok, next_category} <- validate_optional_category(categories_map, next_category_id, category.workspace_id) do
       {:ok, [category, prev_category, next_category]}
     end
   end
 
-  defp validate_optional_category(_categories_map, nil, _book_id), do: {:ok, nil}
+  defp validate_optional_category(_categories_map, nil, _workspace_id), do: {:ok, nil}
 
-  defp validate_optional_category(categories_map, category_id, book_id) do
+  defp validate_optional_category(categories_map, category_id, workspace_id) do
     case Map.get(categories_map, category_id) do
       nil ->
         {:error, :not_found}
 
       category ->
-        if category.book_id == book_id do
+        if category.workspace_id == workspace_id do
           {:ok, category}
         else
           {:error, :not_found}

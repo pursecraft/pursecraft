@@ -7,8 +7,8 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.ChangeEnvelopeTest do
 
   describe "call/2" do
     test "returns an envelope changeset" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
 
       assert %Ecto.Changeset{} = changeset = ChangeEnvelope.call(envelope, %{})
@@ -17,8 +17,8 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.ChangeEnvelopeTest do
     end
 
     test "returns an envelope changeset with changes" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
       new_name = "New Envelope Name"
 

@@ -42,7 +42,7 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
   end
 
   @doc """
-  Gets an envelope by its external ID and book ID with options.
+  Gets an envelope by its external ID and workspace ID with options.
 
   Returns the envelope if it exists, or `nil` if not found.
 
@@ -54,18 +54,18 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepository do
 
   ## Examples
 
-      iex> get_by_external_id_and_book_id("abcd-1234", 1, preload: [:category])
+      iex> get_by_external_id_and_workspace_id("abcd-1234", 1, preload: [:category])
       %Envelope{category: %Category{}}
 
-      iex> get_by_external_id_and_book_id("non-existent-id", 1, preload: [:category])
+      iex> get_by_external_id_and_workspace_id("non-existent-id", 1, preload: [:category])
       nil
 
   """
-  @spec get_by_external_id_and_book_id(Ecto.UUID.t(), integer(), get_options()) :: Envelope.t() | nil
-  def get_by_external_id_and_book_id(external_id, book_id, opts \\ []) do
+  @spec get_by_external_id_and_workspace_id(Ecto.UUID.t(), integer(), get_options()) :: Envelope.t() | nil
+  def get_by_external_id_and_workspace_id(external_id, workspace_id, opts \\ []) do
     external_id
     |> EnvelopeQuery.by_external_id()
-    |> EnvelopeQuery.by_book_id(book_id)
+    |> EnvelopeQuery.by_workspace_id(workspace_id)
     |> Repo.one()
     |> Utilities.maybe_preload(opts)
   end

@@ -5,9 +5,9 @@
 ```mermaid
 erDiagram
     User ||--o{ UserToken : "has many"
-    User ||--o{ BookUser : "has many"
-    Book ||--o{ BookUser : "has many"
-    Book ||--o{ Category : "has many"
+    User ||--o{ WorkspaceUser : "has many"
+    Workspace ||--o{ WorkspaceUser : "has many"
+    Workspace ||--o{ Category : "has many"
     Category ||--o{ Envelope : "has many"
     
     User {
@@ -30,7 +30,7 @@ erDiagram
         datetime inserted_at
     }
     
-    Book {
+    Workspace {
         integer id PK
         uuid external_id UK
         binary name "encrypted, not null"
@@ -39,10 +39,10 @@ erDiagram
         datetime updated_at
     }
     
-    BookUser {
+    WorkspaceUser {
         integer id PK
         enum role ":owner, :editor, :commenter"
-        integer book_id FK
+        integer workspace_id FK
         integer user_id FK
         datetime inserted_at
         datetime updated_at
@@ -54,7 +54,7 @@ erDiagram
         binary name_hash "searchable hash, not null"
         string position "fractional indexing, not null"
         uuid external_id UK
-        integer book_id FK
+        integer workspace_id FK
         datetime inserted_at
         datetime updated_at
     }
@@ -92,25 +92,25 @@ Manages authentication tokens for various purposes like session management, logi
 
 ### Budgeting Context
 
-#### Book
+#### Workspace
 
-Represents a user's budget - the top-level container in the budgeting system. A user can have multiple books, and books can be shared between users with different permission levels.
+Represents a user's budget - the top-level container in the budgeting system. A user can have multiple workspaces, and workspaces can be shared between users with different permission levels.
 
-**Encryption**: Book names use the same dual-column encryption pattern as other entities:
+**Encryption**: Workspace names use the same dual-column encryption pattern as other entities:
 - `name`: AES-GCM encrypted binary field for secure storage
 - `name_hash`: HMAC-SHA256 hash for searchable indexing
-- **Security rationale**: Book names can reveal personal circumstances and family situations
+- **Security rationale**: Workspace names can reveal personal circumstances and family situations
 
-#### BookUser
+#### WorkspaceUser
 
-Junction table that establishes a many-to-many relationship between users and books. Implements role-based access control with three levels:
+Junction table that establishes a many-to-many relationship between users and workspaces. Implements role-based access control with three levels:
 - **owner**: Highest privilege level
 - **editor**: Mid-level privileges
 - **commenter**: Lowest privilege level
 
 #### Category
 
-Groups related envelopes together within a book. Categories help organize the budget structure and provide a logical separation of budget items.
+Groups related envelopes together within a workspace. Categories help organize the budget structure and provide a logical separation of budget items.
 
 **Encryption**: Category names use the same dual-column encryption pattern as user emails:
 - `name`: AES-GCM encrypted binary field for secure storage

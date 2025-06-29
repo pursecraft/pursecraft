@@ -48,40 +48,40 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQueryTest do
     end
   end
 
-  describe "by_book_id/1" do
-    test "creates a query filtered by book_id" do
-      book_id = 123
-      query = CategoryQuery.by_book_id(book_id)
+  describe "by_workspace_id/1" do
+    test "creates a query filtered by workspace_id" do
+      workspace_id = 123
+      query = CategoryQuery.by_workspace_id(workspace_id)
 
       assert query.from.source == {"categories", Category}
 
       assert length(query.wheres) == 1
 
       [where_clause] = query.wheres
-      assert where_clause.params == [{book_id, {0, :book_id}}]
+      assert where_clause.params == [{workspace_id, {0, :workspace_id}}]
     end
   end
 
-  describe "by_book_id/2" do
-    test "adds book_id filter to existing query" do
-      book_id = 456
+  describe "by_workspace_id/2" do
+    test "adds workspace_id filter to existing query" do
+      workspace_id = 456
       base_query = from(c in Category, where: c.name == "Food")
 
-      query = CategoryQuery.by_book_id(base_query, book_id)
+      query = CategoryQuery.by_workspace_id(base_query, workspace_id)
 
       assert length(query.wheres) == 2
 
       param_values = Enum.flat_map(query.wheres, & &1.params)
-      assert {book_id, {0, :book_id}} in param_values
+      assert {workspace_id, {0, :workspace_id}} in param_values
     end
 
     test "works with Category schema directly" do
-      book_id = 789
-      query = CategoryQuery.by_book_id(Category, book_id)
+      workspace_id = 789
+      query = CategoryQuery.by_workspace_id(Category, workspace_id)
 
       assert query.from.source == {"categories", Category}
       assert length(query.wheres) == 1
-      assert hd(query.wheres).params == [{book_id, {0, :book_id}}]
+      assert hd(query.wheres).params == [{workspace_id, {0, :workspace_id}}]
     end
   end
 
@@ -99,7 +99,7 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQueryTest do
 
   describe "order_by_position/1" do
     test "adds position ordering to existing query" do
-      base_query = from(c in Category, where: c.book_id == 1)
+      base_query = from(c in Category, where: c.workspace_id == 1)
       query = CategoryQuery.order_by_position(base_query)
 
       assert length(query.order_bys) == 1
@@ -121,7 +121,7 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQueryTest do
 
   describe "limit/2" do
     test "adds limit to existing query" do
-      base_query = from(c in Category, where: c.book_id == 1)
+      base_query = from(c in Category, where: c.workspace_id == 1)
       count = 10
       query = CategoryQuery.limit(base_query, count)
 
@@ -141,7 +141,7 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQueryTest do
 
   describe "select_position/1" do
     test "adds position selection to existing query" do
-      base_query = from(c in Category, where: c.book_id == 1)
+      base_query = from(c in Category, where: c.workspace_id == 1)
       query = CategoryQuery.select_position(base_query)
 
       assert query.select.expr == {{:., [], [{:&, [], [0]}, :position]}, [], []}
@@ -174,7 +174,7 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQueryTest do
 
   describe "by_external_ids/2" do
     test "adds external_ids filter to existing query" do
-      base_query = from(c in Category, where: c.book_id == 123)
+      base_query = from(c in Category, where: c.workspace_id == 123)
       external_ids = ["id1", "id2"]
 
       query = CategoryQuery.by_external_ids(base_query, external_ids)

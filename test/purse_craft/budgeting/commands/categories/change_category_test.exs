@@ -7,8 +7,8 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ChangeCategoryTest do
 
   describe "call/2" do
     test "returns a category changeset" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
       assert %Ecto.Changeset{} = changeset = ChangeCategory.call(category, %{})
       assert changeset.data == category
@@ -16,8 +16,8 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ChangeCategoryTest do
     end
 
     test "returns a category changeset with changes" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book_id: book.id)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       new_name = "New Category Name"
 
       assert %Ecto.Changeset{} = changeset = ChangeCategory.call(category, %{name: new_name})

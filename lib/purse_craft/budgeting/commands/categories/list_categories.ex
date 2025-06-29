@@ -1,12 +1,12 @@
 defmodule PurseCraft.Budgeting.Commands.Categories.ListCategories do
   @moduledoc """
-  Returns a list of categories for a given book.
+  Returns a list of categories for a given workspace.
   """
 
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Category
-  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Types
 
@@ -14,7 +14,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ListCategories do
   @type options :: [option()]
 
   @doc """
-  Returns a list of categories for a given book.
+  Returns a list of categories for a given workspace.
 
   ## Preloading options
 
@@ -24,20 +24,20 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ListCategories do
 
   ## Examples
 
-      iex> call(authorized_scope, book)
+      iex> call(authorized_scope, workspace)
       [%Category{}, ...]
 
-      iex> call(authorized_scope, book, preload: [:envelopes])
+      iex> call(authorized_scope, workspace, preload: [:envelopes])
       [%Category{envelopes: [%Envelope{}, ...]}, ...]
 
-      iex> call(unauthorized_scope, book)
+      iex> call(unauthorized_scope, workspace)
       {:error, :unauthorized}
 
   """
-  @spec call(Scope.t(), Book.t(), options()) :: list(Category.t()) | {:error, :unauthorized}
-  def call(%Scope{} = scope, %Book{} = book, opts \\ []) do
-    with :ok <- Policy.authorize(:category_read, scope, %{book: book}) do
-      CategoryRepository.list_by_book_id(book.id, opts)
+  @spec call(Scope.t(), Workspace.t(), options()) :: list(Category.t()) | {:error, :unauthorized}
+  def call(%Scope{} = scope, %Workspace{} = workspace, opts \\ []) do
+    with :ok <- Policy.authorize(:category_read, scope, %{workspace: workspace}) do
+      CategoryRepository.list_by_workspace_id(workspace.id, opts)
     end
   end
 end

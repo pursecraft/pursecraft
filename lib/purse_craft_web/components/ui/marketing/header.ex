@@ -126,7 +126,7 @@ defmodule PurseCraftWeb.Components.UI.Marketing.Header do
                 </li>
               </ul>
             </div>
-            <.link href={~p"/books"} class="btn btn-primary">Go to App</.link>
+            <.link href={~p"/workspaces"} class="btn btn-primary">Go to App</.link>
           <% else %>
             <.link href={~p"/users/log-in"} class="hover:text-primary">Log in</.link>
             <.link href={~p"/users/register"} class="btn btn-primary">Start Free Trial</.link>
@@ -136,7 +136,7 @@ defmodule PurseCraftWeb.Components.UI.Marketing.Header do
     <!-- Mobile menu button -->
         <div class="md:hidden flex items-center">
           <%= if @current_scope do %>
-            <.link href={~p"/books"} class="btn btn-primary btn-sm mr-2">App</.link>
+            <.link href={~p"/workspaces"} class="btn btn-primary btn-sm mr-2">App</.link>
           <% end %>
           <button class="btn btn-ghost btn-sm btn-square" phx-click={JS.toggle(to: "#mobile-menu")}>
             <svg

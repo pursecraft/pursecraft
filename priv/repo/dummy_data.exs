@@ -15,8 +15,8 @@ import Ecto.Changeset
 alias PurseCraft.Accounting.Schemas.Account
 alias PurseCraft.Budgeting.Schemas.Category
 alias PurseCraft.Budgeting.Schemas.Envelope
-alias PurseCraft.Core.Schemas.Book
-alias PurseCraft.Core.Schemas.BookUser
+alias PurseCraft.Core.Schemas.Workspace
+alias PurseCraft.Core.Schemas.WorkspaceUser
 alias PurseCraft.Identity.Schemas.User
 alias PurseCraft.Repo
 alias PurseCraft.Utilities.FractionalIndexing
@@ -29,12 +29,12 @@ now = DateTime.utc_now(:second)
 password = "password123!"
 hashed_password = Bcrypt.hash_pwd_salt(password)
 
-dummy_book =
-  %Book{}
-  |> Book.changeset(%{name: "Dummy Book"})
+dummy_workspace =
+  %Workspace{}
+  |> Workspace.changeset(%{name: "Dummy Workspace"})
   |> Repo.insert!()
 
-dummy_book_owner =
+dummy_workspace_owner =
   %User{}
   |> User.email_changeset(%{email: "owner@example.com"})
   |> put_change(:hashed_password, hashed_password)
@@ -42,7 +42,7 @@ dummy_book_owner =
   |> put_change(:authenticated_at, now)
   |> Repo.insert!()
 
-dummy_book_editor =
+dummy_workspace_editor =
   %User{}
   |> User.email_changeset(%{email: "editor@example.com"})
   |> put_change(:hashed_password, hashed_password)
@@ -50,7 +50,7 @@ dummy_book_editor =
   |> put_change(:authenticated_at, now)
   |> Repo.insert!()
 
-dummy_book_commenter =
+dummy_workspace_commenter =
   %User{}
   |> User.email_changeset(%{email: "commenter@example.com"})
   |> put_change(:hashed_password, hashed_password)
@@ -58,21 +58,21 @@ dummy_book_commenter =
   |> put_change(:authenticated_at, now)
   |> Repo.insert!()
 
-Repo.insert!(%BookUser{
-  book_id: dummy_book.id,
-  user_id: dummy_book_owner.id,
+Repo.insert!(%WorkspaceUser{
+  workspace_id: dummy_workspace.id,
+  user_id: dummy_workspace_owner.id,
   role: :owner
 })
 
-Repo.insert!(%BookUser{
-  book_id: dummy_book.id,
-  user_id: dummy_book_editor.id,
+Repo.insert!(%WorkspaceUser{
+  workspace_id: dummy_workspace.id,
+  user_id: dummy_workspace_editor.id,
   role: :editor
 })
 
-Repo.insert!(%BookUser{
-  book_id: dummy_book.id,
-  user_id: dummy_book_commenter.id,
+Repo.insert!(%WorkspaceUser{
+  workspace_id: dummy_workspace.id,
+  user_id: dummy_workspace_commenter.id,
   role: :commenter
 })
 
@@ -156,7 +156,7 @@ category_names
     %Category{}
     |> Category.changeset(%{
       name: category_name,
-      book_id: dummy_book.id,
+      workspace_id: dummy_workspace.id,
       position: position
     })
     |> Repo.insert!()
@@ -210,7 +210,7 @@ account_data
     name: account_attrs.name,
     account_type: account_attrs.account_type,
     description: account_attrs.description,
-    book_id: dummy_book.id,
+    workspace_id: dummy_workspace.id,
     position: position
   })
   |> Repo.insert!()

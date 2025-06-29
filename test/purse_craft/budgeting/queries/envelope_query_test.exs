@@ -49,10 +49,10 @@ defmodule PurseCraft.Budgeting.Queries.EnvelopeQueryTest do
     end
   end
 
-  describe "by_book_id/1" do
-    test "creates a query with join and filter by book_id" do
-      book_id = 123
-      query = EnvelopeQuery.by_book_id(book_id)
+  describe "by_workspace_id/1" do
+    test "creates a query with join and filter by workspace_id" do
+      workspace_id = 123
+      query = EnvelopeQuery.by_workspace_id(workspace_id)
 
       assert query.from.source == {"envelopes", Envelope}
 
@@ -62,32 +62,32 @@ defmodule PurseCraft.Budgeting.Queries.EnvelopeQueryTest do
 
       assert length(query.wheres) == 1
       [where_clause] = query.wheres
-      assert where_clause.params == [{book_id, {1, :book_id}}]
+      assert where_clause.params == [{workspace_id, {1, :workspace_id}}]
     end
   end
 
-  describe "by_book_id/2" do
-    test "adds book_id filter with join to existing query" do
-      book_id = 456
+  describe "by_workspace_id/2" do
+    test "adds workspace_id filter with join to existing query" do
+      workspace_id = 456
       base_query = from(e in Envelope, where: e.name == "Groceries")
 
-      query = EnvelopeQuery.by_book_id(base_query, book_id)
+      query = EnvelopeQuery.by_workspace_id(base_query, workspace_id)
 
       assert length(query.joins) == 1
       assert length(query.wheres) == 2
 
       param_values = Enum.flat_map(query.wheres, & &1.params)
-      assert {book_id, {1, :book_id}} in param_values
+      assert {workspace_id, {1, :workspace_id}} in param_values
     end
 
     test "works with Envelope schema directly" do
-      book_id = 789
-      query = EnvelopeQuery.by_book_id(Envelope, book_id)
+      workspace_id = 789
+      query = EnvelopeQuery.by_workspace_id(Envelope, workspace_id)
 
       assert query.from.source == {"envelopes", Envelope}
       assert length(query.joins) == 1
       assert length(query.wheres) == 1
-      assert hd(query.wheres).params == [{book_id, {1, :book_id}}]
+      assert hd(query.wheres).params == [{workspace_id, {1, :workspace_id}}]
     end
   end
 

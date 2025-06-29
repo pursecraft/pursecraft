@@ -8,17 +8,17 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
   alias PurseCraft.CoreFactory
 
   setup do
-    book = CoreFactory.insert(:book)
-    {:ok, book: book}
+    workspace = CoreFactory.insert(:workspace)
+    {:ok, workspace: workspace}
   end
 
   describe "create/1" do
-    test "with valid attributes creates an account", %{book: book} do
+    test "with valid attributes creates an account", %{workspace: workspace} do
       attrs = %{
         name: "Test Account",
         account_type: "checking",
         description: "Test Description",
-        book_id: book.id,
+        workspace_id: workspace.id,
         position: "m"
       }
 
@@ -26,16 +26,16 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert account.name == "Test Account"
       assert account.account_type == "checking"
       assert account.description == "Test Description"
-      assert account.book_id == book.id
+      assert account.workspace_id == workspace.id
       assert account.position == "m"
       assert is_binary(account.external_id)
     end
 
-    test "with invalid name returns error changeset", %{book: book} do
+    test "with invalid name returns error changeset", %{workspace: workspace} do
       attrs = %{
         name: "",
         account_type: "checking",
-        book_id: book.id,
+        workspace_id: workspace.id,
         position: "m"
       }
 
@@ -43,11 +43,11 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert %{name: ["can't be blank"]} = errors_on(changeset)
     end
 
-    test "with invalid account_type returns error changeset", %{book: book} do
+    test "with invalid account_type returns error changeset", %{workspace: workspace} do
       attrs = %{
         name: "Test Account",
         account_type: "invalid_type",
-        book_id: book.id,
+        workspace_id: workspace.id,
         position: "m"
       }
 
@@ -59,14 +59,14 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       attrs = %{name: "Test Account"}
 
       assert {:error, changeset} = AccountRepository.create(attrs)
-      assert %{book_id: ["can't be blank"], position: ["can't be blank"]} = errors_on(changeset)
+      assert %{workspace_id: ["can't be blank"], position: ["can't be blank"]} = errors_on(changeset)
     end
 
-    test "validates position format", %{book: book} do
+    test "validates position format", %{workspace: workspace} do
       attrs = %{
         name: "Test Account",
         account_type: "checking",
-        book_id: book.id,
+        workspace_id: workspace.id,
         position: "INVALID"
       }
 
@@ -74,13 +74,13 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert %{position: ["must contain only lowercase letters"]} = errors_on(changeset)
     end
 
-    test "enforces book_id + position unique constraint", %{book: book} do
-      AccountingFactory.insert(:account, book: book, position: "m")
+    test "enforces workspace_id + position unique constraint", %{workspace: workspace} do
+      AccountingFactory.insert(:account, workspace: workspace, position: "m")
 
       attrs = %{
         name: "Duplicate Position Account",
         account_type: "checking",
-        book_id: book.id,
+        workspace_id: workspace.id,
         position: "m"
       }
 
@@ -88,15 +88,15 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert %{position: ["has already been taken"]} = errors_on(changeset)
     end
 
-    test "allows same position in different books" do
-      book1 = CoreFactory.insert(:book)
-      book2 = CoreFactory.insert(:book)
-      AccountingFactory.insert(:account, book: book1, position: "m")
+    test "allows same position in different workspaces" do
+      workspace1 = CoreFactory.insert(:workspace)
+      workspace2 = CoreFactory.insert(:workspace)
+      AccountingFactory.insert(:account, workspace: workspace1, position: "m")
 
       attrs = %{
-        name: "Same Position Different Book",
+        name: "Same Position Different Workspace",
         account_type: "checking",
-        book_id: book2.id,
+        workspace_id: workspace2.id,
         position: "m"
       }
 
@@ -105,47 +105,47 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
   end
 
   describe "get_first_position/1" do
-    test "returns nil when no accounts exist in book", %{book: book} do
-      assert AccountRepository.get_first_position(book.id) == nil
+    test "returns nil when no accounts exist in workspace", %{workspace: workspace} do
+      assert AccountRepository.get_first_position(workspace.id) == nil
     end
 
-    test "returns position of first account when accounts exist", %{book: book} do
-      AccountingFactory.insert(:account, book: book, position: "m")
-      AccountingFactory.insert(:account, book: book, position: "g")
-      AccountingFactory.insert(:account, book: book, position: "t")
+    test "returns position of first account when accounts exist", %{workspace: workspace} do
+      AccountingFactory.insert(:account, workspace: workspace, position: "m")
+      AccountingFactory.insert(:account, workspace: workspace, position: "g")
+      AccountingFactory.insert(:account, workspace: workspace, position: "t")
 
-      assert AccountRepository.get_first_position(book.id) == "g"
+      assert AccountRepository.get_first_position(workspace.id) == "g"
     end
 
-    test "returns single account position when only one account exists", %{book: book} do
-      AccountingFactory.insert(:account, book: book, position: "m")
+    test "returns single account position when only one account exists", %{workspace: workspace} do
+      AccountingFactory.insert(:account, workspace: workspace, position: "m")
 
-      assert AccountRepository.get_first_position(book.id) == "m"
+      assert AccountRepository.get_first_position(workspace.id) == "m"
     end
 
-    test "ignores accounts from other books", %{book: book} do
-      other_book = CoreFactory.insert(:book)
-      AccountingFactory.insert(:account, book: book, position: "a")
-      AccountingFactory.insert(:account, book: other_book, position: "z")
+    test "ignores accounts from other workspaces", %{workspace: workspace} do
+      other_workspace = CoreFactory.insert(:workspace)
+      AccountingFactory.insert(:account, workspace: workspace, position: "a")
+      AccountingFactory.insert(:account, workspace: other_workspace, position: "z")
 
-      assert AccountRepository.get_first_position(book.id) == "a"
-      assert AccountRepository.get_first_position(other_book.id) == "z"
+      assert AccountRepository.get_first_position(workspace.id) == "a"
+      assert AccountRepository.get_first_position(other_workspace.id) == "z"
     end
 
-    test "handles complex position ordering correctly", %{book: book} do
-      AccountingFactory.insert(:account, book: book, position: "m")
-      AccountingFactory.insert(:account, book: book, position: "d")
-      AccountingFactory.insert(:account, book: book, position: "g")
-      AccountingFactory.insert(:account, book: book, position: "b")
-      AccountingFactory.insert(:account, book: book, position: "t")
+    test "handles complex position ordering correctly", %{workspace: workspace} do
+      AccountingFactory.insert(:account, workspace: workspace, position: "m")
+      AccountingFactory.insert(:account, workspace: workspace, position: "d")
+      AccountingFactory.insert(:account, workspace: workspace, position: "g")
+      AccountingFactory.insert(:account, workspace: workspace, position: "b")
+      AccountingFactory.insert(:account, workspace: workspace, position: "t")
 
-      assert AccountRepository.get_first_position(book.id) == "b"
+      assert AccountRepository.get_first_position(workspace.id) == "b"
     end
   end
 
   describe "get_by_external_id/2" do
-    test "returns account when found", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book)
+    test "returns account when found", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace)
 
       result = AccountRepository.get_by_external_id(account.external_id)
 
@@ -159,26 +159,26 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert result == nil
     end
 
-    test "returns account with preloaded associations", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book)
+    test "returns account with preloaded associations", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace)
 
-      result = AccountRepository.get_by_external_id(account.external_id, preload: [:book])
+      result = AccountRepository.get_by_external_id(account.external_id, preload: [:workspace])
 
       assert result.id == account.id
-      assert %NotLoaded{} != result.book
-      assert result.book.id == account.book_id
+      assert %NotLoaded{} != result.workspace
+      assert result.workspace.id == account.workspace_id
     end
 
-    test "filters closed accounts when active_only is true (default)", %{book: book} do
-      closed_account = AccountingFactory.insert(:account, book: book, closed_at: DateTime.utc_now())
+    test "filters closed accounts when active_only is true (default)", %{workspace: workspace} do
+      closed_account = AccountingFactory.insert(:account, workspace: workspace, closed_at: DateTime.utc_now())
 
       result = AccountRepository.get_by_external_id(closed_account.external_id)
 
       assert result == nil
     end
 
-    test "includes closed accounts when active_only is false", %{book: book} do
-      closed_account = AccountingFactory.insert(:account, book: book, closed_at: DateTime.utc_now())
+    test "includes closed accounts when active_only is false", %{workspace: workspace} do
+      closed_account = AccountingFactory.insert(:account, workspace: workspace, closed_at: DateTime.utc_now())
 
       result = AccountRepository.get_by_external_id(closed_account.external_id, active_only: false)
 
@@ -186,13 +186,13 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
   end
 
-  describe "list_by_book/2" do
-    test "returns all accounts for a book ordered by position", %{book: book} do
-      account1 = AccountingFactory.insert(:account, book: book, position: "bbbb")
-      account2 = AccountingFactory.insert(:account, book: book, position: "aaaa")
-      account3 = AccountingFactory.insert(:account, book: book, position: "cccc")
+  describe "list_by_workspace/2" do
+    test "returns all accounts for a workspace ordered by position", %{workspace: workspace} do
+      account1 = AccountingFactory.insert(:account, workspace: workspace, position: "bbbb")
+      account2 = AccountingFactory.insert(:account, workspace: workspace, position: "aaaa")
+      account3 = AccountingFactory.insert(:account, workspace: workspace, position: "cccc")
 
-      result = AccountRepository.list_by_book(book.id)
+      result = AccountRepository.list_by_workspace(workspace.id)
 
       assert length(result) == 3
       assert [first, second, third] = result
@@ -201,36 +201,38 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert third.id == account3.id
     end
 
-    test "returns empty list when no accounts exist", %{book: book} do
-      result = AccountRepository.list_by_book(book.id)
+    test "returns empty list when no accounts exist", %{workspace: workspace} do
+      result = AccountRepository.list_by_workspace(workspace.id)
 
       assert result == []
     end
 
-    test "returns accounts with preloaded associations", %{book: book} do
-      AccountingFactory.insert(:account, book: book, position: "aaaa")
+    test "returns accounts with preloaded associations", %{workspace: workspace} do
+      AccountingFactory.insert(:account, workspace: workspace, position: "aaaa")
 
-      result = AccountRepository.list_by_book(book.id, preload: [:book])
+      result = AccountRepository.list_by_workspace(workspace.id, preload: [:workspace])
 
       assert [account] = result
-      assert %NotLoaded{} != account.book
-      assert account.book.id == book.id
+      assert %NotLoaded{} != account.workspace
+      assert account.workspace.id == workspace.id
     end
 
-    test "filters closed accounts when active_only is true (default)", %{book: book} do
-      AccountingFactory.insert(:account, book: book, position: "aaaa")
-      AccountingFactory.insert(:account, book: book, position: "bbbb", closed_at: DateTime.utc_now())
+    test "filters closed accounts when active_only is true (default)", %{workspace: workspace} do
+      AccountingFactory.insert(:account, workspace: workspace, position: "aaaa")
+      AccountingFactory.insert(:account, workspace: workspace, position: "bbbb", closed_at: DateTime.utc_now())
 
-      result = AccountRepository.list_by_book(book.id)
+      result = AccountRepository.list_by_workspace(workspace.id)
 
       assert length(result) == 1
     end
 
-    test "includes closed accounts when active_only is false", %{book: book} do
-      active_account = AccountingFactory.insert(:account, book: book, position: "aaaa")
-      closed_account = AccountingFactory.insert(:account, book: book, position: "bbbb", closed_at: DateTime.utc_now())
+    test "includes closed accounts when active_only is false", %{workspace: workspace} do
+      active_account = AccountingFactory.insert(:account, workspace: workspace, position: "aaaa")
 
-      result = AccountRepository.list_by_book(book.id, active_only: false)
+      closed_account =
+        AccountingFactory.insert(:account, workspace: workspace, position: "bbbb", closed_at: DateTime.utc_now())
+
+      result = AccountRepository.list_by_workspace(workspace.id, active_only: false)
 
       assert length(result) == 2
       assert [first, second] = result
@@ -238,42 +240,42 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert second.id == closed_account.id
     end
 
-    test "only returns accounts for specified book", %{book: book} do
-      other_book = CoreFactory.insert(:book)
-      AccountingFactory.insert(:account, book: book, position: "aaaa")
-      AccountingFactory.insert(:account, book: other_book, position: "aaaa")
+    test "only returns accounts for specified workspace", %{workspace: workspace} do
+      other_workspace = CoreFactory.insert(:workspace)
+      AccountingFactory.insert(:account, workspace: workspace, position: "aaaa")
+      AccountingFactory.insert(:account, workspace: other_workspace, position: "aaaa")
 
-      result = AccountRepository.list_by_book(book.id)
+      result = AccountRepository.list_by_workspace(workspace.id)
 
       assert length(result) == 1
       assert [account] = result
-      assert account.book_id == book.id
+      assert account.workspace_id == workspace.id
     end
 
-    test "handles multiple options together", %{book: book} do
-      active_account = AccountingFactory.insert(:account, book: book, position: "aaaa")
-      AccountingFactory.insert(:account, book: book, position: "bbbb", closed_at: DateTime.utc_now())
+    test "handles multiple options together", %{workspace: workspace} do
+      active_account = AccountingFactory.insert(:account, workspace: workspace, position: "aaaa")
+      AccountingFactory.insert(:account, workspace: workspace, position: "bbbb", closed_at: DateTime.utc_now())
 
-      result = AccountRepository.list_by_book(book.id, preload: [:book], active_only: true)
+      result = AccountRepository.list_by_workspace(workspace.id, preload: [:workspace], active_only: true)
 
       assert length(result) == 1
       assert [account] = result
       assert account.id == active_account.id
-      assert %NotLoaded{} != account.book
+      assert %NotLoaded{} != account.workspace
     end
 
-    test "handles book with no accounts returns empty list" do
-      non_existent_book_id = 999_999
+    test "handles workspace with no accounts returns empty list" do
+      non_existent_workspace_id = 999_999
 
-      result = AccountRepository.list_by_book(non_existent_book_id)
+      result = AccountRepository.list_by_workspace(non_existent_workspace_id)
 
       assert result == []
     end
   end
 
   describe "update/2" do
-    test "with valid attributes updates an account", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book, name: "Old Name", description: "Old Description")
+    test "with valid attributes updates an account", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace, name: "Old Name", description: "Old Description")
       attrs = %{name: "New Name", description: "New Description"}
 
       assert {:ok, %Account{} = updated_account} = AccountRepository.update(account, attrs)
@@ -282,35 +284,35 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert updated_account.description == "New Description"
       assert updated_account.account_type == account.account_type
       assert updated_account.position == account.position
-      assert updated_account.book_id == account.book_id
+      assert updated_account.workspace_id == account.workspace_id
     end
 
-    test "with invalid name returns error changeset", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book)
+    test "with invalid name returns error changeset", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace)
       attrs = %{name: ""}
 
       assert {:error, changeset} = AccountRepository.update(account, attrs)
       assert %{name: ["can't be blank"]} = errors_on(changeset)
     end
 
-    test "with empty description updates successfully", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book, description: "Old Description")
+    test "with empty description updates successfully", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace, description: "Old Description")
       attrs = %{description: ""}
 
       assert {:ok, updated_account} = AccountRepository.update(account, attrs)
       assert updated_account.description == nil
     end
 
-    test "with nil attributes handles gracefully", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book, name: "Original Name")
+    test "with nil attributes handles gracefully", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace, name: "Original Name")
       attrs = %{name: nil}
 
       assert {:error, changeset} = AccountRepository.update(account, attrs)
       assert %{name: ["can't be blank"]} = errors_on(changeset)
     end
 
-    test "ignores account_type changes", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book, account_type: "checking")
+    test "ignores account_type changes", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
       attrs = %{account_type: "savings", name: "Updated Name"}
 
       assert {:ok, updated_account} = AccountRepository.update(account, attrs)
@@ -318,8 +320,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert updated_account.name == "Updated Name"
     end
 
-    test "ignores position changes", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book, position: "m")
+    test "ignores position changes", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace, position: "m")
       attrs = %{position: "z", name: "Updated Name"}
 
       assert {:ok, updated_account} = AccountRepository.update(account, attrs)
@@ -327,18 +329,18 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert updated_account.name == "Updated Name"
     end
 
-    test "ignores book_id changes", %{book: book} do
-      other_book = CoreFactory.insert(:book)
-      account = AccountingFactory.insert(:account, book: book)
-      attrs = %{book_id: other_book.id, name: "Updated Name"}
+    test "ignores workspace_id changes", %{workspace: workspace} do
+      other_workspace = CoreFactory.insert(:workspace)
+      account = AccountingFactory.insert(:account, workspace: workspace)
+      attrs = %{workspace_id: other_workspace.id, name: "Updated Name"}
 
       assert {:ok, updated_account} = AccountRepository.update(account, attrs)
-      assert updated_account.book_id == book.id
+      assert updated_account.workspace_id == workspace.id
       assert updated_account.name == "Updated Name"
     end
 
-    test "ignores external_id changes", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book)
+    test "ignores external_id changes", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace)
       original_external_id = account.external_id
       attrs = %{external_id: Ecto.UUID.generate(), name: "Updated Name"}
 
@@ -349,8 +351,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
   end
 
   describe "delete/1" do
-    test "with valid account deletes successfully", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book)
+    test "with valid account deletes successfully", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace)
 
       assert {:ok, deleted_account} = AccountRepository.delete(account)
       assert deleted_account.id == account.id
@@ -358,8 +360,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert AccountRepository.get_by_external_id(account.external_id, active_only: false) == nil
     end
 
-    test "with already deleted account returns error", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book)
+    test "with already deleted account returns error", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace)
 
       assert {:ok, _deleted_account} = AccountRepository.delete(account)
 
@@ -369,16 +371,16 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
   end
 
   describe "close/1" do
-    test "with valid account closes successfully", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book, closed_at: nil)
+    test "with valid account closes successfully", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace, closed_at: nil)
 
       assert {:ok, closed_account} = AccountRepository.close(account)
       assert closed_account.id == account.id
       assert closed_account.closed_at != nil
     end
 
-    test "verifies closed account persists in database", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book, closed_at: nil)
+    test "verifies closed account persists in database", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace, closed_at: nil)
 
       assert {:ok, closed_account} = AccountRepository.close(account)
 
@@ -389,24 +391,24 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
   end
 
   describe "update_position/2" do
-    test "with valid position updates successfully", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book, position: "m")
+    test "with valid position updates successfully", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace, position: "m")
 
       assert {:ok, updated_account} = AccountRepository.update_position(account, "z")
       assert updated_account.id == account.id
       assert updated_account.position == "z"
     end
 
-    test "with invalid position returns error changeset", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book, position: "m")
+    test "with invalid position returns error changeset", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace, position: "m")
 
       assert {:error, changeset} = AccountRepository.update_position(account, "INVALID")
       assert %{position: ["must contain only lowercase letters"]} = errors_on(changeset)
     end
 
-    test "with duplicate position returns unique constraint error", %{book: book} do
-      AccountingFactory.insert(:account, book: book, position: "g")
-      account2 = AccountingFactory.insert(:account, book: book, position: "m")
+    test "with duplicate position returns unique constraint error", %{workspace: workspace} do
+      AccountingFactory.insert(:account, workspace: workspace, position: "g")
+      account2 = AccountingFactory.insert(:account, workspace: workspace, position: "m")
 
       assert {:error, changeset} = AccountRepository.update_position(account2, "g")
       assert %{position: ["has already been taken"]} = errors_on(changeset)
@@ -414,10 +416,10 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
   end
 
   describe "list_by_external_ids/2" do
-    test "returns accounts matching the external IDs", %{book: book} do
-      account1 = AccountingFactory.insert(:account, book: book, position: "g")
-      account2 = AccountingFactory.insert(:account, book: book, position: "m")
-      account3 = AccountingFactory.insert(:account, book: book, position: "t")
+    test "returns accounts matching the external IDs", %{workspace: workspace} do
+      account1 = AccountingFactory.insert(:account, workspace: workspace, position: "g")
+      account2 = AccountingFactory.insert(:account, workspace: workspace, position: "m")
+      account3 = AccountingFactory.insert(:account, workspace: workspace, position: "t")
 
       external_ids = [account1.external_id, account3.external_id]
       result = AccountRepository.list_by_external_ids(external_ids)
@@ -429,8 +431,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       refute account2.external_id in returned_ids
     end
 
-    test "returns empty list when no external IDs match", %{book: book} do
-      AccountingFactory.insert(:account, book: book, position: "g")
+    test "returns empty list when no external IDs match", %{workspace: workspace} do
+      AccountingFactory.insert(:account, workspace: workspace, position: "g")
 
       external_ids = [Ecto.UUID.generate(), Ecto.UUID.generate()]
       result = AccountRepository.list_by_external_ids(external_ids)
@@ -438,26 +440,26 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
       assert result == []
     end
 
-    test "returns accounts with preloaded associations", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book, position: "m")
+    test "returns accounts with preloaded associations", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace, position: "m")
 
-      result = AccountRepository.list_by_external_ids([account.external_id], preload: [:book])
+      result = AccountRepository.list_by_external_ids([account.external_id], preload: [:workspace])
 
       assert [loaded_account] = result
-      assert %NotLoaded{} != loaded_account.book
-      assert loaded_account.book.id == book.id
+      assert %NotLoaded{} != loaded_account.workspace
+      assert loaded_account.workspace.id == workspace.id
     end
 
-    test "handles empty external IDs list", %{book: book} do
-      AccountingFactory.insert(:account, book: book, position: "g")
+    test "handles empty external IDs list", %{workspace: workspace} do
+      AccountingFactory.insert(:account, workspace: workspace, position: "g")
 
       result = AccountRepository.list_by_external_ids([])
 
       assert result == []
     end
 
-    test "handles duplicate external IDs", %{book: book} do
-      account = AccountingFactory.insert(:account, book: book, position: "m")
+    test "handles duplicate external IDs", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace, position: "m")
 
       external_ids = [account.external_id, account.external_id]
       result = AccountRepository.list_by_external_ids(external_ids)

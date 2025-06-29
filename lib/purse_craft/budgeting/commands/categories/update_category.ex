@@ -6,7 +6,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategory do
   alias PurseCraft.Budgeting.Policy
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Category
-  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub
   alias PurseCraft.Types
@@ -30,27 +30,27 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategory do
 
   ## Examples
 
-      iex> call(authorized_scope, book, category, %{name: "Updated Name"})
+      iex> call(authorized_scope, workspace, category, %{name: "Updated Name"})
       {:ok, %Category{}}
 
-      iex> call(authorized_scope, book, category, %{name: "Updated Name"}, preload: [:envelopes])
+      iex> call(authorized_scope, workspace, category, %{name: "Updated Name"}, preload: [:envelopes])
       {:ok, %Category{envelopes: [%Envelope{}, ...]}}
 
-      iex> call(authorized_scope, book, category, %{name: ""})
+      iex> call(authorized_scope, workspace, category, %{name: ""})
       {:error, %Ecto.Changeset{}}
 
-      iex> call(unauthorized_scope, book, category, %{name: "Updated Name"})
+      iex> call(unauthorized_scope, workspace, category, %{name: "Updated Name"})
       {:error, :unauthorized}
 
   """
-  @spec call(Scope.t(), Book.t(), Category.t(), attrs(), options()) ::
+  @spec call(Scope.t(), Workspace.t(), Category.t(), attrs(), options()) ::
           {:ok, Category.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def call(%Scope{} = scope, %Book{} = book, %Category{} = category, attrs, opts \\ []) do
+  def call(%Scope{} = scope, %Workspace{} = workspace, %Category{} = category, attrs, opts \\ []) do
     attrs = Utilities.atomize_keys(attrs)
 
-    with :ok <- Policy.authorize(:category_update, scope, %{book: book}),
+    with :ok <- Policy.authorize(:category_update, scope, %{workspace: workspace}),
          {:ok, category} <- CategoryRepository.update(category, attrs, opts) do
-      PubSub.broadcast_book(book, {:category_updated, category})
+      PubSub.broadcast_workspace(workspace, {:category_updated, category})
       {:ok, category}
     end
   end

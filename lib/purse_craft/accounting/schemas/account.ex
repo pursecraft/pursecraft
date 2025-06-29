@@ -1,6 +1,6 @@
 defmodule PurseCraft.Accounting.Schemas.Account do
   @moduledoc """
-  An `Account` represents a financial account (cash, credit, loan, asset, or liability) in a `Book`.
+  An `Account` represents a financial account (cash, credit, loan, asset, or liability) in a `Workspace`.
 
   Accounts track balances and transactions for different types of financial instruments.
   They can be on-budget (affecting envelope allocations) or off-budget (tracking only).
@@ -11,7 +11,7 @@ defmodule PurseCraft.Accounting.Schemas.Account do
   import Ecto.Changeset
 
   alias Ecto.Association.NotLoaded
-  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Utilities
   alias PurseCraft.Utilities.EncryptedBinary
   alias PurseCraft.Utilities.HashedHMAC
@@ -27,8 +27,8 @@ defmodule PurseCraft.Accounting.Schemas.Account do
           description_hash: binary() | nil,
           position: String.t() | nil,
           external_id: Ecto.UUID.t() | nil,
-          book: Book.t() | NotLoaded.t() | nil,
-          book_id: integer() | nil,
+          workspace: Workspace.t() | NotLoaded.t() | nil,
+          workspace_id: integer() | nil,
           closed_at: DateTime.t() | nil,
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
@@ -37,7 +37,7 @@ defmodule PurseCraft.Accounting.Schemas.Account do
   @type create_changeset_attrs :: %{
           optional(:name) => String.t(),
           optional(:account_type) => String.t(),
-          optional(:book_id) => integer(),
+          optional(:workspace_id) => integer(),
           optional(:position) => String.t(),
           optional(:description) => String.t()
         }
@@ -84,7 +84,7 @@ defmodule PurseCraft.Accounting.Schemas.Account do
     field :external_id, Ecto.UUID, autogenerate: true
     field :closed_at, :utc_datetime
 
-    belongs_to :book, Book
+    belongs_to :workspace, Workspace
 
     timestamps(type: :utc_datetime)
   end
@@ -92,7 +92,7 @@ defmodule PurseCraft.Accounting.Schemas.Account do
   @doc """
   Creates a changeset for account creation.
 
-  All required fields must be provided: name, account_type, book_id, and position.
+  All required fields must be provided: name, account_type, workspace_id, and position.
   The description field is optional.
 
   ## Examples
@@ -100,7 +100,7 @@ defmodule PurseCraft.Accounting.Schemas.Account do
       iex> Account.create_changeset(%Account{}, %{
       ...>   name: "My Checking Account",
       ...>   account_type: "checking",
-      ...>   book_id: 123,
+      ...>   workspace_id: 123,
       ...>   position: "a"
       ...> })
       %Ecto.Changeset{valid?: true}
@@ -109,20 +109,20 @@ defmodule PurseCraft.Accounting.Schemas.Account do
   @spec create_changeset(t(), create_changeset_attrs()) :: Ecto.Changeset.t()
   def create_changeset(account, attrs) do
     account
-    |> cast(attrs, [:name, :account_type, :description, :position, :book_id])
+    |> cast(attrs, [:name, :account_type, :description, :position, :workspace_id])
     |> Utilities.put_hashed_field([:name, :account_type, :description])
-    |> validate_required([:name, :account_type, :position, :book_id])
+    |> validate_required([:name, :account_type, :position, :workspace_id])
     |> validate_inclusion(:account_type, @account_types)
     |> validate_format(:position, ~r/^[a-z]+$/, message: "must contain only lowercase letters")
     |> unique_constraint(:external_id, name: :accounts_external_id_index)
-    |> unique_constraint(:position, name: :accounts_book_id_position_index)
-    |> foreign_key_constraint(:book_id)
+    |> unique_constraint(:position, name: :accounts_workspace_id_position_index)
+    |> foreign_key_constraint(:workspace_id)
   end
 
   @doc """
   Creates a changeset for account updates.
 
-  Only name and description can be updated. Account type, position, and book_id
+  Only name and description can be updated. Account type, position, and workspace_id
   cannot be changed after creation.
 
   ## Examples
@@ -174,7 +174,7 @@ defmodule PurseCraft.Accounting.Schemas.Account do
     |> cast(attrs, [:position])
     |> validate_required([:position])
     |> validate_format(:position, ~r/^[a-z]+$/, message: "must contain only lowercase letters")
-    |> unique_constraint(:position, name: :accounts_book_id_position_index)
+    |> unique_constraint(:position, name: :accounts_workspace_id_position_index)
   end
 
   @doc """
