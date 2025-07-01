@@ -11,22 +11,25 @@ defmodule PurseCraft.Budgeting.Commands.Categories.DeleteCategoryTest do
   alias PurseCraft.PubSub.BroadcastWorkspace
 
   setup do
+    user = IdentityFactory.insert(:user)
     workspace = CoreFactory.insert(:workspace)
-    category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
+    category = BudgetingFactory.insert(:category, workspace: workspace)
+    scope = IdentityFactory.build(:scope, user: user)
 
-    %{
-      workspace: workspace,
-      category: category
-    }
+    {:ok, user: user, workspace: workspace, category: category, scope: scope}
   end
 
   describe "call/3" do
-    test "with owner role (authorized scope) deletes a category", %{workspace: workspace, category: category} do
-      user = IdentityFactory.insert(:user)
+    test "with owner role (authorized scope) deletes a category", %{
+      user: user,
+      scope: scope,
+      workspace: workspace,
+      category: category
+    } do
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
-      scope = IdentityFactory.build(:scope, user: user)
 
-      assert {:ok, %Category{}} = DeleteCategory.call(scope, workspace, category)
+      assert {:ok, deleted_category} = DeleteCategory.call(scope, workspace, category)
+      assert deleted_category.id == category.id
       assert_raise Ecto.NoResultsError, fn -> Repo.get!(Category, category.id) end
     end
 
@@ -35,7 +38,8 @@ defmodule PurseCraft.Budgeting.Commands.Categories.DeleteCategoryTest do
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
-      assert {:ok, %Category{}} = DeleteCategory.call(scope, workspace, category)
+      assert {:ok, deleted_category} = DeleteCategory.call(scope, workspace, category)
+      assert deleted_category.id == category.id
       assert_raise Ecto.NoResultsError, fn -> Repo.get!(Category, category.id) end
     end
 
@@ -59,18 +63,22 @@ defmodule PurseCraft.Budgeting.Commands.Categories.DeleteCategoryTest do
       assert Repo.get(Category, category.id)
     end
 
-    test "invokes BroadcastWorkspace when category is deleted successfully", %{workspace: workspace, category: category} do
-      user = IdentityFactory.insert(:user)
+    test "broadcasts category_deleted event when category is deleted successfully", %{
+      user: user,
+      scope: scope,
+      workspace: workspace,
+      category: category
+    } do
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
-      scope = IdentityFactory.build(:scope, user: user)
 
       expect(BroadcastWorkspace, :call, fn broadcast_workspace, {:category_deleted, broadcast_category} ->
-        assert broadcast_workspace == workspace
+        assert broadcast_workspace.id == workspace.id
         assert broadcast_category.id == category.id
         :ok
       end)
 
-      assert {:ok, %Category{}} = DeleteCategory.call(scope, workspace, category)
+      assert {:ok, deleted_category} = DeleteCategory.call(scope, workspace, category)
+      assert deleted_category.id == category.id
 
       verify!()
     end

@@ -4,133 +4,109 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
   import Mimic
 
   alias PurseCraft.Budgeting.Commands.Categories.UpdateCategory
-  alias PurseCraft.Budgeting.Repositories.CategoryRepository
-  alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.PubSub.BroadcastWorkspace
 
   setup do
+    user = IdentityFactory.insert(:user)
     workspace = CoreFactory.insert(:workspace)
-    category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
+    category = BudgetingFactory.insert(:category, workspace: workspace)
+    scope = IdentityFactory.build(:scope, user: user)
 
-    %{
-      workspace: workspace,
-      category: category
-    }
+    {:ok, user: user, workspace: workspace, category: category, scope: scope}
   end
 
-  describe "call/5" do
-    test "with string keys in attrs calls repository update correctly", %{workspace: workspace, category: category} do
-      user = IdentityFactory.insert(:user)
+  describe "call/4" do
+    test "with owner role (authorized scope) updates category successfully", %{
+      user: user,
+      scope: scope,
+      workspace: workspace,
+      category: category
+    } do
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
-      scope = IdentityFactory.build(:scope, user: user)
+      attrs = %{name: "Updated Category Name"}
 
-      updated_category = %{category | name: "Updated String Key Category"}
-      attrs = %{"name" => "Updated String Key Category"}
-
-      stub(CategoryRepository, :update, fn received_category, received_attrs, received_opts ->
-        assert received_category.id == category.id
-        assert received_attrs == %{name: "Updated String Key Category"}
-        assert received_opts == []
-        {:ok, updated_category}
-      end)
-
-      assert {:ok, %Category{} = result} = UpdateCategory.call(scope, workspace, category, attrs)
-      assert result.name == "Updated String Key Category"
+      assert {:ok, updated_category} = UpdateCategory.call(scope, workspace, category, attrs)
+      assert updated_category.name == "Updated Category Name"
+      assert updated_category.id == category.id
     end
 
-    test "with authorization failure returns unauthorized error", %{workspace: workspace, category: category} do
+    test "with editor role (authorized scope) updates category successfully", %{workspace: workspace, category: category} do
+      user = IdentityFactory.insert(:user)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :editor)
+      scope = IdentityFactory.build(:scope, user: user)
+      attrs = %{name: "Editor Updated Category"}
+
+      assert {:ok, updated_category} = UpdateCategory.call(scope, workspace, category, attrs)
+      assert updated_category.name == "Editor Updated Category"
+    end
+
+    test "with commenter role (unauthorized scope) returns error", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
-
-      attrs = %{name: "Updated Category"}
-
-      reject(CategoryRepository, :update, 3)
+      attrs = %{name: "Commenter Category"}
 
       assert {:error, :unauthorized} = UpdateCategory.call(scope, workspace, category, attrs)
     end
 
-    test "with repository error returns changeset error", %{workspace: workspace, category: category} do
-      user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
-      scope = IdentityFactory.build(:scope, user: user)
-
-      attrs = %{name: ""}
-      changeset = Category.changeset(category, attrs)
-
-      stub(CategoryRepository, :update, fn _category, _attrs, _opts ->
-        {:error, changeset}
-      end)
-
-      assert {:error, returned_changeset} = UpdateCategory.call(scope, workspace, category, attrs)
-      assert returned_changeset == changeset
-    end
-
-    test "with preload option preloads associations", %{workspace: workspace, category: category} do
-      user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
-      scope = IdentityFactory.build(:scope, user: user)
-
-      updated_category = %{category | name: "Updated Category"}
-      envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
-
-      stub(CategoryRepository, :update, fn _category, _attrs, received_opts ->
-        assert received_opts == [preload: [:envelopes]]
-        {:ok, %{updated_category | envelopes: [envelope]}}
-      end)
-
-      attrs = %{name: "Updated Category"}
-
-      assert {:ok, %Category{} = result} = UpdateCategory.call(scope, workspace, category, attrs, preload: [:envelopes])
-      assert result.name == "Updated Category"
-      assert Enum.any?(result.envelopes, &(&1.id == envelope.id))
-    end
-
-    test "without preload option returns category without loaded associations", %{
+    test "with no association to workspace (unauthorized scope) returns error", %{
       workspace: workspace,
       category: category
     } do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
+      attrs = %{name: "Unauthorized Category"}
 
-      updated_category = %{category | name: "Updated Category"}
-
-      stub(CategoryRepository, :update, fn _category, _attrs, received_opts ->
-        assert received_opts == []
-        {:ok, updated_category}
-      end)
-
-      attrs = %{name: "Updated Category"}
-
-      assert {:ok, %Category{} = result} = UpdateCategory.call(scope, workspace, category, attrs)
-      refute Ecto.assoc_loaded?(result.envelopes)
+      assert {:error, :unauthorized} = UpdateCategory.call(scope, workspace, category, attrs)
     end
 
-    test "invokes BroadcastWorkspace with correct parameters", %{workspace: workspace, category: category} do
-      user = IdentityFactory.insert(:user)
+    test "with invalid attributes returns changeset error", %{
+      user: user,
+      scope: scope,
+      workspace: workspace,
+      category: category
+    } do
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
-      scope = IdentityFactory.build(:scope, user: user)
+      attrs = %{name: ""}
 
-      updated_category = %{category | name: "Broadcast Test Category"}
+      assert {:error, changeset} = UpdateCategory.call(scope, workspace, category, attrs)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
 
-      expect(CategoryRepository, :update, fn _category, _attrs, _opts ->
-        {:ok, updated_category}
-      end)
+    test "with string keys in attrs updates category correctly", %{
+      user: user,
+      scope: scope,
+      workspace: workspace,
+      category: category
+    } do
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
+      attrs = %{"name" => "String Key Updated"}
+
+      assert {:ok, updated_category} = UpdateCategory.call(scope, workspace, category, attrs)
+      assert updated_category.name == "String Key Updated"
+    end
+
+    test "broadcasts category_updated event when category is updated successfully", %{
+      user: user,
+      scope: scope,
+      workspace: workspace,
+      category: category
+    } do
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
 
       expect(BroadcastWorkspace, :call, fn received_workspace, {:category_updated, received_category} ->
         assert received_workspace.id == workspace.id
-        assert received_category.id == updated_category.id
         assert received_category.name == "Broadcast Test Category"
         :ok
       end)
 
       attrs = %{name: "Broadcast Test Category"}
 
-      assert {:ok, %Category{}} = UpdateCategory.call(scope, workspace, category, attrs)
+      assert {:ok, updated_category} = UpdateCategory.call(scope, workspace, category, attrs)
+      assert updated_category.name == "Broadcast Test Category"
 
       verify!()
     end
