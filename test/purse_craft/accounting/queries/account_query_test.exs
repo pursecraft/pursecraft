@@ -6,40 +6,40 @@ defmodule PurseCraft.Accounting.Queries.AccountQueryTest do
   alias PurseCraft.Accounting.Queries.AccountQuery
   alias PurseCraft.Accounting.Schemas.Account
 
-  describe "by_book_id/1" do
-    test "creates a query filtered by book_id" do
-      book_id = 123
-      query = AccountQuery.by_book_id(book_id)
+  describe "by_workspace_id/1" do
+    test "creates a query filtered by workspace_id" do
+      workspace_id = 123
+      query = AccountQuery.by_workspace_id(workspace_id)
 
       assert query.from.source == {"accounts", Account}
 
       assert length(query.wheres) == 1
 
       [where_clause] = query.wheres
-      assert where_clause.params == [{book_id, {0, :book_id}}]
+      assert where_clause.params == [{workspace_id, {0, :workspace_id}}]
     end
   end
 
-  describe "by_book_id/2" do
-    test "adds book_id filter to existing query" do
-      book_id = 456
+  describe "by_workspace_id/2" do
+    test "adds workspace_id filter to existing query" do
+      workspace_id = 456
       base_query = from(a in Account, where: a.name == "Test Account")
 
-      query = AccountQuery.by_book_id(base_query, book_id)
+      query = AccountQuery.by_workspace_id(base_query, workspace_id)
 
       assert length(query.wheres) == 2
 
       param_values = Enum.flat_map(query.wheres, & &1.params)
-      assert {book_id, {0, :book_id}} in param_values
+      assert {workspace_id, {0, :workspace_id}} in param_values
     end
 
     test "works with Account schema directly" do
-      book_id = 789
-      query = AccountQuery.by_book_id(Account, book_id)
+      workspace_id = 789
+      query = AccountQuery.by_workspace_id(Account, workspace_id)
 
       assert query.from.source == {"accounts", Account}
       assert length(query.wheres) == 1
-      assert hd(query.wheres).params == [{book_id, {0, :book_id}}]
+      assert hd(query.wheres).params == [{workspace_id, {0, :workspace_id}}]
     end
   end
 
@@ -57,7 +57,7 @@ defmodule PurseCraft.Accounting.Queries.AccountQueryTest do
 
   describe "order_by_position/1" do
     test "adds position ordering to existing query" do
-      base_query = from(a in Account, where: a.book_id == 1)
+      base_query = from(a in Account, where: a.workspace_id == 1)
       query = AccountQuery.order_by_position(base_query)
 
       assert length(query.order_bys) == 1
@@ -79,7 +79,7 @@ defmodule PurseCraft.Accounting.Queries.AccountQueryTest do
 
   describe "limit/2" do
     test "adds limit to existing query" do
-      base_query = from(a in Account, where: a.book_id == 1)
+      base_query = from(a in Account, where: a.workspace_id == 1)
       count = 10
       query = AccountQuery.limit(base_query, count)
 
@@ -99,7 +99,7 @@ defmodule PurseCraft.Accounting.Queries.AccountQueryTest do
 
   describe "select_position/1" do
     test "adds position selection to existing query" do
-      base_query = from(a in Account, where: a.book_id == 1)
+      base_query = from(a in Account, where: a.workspace_id == 1)
       query = AccountQuery.select_position(base_query)
 
       assert query.select.expr == {{:., [], [{:&, [], [0]}, :position]}, [], []}
@@ -122,7 +122,7 @@ defmodule PurseCraft.Accounting.Queries.AccountQueryTest do
   describe "by_external_id/2" do
     test "adds external_id filter to existing query" do
       external_id = Ecto.UUID.generate()
-      base_query = from(a in Account, where: a.book_id == 1)
+      base_query = from(a in Account, where: a.workspace_id == 1)
 
       query = AccountQuery.by_external_id(base_query, external_id)
 
@@ -147,7 +147,7 @@ defmodule PurseCraft.Accounting.Queries.AccountQueryTest do
 
   describe "active/1" do
     test "adds active filter to existing query" do
-      base_query = from(a in Account, where: a.book_id == 1)
+      base_query = from(a in Account, where: a.workspace_id == 1)
       query = AccountQuery.active(base_query)
 
       assert length(query.wheres) == 2
@@ -178,7 +178,7 @@ defmodule PurseCraft.Accounting.Queries.AccountQueryTest do
   describe "by_external_ids/2" do
     test "adds external IDs filter to existing query" do
       external_ids = [Ecto.UUID.generate(), Ecto.UUID.generate()]
-      base_query = from(a in Account, where: a.book_id == 1)
+      base_query = from(a in Account, where: a.workspace_id == 1)
 
       query = AccountQuery.by_external_ids(base_query, external_ids)
 

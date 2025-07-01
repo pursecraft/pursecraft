@@ -48,12 +48,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.RepositionEnvelope do
 
     categories =
       [target_category_id]
-      |> CategoryRepository.list_by_external_ids(preload: [:book])
+      |> CategoryRepository.list_by_external_ids(preload: [:workspace])
       |> Map.new(&{&1.external_id, &1})
 
     with {:ok, envelope} <- validate_envelope(envelopes, envelope_id),
          {:ok, target_category} <- validate_target_category(categories, target_category_id),
-         :ok <- Policy.authorize(:envelope_update, scope, %{book: target_category.book}),
+         :ok <- Policy.authorize(:envelope_update, scope, %{workspace: target_category.workspace}),
          {:ok, [prev_envelope, next_envelope]} <-
            validate_neighbor_envelopes(
              envelopes,

@@ -1,12 +1,12 @@
 defmodule PurseCraft.Accounting.Commands.Accounts.ListAccounts do
   @moduledoc """
-  Lists all accounts for a book.
+  Lists all accounts for a workspace.
   """
 
   alias PurseCraft.Accounting.Policy
   alias PurseCraft.Accounting.Repositories.AccountRepository
   alias PurseCraft.Accounting.Schemas.Account
-  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Types
 
@@ -14,25 +14,25 @@ defmodule PurseCraft.Accounting.Commands.Accounts.ListAccounts do
   @type list_options :: [list_option()]
 
   @doc """
-  Lists all accounts for a book.
+  Lists all accounts for a workspace.
 
   ## Examples
 
-      iex> ListAccounts.call(authorized_scope, book)
+      iex> ListAccounts.call(authorized_scope, workspace)
       [%Account{}]
 
-      iex> ListAccounts.call(authorized_scope, book, preload: [:book])
-      [%Account{book: %Book{}}]
+      iex> ListAccounts.call(authorized_scope, workspace, preload: [:workspace])
+      [%Account{workspace: %Workspace{}}]
 
-      iex> ListAccounts.call(unauthorized_scope, book)
+      iex> ListAccounts.call(unauthorized_scope, workspace)
       {:error, :unauthorized}
 
   """
-  @spec call(Scope.t(), Book.t(), list_options()) ::
+  @spec call(Scope.t(), Workspace.t(), list_options()) ::
           list(Account.t()) | {:error, :unauthorized}
-  def call(%Scope{} = scope, %Book{} = book, opts \\ []) do
-    with :ok <- Policy.authorize(:account_read, scope, %{book: book}) do
-      AccountRepository.list_by_book(book.id, opts)
+  def call(%Scope{} = scope, %Workspace{} = workspace, opts \\ []) do
+    with :ok <- Policy.authorize(:account_read, scope, %{workspace: workspace}) do
+      AccountRepository.list_by_workspace(workspace.id, opts)
     end
   end
 end

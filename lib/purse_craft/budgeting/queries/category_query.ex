@@ -30,25 +30,25 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQuery do
   end
 
   @doc """
-  Returns a query for finding categories by book ID.
+  Returns a query for finding categories by workspace ID.
 
   ## Examples
 
-      iex> by_book_id(1)
+      iex> by_workspace_id(1)
       #Ecto.Query<...>
 
-      iex> Category |> by_book_id(1)
+      iex> Category |> by_workspace_id(1)
       #Ecto.Query<...>
 
   """
-  @spec by_book_id(integer()) :: Ecto.Query.t()
-  def by_book_id(book_id) do
-    by_book_id(Category, book_id)
+  @spec by_workspace_id(integer()) :: Ecto.Query.t()
+  def by_workspace_id(workspace_id) do
+    by_workspace_id(Category, workspace_id)
   end
 
-  @spec by_book_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
-  def by_book_id(queryable, book_id) do
-    from(c in queryable, where: c.book_id == ^book_id)
+  @spec by_workspace_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
+  def by_workspace_id(queryable, workspace_id) do
+    from(c in queryable, where: c.workspace_id == ^workspace_id)
   end
 
   @doc """
@@ -59,7 +59,7 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQuery do
       iex> order_by_position()
       #Ecto.Query<...>
 
-      iex> Category |> by_book_id(1) |> order_by_position()
+      iex> Category |> by_workspace_id(1) |> order_by_position()
       #Ecto.Query<...>
 
   """
@@ -81,7 +81,7 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQuery do
       iex> limit(1)
       #Ecto.Query<...>
 
-      iex> Category |> by_book_id(1) |> limit(5)
+      iex> Category |> by_workspace_id(1) |> limit(5)
       #Ecto.Query<...>
 
   """
@@ -103,7 +103,7 @@ defmodule PurseCraft.Budgeting.Queries.CategoryQuery do
       iex> select_position()
       #Ecto.Query<...>
 
-      iex> Category |> by_book_id(1) |> select_position()
+      iex> Category |> by_workspace_id(1) |> select_position()
       #Ecto.Query<...>
 
   """

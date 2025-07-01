@@ -9,17 +9,17 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccountTest do
   alias PurseCraft.AccountingFactory
   alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
-  alias PurseCraft.PubSub.BroadcastBook
+  alias PurseCraft.PubSub.BroadcastWorkspace
 
   setup do
-    book = CoreFactory.insert(:book)
+    workspace = CoreFactory.insert(:workspace)
 
-    acc1 = AccountingFactory.insert(:account, book: book, position: "g")
-    acc2 = AccountingFactory.insert(:account, book: book, position: "m")
-    acc3 = AccountingFactory.insert(:account, book: book, position: "t")
+    acc1 = AccountingFactory.insert(:account, workspace: workspace, position: "g")
+    acc2 = AccountingFactory.insert(:account, workspace: workspace, position: "m")
+    acc3 = AccountingFactory.insert(:account, workspace: workspace, position: "t")
 
     %{
-      book: book,
+      workspace: workspace,
       acc1: acc1,
       acc2: acc2,
       acc3: acc3
@@ -27,9 +27,14 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccountTest do
   end
 
   describe "call/4" do
-    test "successfully repositions account between two others", %{book: book, acc1: acc1, acc2: acc2, acc3: acc3} do
+    test "successfully repositions account between two others", %{
+      workspace: workspace,
+      acc1: acc1,
+      acc2: acc2,
+      acc3: acc3
+    } do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} = RepositionAccount.call(scope, acc3.external_id, acc1.external_id, acc2.external_id)
@@ -39,9 +44,13 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccountTest do
       assert updated.position < acc2.position
     end
 
-    test "repositions account to the beginning when prev_account_id is nil", %{book: book, acc1: acc1, acc3: acc3} do
+    test "repositions account to the beginning when prev_account_id is nil", %{
+      workspace: workspace,
+      acc1: acc1,
+      acc3: acc3
+    } do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} = RepositionAccount.call(scope, acc3.external_id, nil, acc1.external_id)
@@ -50,9 +59,9 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccountTest do
       assert updated.position < acc1.position
     end
 
-    test "repositions account to the end when next_account_id is nil", %{book: book, acc1: acc1, acc3: acc3} do
+    test "repositions account to the end when next_account_id is nil", %{workspace: workspace, acc1: acc1, acc3: acc3} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} = RepositionAccount.call(scope, acc1.external_id, acc3.external_id, nil)
@@ -61,74 +70,78 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccountTest do
       assert updated.position > acc3.position
     end
 
-    test "returns not_found when account doesn't exist", %{book: book, acc1: acc1, acc2: acc2} do
+    test "returns not_found when account doesn't exist", %{workspace: workspace, acc1: acc1, acc2: acc2} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} =
                RepositionAccount.call(scope, Ecto.UUID.generate(), acc1.external_id, acc2.external_id)
     end
 
-    test "returns not_found when prev_account doesn't exist", %{book: book, acc1: acc1, acc2: acc2} do
+    test "returns not_found when prev_account doesn't exist", %{workspace: workspace, acc1: acc1, acc2: acc2} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} =
                RepositionAccount.call(scope, acc1.external_id, Ecto.UUID.generate(), acc2.external_id)
     end
 
-    test "returns not_found when next_account doesn't exist", %{book: book, acc1: acc1, acc2: acc2} do
+    test "returns not_found when next_account doesn't exist", %{workspace: workspace, acc1: acc1, acc2: acc2} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :not_found} =
                RepositionAccount.call(scope, acc1.external_id, acc2.external_id, Ecto.UUID.generate())
     end
 
-    test "returns not_found when prev_account is from different book", %{book: book, acc1: acc1, acc2: acc2} do
+    test "returns not_found when prev_account is from different workspace", %{
+      workspace: workspace,
+      acc1: acc1,
+      acc2: acc2
+    } do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
-      other_book = CoreFactory.insert(:book)
-      other_acc = AccountingFactory.insert(:account, book: other_book, position: "a")
+      other_workspace = CoreFactory.insert(:workspace)
+      other_acc = AccountingFactory.insert(:account, workspace: other_workspace, position: "a")
 
       assert {:error, :not_found} =
                RepositionAccount.call(scope, acc1.external_id, other_acc.external_id, acc2.external_id)
     end
 
-    test "returns unauthorized when user lacks permission", %{book: book, acc1: acc1, acc2: acc2, acc3: acc3} do
+    test "returns unauthorized when user lacks permission", %{workspace: workspace, acc1: acc1, acc2: acc2, acc3: acc3} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:error, :unauthorized} =
                RepositionAccount.call(scope, acc3.external_id, acc1.external_id, acc2.external_id)
     end
 
-    test "returns error when fractional indexing fails", %{book: book} do
+    test "returns error when fractional indexing fails", %{workspace: workspace} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
-      acc1 = AccountingFactory.insert(:account, book: book, position: "z")
-      acc2 = AccountingFactory.insert(:account, book: book, position: "a")
-      acc3 = AccountingFactory.insert(:account, book: book, position: "n")
+      acc1 = AccountingFactory.insert(:account, workspace: workspace, position: "z")
+      acc2 = AccountingFactory.insert(:account, workspace: workspace, position: "a")
+      acc3 = AccountingFactory.insert(:account, workspace: workspace, position: "n")
 
       assert {:error, :prev_must_be_less_than_next} =
                RepositionAccount.call(scope, acc3.external_id, acc1.external_id, acc2.external_id)
     end
 
-    test "broadcasts account_repositioned event on success", %{book: book, acc1: acc1, acc2: acc2, acc3: acc3} do
+    test "broadcasts account_repositioned event on success", %{workspace: workspace, acc1: acc1, acc2: acc2, acc3: acc3} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
-      expect(BroadcastBook, :call, fn received_book, {:account_repositioned, received_account} ->
-        assert received_book.id == book.id
+      expect(BroadcastWorkspace, :call, fn received_workspace, {:account_repositioned, received_account} ->
+        assert received_workspace.id == workspace.id
         assert received_account.id == acc3.id
         :ok
       end)
@@ -138,9 +151,9 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccountTest do
       verify!()
     end
 
-    test "handles unique constraint violation with retry", %{book: book, acc1: acc1, acc2: acc2, acc3: acc3} do
+    test "handles unique constraint violation with retry", %{workspace: workspace, acc1: acc1, acc2: acc2, acc3: acc3} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       assert {:ok, updated} = RepositionAccount.call(scope, acc3.external_id, acc1.external_id, acc2.external_id)
@@ -150,9 +163,9 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccountTest do
       assert updated.position < acc2.position
     end
 
-    test "returns error after max retries", %{book: book, acc1: acc1, acc2: acc2, acc3: acc3} do
+    test "returns error after max retries", %{workspace: workspace, acc1: acc1, acc2: acc2, acc3: acc3} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(AccountRepository, :update_position, fn _account, _position ->
@@ -169,9 +182,9 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccountTest do
              end)
     end
 
-    test "handles non-position errors in changeset", %{book: book, acc1: acc1, acc2: acc2, acc3: acc3} do
+    test "handles non-position errors in changeset", %{workspace: workspace, acc1: acc1, acc2: acc2, acc3: acc3} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(AccountRepository, :update_position, fn _account, _position ->

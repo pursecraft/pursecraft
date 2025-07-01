@@ -44,7 +44,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccount do
       [account_id, prev_account_id, next_account_id]
       |> Enum.filter(&(&1 != nil))
       |> Enum.uniq()
-      |> AccountRepository.list_by_external_ids(preload: [:book])
+      |> AccountRepository.list_by_external_ids(preload: [:workspace])
       |> Map.new(&{&1.external_id, &1})
 
     with {:ok, [account, prev_account, next_account]} <-
@@ -54,7 +54,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccount do
              prev_account_id,
              next_account_id
            ),
-         :ok <- Policy.authorize(:account_update, scope, %{book: account.book}) do
+         :ok <- Policy.authorize(:account_update, scope, %{workspace: account.workspace}) do
       result =
         Repo.transaction(fn ->
           case attempt_reposition(account, prev_account, next_account, @max_retries) do
@@ -65,7 +65,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccount do
 
       case result do
         {:ok, updated} ->
-          PubSub.broadcast_book(account.book, {:account_repositioned, updated})
+          PubSub.broadcast_workspace(account.workspace, {:account_repositioned, updated})
           {:ok, updated}
 
         {:error, reason} ->
@@ -79,21 +79,21 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccount do
            accounts_map
            |> Map.get(account_id)
            |> Utilities.to_result(),
-         {:ok, prev_account} <- validate_optional_account(accounts_map, prev_account_id, account.book_id),
-         {:ok, next_account} <- validate_optional_account(accounts_map, next_account_id, account.book_id) do
+         {:ok, prev_account} <- validate_optional_account(accounts_map, prev_account_id, account.workspace_id),
+         {:ok, next_account} <- validate_optional_account(accounts_map, next_account_id, account.workspace_id) do
       {:ok, [account, prev_account, next_account]}
     end
   end
 
-  defp validate_optional_account(_accounts_map, nil, _book_id), do: {:ok, nil}
+  defp validate_optional_account(_accounts_map, nil, _workspace_id), do: {:ok, nil}
 
-  defp validate_optional_account(accounts_map, account_id, book_id) do
+  defp validate_optional_account(accounts_map, account_id, workspace_id) do
     case Map.get(accounts_map, account_id) do
       nil ->
         {:error, :not_found}
 
       account ->
-        if account.book_id == book_id do
+        if account.workspace_id == workspace_id do
           {:ok, account}
         else
           {:error, :not_found}

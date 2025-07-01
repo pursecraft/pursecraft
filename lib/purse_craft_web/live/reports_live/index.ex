@@ -4,19 +4,19 @@ defmodule PurseCraftWeb.ReportsLive.Index do
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Accounting
-  alias PurseCraft.Budgeting
+  alias PurseCraft.Core
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
-    case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
-      {:ok, book} ->
-        accounts = Accounting.list_accounts(socket.assigns.current_scope, book)
+    case Core.fetch_workspace_by_external_id(socket.assigns.current_scope, external_id) do
+      {:ok, workspace} ->
+        accounts = Accounting.list_accounts(socket.assigns.current_scope, workspace)
 
         socket =
           socket
-          |> assign(:page_title, "Reports - #{book.name}")
-          |> assign(:current_path, "/books/#{book.external_id}/reports")
-          |> assign(:book, book)
+          |> assign(:page_title, "Reports - #{workspace.name}")
+          |> assign(:current_path, "/workspaces/#{workspace.external_id}/reports")
+          |> assign(:workspace, workspace)
           |> assign(:accounts, accounts)
 
         {:ok, socket}
@@ -24,14 +24,14 @@ defmodule PurseCraftWeb.ReportsLive.Index do
       {:error, :not_found} ->
         {:ok,
          socket
-         |> put_flash(:error, "Book not found")
-         |> push_navigate(to: ~p"/books")}
+         |> put_flash(:error, "Workspace not found")
+         |> push_navigate(to: ~p"/workspaces")}
 
       {:error, :unauthorized} ->
         {:ok,
          socket
-         |> put_flash(:error, "You don't have access to this book")
-         |> push_navigate(to: ~p"/books")}
+         |> put_flash(:error, "You don't have access to this workspace")
+         |> push_navigate(to: ~p"/workspaces")}
     end
   end
 
@@ -46,7 +46,7 @@ defmodule PurseCraftWeb.ReportsLive.Index do
     >
       <div class="space-y-6">
         <div class="flex justify-between items-center">
-          <h1 class="text-2xl font-bold">Reports - {@book.name}</h1>
+          <h1 class="text-2xl font-bold">Reports - {@workspace.name}</h1>
           <div class="flex gap-2">
             <button class="btn btn-outline">Export</button>
           </div>

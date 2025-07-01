@@ -1,12 +1,12 @@
 defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccount do
   @moduledoc """
-  Creates an account and associates it with the given `Book`.
+  Creates an account and associates it with the given `Workspace`.
   """
 
   alias PurseCraft.Accounting.Policy
   alias PurseCraft.Accounting.Repositories.AccountRepository
   alias PurseCraft.Accounting.Schemas.Account
-  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.PubSub
   alias PurseCraft.Utilities
@@ -19,29 +19,29 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccount do
         }
 
   @doc """
-  Creates an account and associates it with the given `Book`.
+  Creates an account and associates it with the given `Workspace`.
 
   ## Examples
 
-      iex> call(authorized_scope, book, %{name: "Checking Account", account_type: "checking"})
+      iex> call(authorized_scope, workspace, %{name: "Checking Account", account_type: "checking"})
       {:ok, %Account{}}
 
-      iex> call(authorized_scope, book, %{name: "", account_type: "invalid"})
+      iex> call(authorized_scope, workspace, %{name: "", account_type: "invalid"})
       {:error, %Ecto.Changeset{}}
 
-      iex> call(unauthorized_scope, book, %{name: "Checking Account", account_type: "checking"})
+      iex> call(unauthorized_scope, workspace, %{name: "Checking Account", account_type: "checking"})
       {:error, :unauthorized}
 
   """
-  @spec call(Scope.t(), Book.t(), create_attrs()) ::
+  @spec call(Scope.t(), Workspace.t(), create_attrs()) ::
           {:ok, Account.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized} | {:error, :cannot_place_at_top}
-  def call(%Scope{} = scope, %Book{} = book, attrs \\ %{}) do
-    with :ok <- Policy.authorize(:account_create, scope, %{book: book}),
-         first_position = AccountRepository.get_first_position(book.id),
+  def call(%Scope{} = scope, %Workspace{} = workspace, attrs \\ %{}) do
+    with :ok <- Policy.authorize(:account_create, scope, %{workspace: workspace}),
+         first_position = AccountRepository.get_first_position(workspace.id),
          {:ok, position} <- generate_top_position(first_position),
-         attrs = build_attrs(attrs, book.id, position),
+         attrs = build_attrs(attrs, workspace.id, position),
          {:ok, account} <- AccountRepository.create(attrs) do
-      PubSub.broadcast_book(book, {:account_created, account})
+      PubSub.broadcast_workspace(workspace, {:account_created, account})
       {:ok, account}
     end
   end
@@ -53,10 +53,10 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccount do
     end
   end
 
-  defp build_attrs(attrs, book_id, position) do
+  defp build_attrs(attrs, workspace_id, position) do
     attrs
     |> Utilities.atomize_keys()
-    |> Map.put(:book_id, book_id)
+    |> Map.put(:workspace_id, workspace_id)
     |> Map.put(:position, position)
   end
 end

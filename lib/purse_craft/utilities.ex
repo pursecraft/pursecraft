@@ -67,13 +67,13 @@ defmodule PurseCraft.Utilities do
       iex> Utilities.maybe_preload(%User{}, [])
       %User{}
 
-      iex> Utilities.maybe_preload(%User{}, preload: [:books])
-      %User{books: [...]}
+      iex> Utilities.maybe_preload(%User{}, preload: [:workspaces])
+      %User{workspaces: [...]}
 
-      iex> Utilities.maybe_preload([%User{}], preload: [:books])
-      [%User{books: [...]}]
+      iex> Utilities.maybe_preload([%User{}], preload: [:workspaces])
+      [%User{workspaces: [...]}]
 
-      iex> Utilities.maybe_preload(nil, preload: [:books])
+      iex> Utilities.maybe_preload(nil, preload: [:workspaces])
       nil
 
   """

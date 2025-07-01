@@ -10,6 +10,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   alias PurseCraft.Budgeting.Repositories.CategoryRepository
   alias PurseCraft.Budgeting.Schemas.Category
   alias PurseCraft.Budgeting.Schemas.Envelope
+  alias PurseCraft.Core
   alias PurseCraft.PubSub
   alias PurseCraftWeb.BudgetLive.Components.BudgetHeader
   alias PurseCraftWeb.BudgetLive.Components.CategorySection
@@ -21,26 +22,26 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   @impl Phoenix.LiveView
   def mount(%{"external_id" => external_id}, _session, socket) do
-    case Budgeting.fetch_book_by_external_id(socket.assigns.current_scope, external_id) do
-      {:ok, book} ->
-        case Budgeting.list_categories(socket.assigns.current_scope, book, preload: [:envelopes]) do
+    case Core.fetch_workspace_by_external_id(socket.assigns.current_scope, external_id) do
+      {:ok, workspace} ->
+        case Budgeting.list_categories(socket.assigns.current_scope, workspace, preload: [:envelopes]) do
           {:error, :unauthorized} ->
             {:ok,
              socket
-             |> put_flash(:error, "You don't have access to this book's categories")
-             |> push_navigate(to: ~p"/books")}
+             |> put_flash(:error, "You don't have access to this workspace's categories")
+             |> push_navigate(to: ~p"/workspaces")}
 
           categories ->
-            PubSub.subscribe_book(book)
+            PubSub.subscribe_workspace(workspace)
             subscribe_to_categories(categories)
 
-            accounts = Accounting.list_accounts(socket.assigns.current_scope, book)
+            accounts = Accounting.list_accounts(socket.assigns.current_scope, workspace)
 
             socket =
               socket
-              |> assign(:page_title, "Budget - #{book.name}")
-              |> assign(:current_path, "/books/#{book.external_id}/budget")
-              |> assign(:book, book)
+              |> assign(:page_title, "Budget - #{workspace.name}")
+              |> assign(:current_path, "/workspaces/#{workspace.external_id}/budget")
+              |> assign(:workspace, workspace)
               |> assign(:accounts, accounts)
               |> assign(:category_form, to_form(Budgeting.change_category(%Category{})))
               |> assign(
@@ -70,14 +71,14 @@ defmodule PurseCraftWeb.BudgetLive.Index do
       {:error, :not_found} ->
         {:ok,
          socket
-         |> put_flash(:error, "Book not found")
-         |> push_navigate(to: ~p"/books")}
+         |> put_flash(:error, "Workspace not found")
+         |> push_navigate(to: ~p"/workspaces")}
 
       {:error, :unauthorized} ->
         {:ok,
          socket
-         |> put_flash(:error, "You don't have access to this book")
-         |> push_navigate(to: ~p"/books")}
+         |> put_flash(:error, "You don't have access to this workspace")
+         |> push_navigate(to: ~p"/workspaces")}
     end
   end
 
@@ -99,7 +100,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   @impl Phoenix.LiveView
   def handle_event("edit_category", %{"id" => external_id}, socket) do
     socket.assigns.current_scope
-    |> Budgeting.fetch_category_by_external_id(socket.assigns.book, external_id)
+    |> Budgeting.fetch_category_by_external_id(socket.assigns.workspace, external_id)
     |> case do
       {:ok, category} ->
         {:noreply, show_category_modal(socket, category)}
@@ -126,7 +127,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   @impl Phoenix.LiveView
   def handle_event("delete_category_confirm", %{"id" => external_id}, socket) do
     socket.assigns.current_scope
-    |> Budgeting.fetch_category_by_external_id(socket.assigns.book, external_id, preload: [:envelopes])
+    |> Budgeting.fetch_category_by_external_id(socket.assigns.workspace, external_id, preload: [:envelopes])
     |> case do
       {:ok, category} ->
         if Enum.empty?(category.envelopes) do
@@ -153,7 +154,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
     category = socket.assigns.category_to_delete
 
     socket.assigns.current_scope
-    |> Budgeting.delete_category(socket.assigns.book, category)
+    |> Budgeting.delete_category(socket.assigns.workspace, category)
     |> case do
       {:ok, deleted_category} ->
         socket =
@@ -181,7 +182,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   @impl Phoenix.LiveView
   def handle_event("new_envelope", %{"id" => external_id}, socket) do
     socket.assigns.current_scope
-    |> Budgeting.fetch_category_by_external_id(socket.assigns.book, external_id, preload: [:envelopes])
+    |> Budgeting.fetch_category_by_external_id(socket.assigns.workspace, external_id, preload: [:envelopes])
     |> case do
       {:ok, category} ->
         {:noreply, show_envelope_modal(socket, %Envelope{}, category)}
@@ -211,7 +212,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
     if envelope && envelope.id do
       socket.assigns.current_scope
-      |> Budgeting.update_envelope(socket.assigns.book, envelope, envelope_params)
+      |> Budgeting.update_envelope(socket.assigns.workspace, envelope, envelope_params)
       |> case do
         {:ok, updated_envelope} ->
           handle_successful_envelope_update(socket, category, updated_envelope)
@@ -227,7 +228,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
       end
     else
       socket.assigns.current_scope
-      |> Budgeting.create_envelope(socket.assigns.book, category, envelope_params)
+      |> Budgeting.create_envelope(socket.assigns.workspace, category, envelope_params)
       |> case do
         {:ok, envelope} ->
           updated_category = %{
@@ -258,7 +259,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   @impl Phoenix.LiveView
   def handle_event("edit_envelope", %{"id" => external_id}, socket) do
     socket.assigns.current_scope
-    |> Budgeting.fetch_envelope_by_external_id(socket.assigns.book, external_id, preload: [category: [:envelopes]])
+    |> Budgeting.fetch_envelope_by_external_id(socket.assigns.workspace, external_id, preload: [category: [:envelopes]])
     |> case do
       {:ok, envelope} ->
         {:noreply, show_envelope_modal(socket, envelope, envelope.category)}
@@ -274,7 +275,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   @impl Phoenix.LiveView
   def handle_event("delete_envelope_confirm", %{"id" => external_id}, socket) do
     socket.assigns.current_scope
-    |> Budgeting.fetch_envelope_by_external_id(socket.assigns.book, external_id, preload: [category: [:envelopes]])
+    |> Budgeting.fetch_envelope_by_external_id(socket.assigns.workspace, external_id, preload: [category: [:envelopes]])
     |> case do
       {:ok, envelope} ->
         {:noreply, show_delete_modal(socket, envelope, :envelope)}
@@ -293,7 +294,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
     category = socket.assigns.selected_category_for_envelope
 
     socket.assigns.current_scope
-    |> Budgeting.delete_envelope(socket.assigns.book, envelope)
+    |> Budgeting.delete_envelope(socket.assigns.workspace, envelope)
     |> case do
       {:ok, deleted_envelope} ->
         updated_envelopes = Enum.reject(category.envelopes, fn e -> e.id == deleted_envelope.id end)
@@ -385,7 +386,7 @@ defmodule PurseCraftWeb.BudgetLive.Index do
   @impl Phoenix.LiveView
   def handle_info({:category_repositioned, _category}, socket) do
     categories =
-      Budgeting.list_categories(socket.assigns.current_scope, socket.assigns.book, preload: [:envelopes])
+      Budgeting.list_categories(socket.assigns.current_scope, socket.assigns.workspace, preload: [:envelopes])
 
     {:noreply, stream(socket, :categories, categories, reset: true)}
   end
@@ -517,13 +518,13 @@ defmodule PurseCraftWeb.BudgetLive.Index do
 
   defp handle_category_update(socket, category, category_params) do
     socket.assigns.current_scope
-    |> Budgeting.update_category(socket.assigns.book, category, category_params, preload: [:envelopes])
+    |> Budgeting.update_category(socket.assigns.workspace, category, category_params, preload: [:envelopes])
     |> handle_category_result(socket, "Category updated successfully")
   end
 
   defp handle_category_create(socket, category_params) do
     socket.assigns.current_scope
-    |> Budgeting.create_category(socket.assigns.book, category_params)
+    |> Budgeting.create_category(socket.assigns.workspace, category_params)
     |> handle_category_result(socket, "Category created successfully", at: 0)
   end
 

@@ -9,22 +9,22 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
-  alias PurseCraft.PubSub.BroadcastBook
+  alias PurseCraft.PubSub.BroadcastWorkspace
 
   setup do
-    book = CoreFactory.insert(:book)
-    category = BudgetingFactory.insert(:category, book_id: book.id)
+    workspace = CoreFactory.insert(:workspace)
+    category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
     %{
-      book: book,
+      workspace: workspace,
       category: category
     }
   end
 
   describe "call/5" do
-    test "with string keys in attrs calls repository update correctly", %{book: book, category: category} do
+    test "with string keys in attrs calls repository update correctly", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       updated_category = %{category | name: "Updated String Key Category"}
@@ -37,25 +37,25 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
         {:ok, updated_category}
       end)
 
-      assert {:ok, %Category{} = result} = UpdateCategory.call(scope, book, category, attrs)
+      assert {:ok, %Category{} = result} = UpdateCategory.call(scope, workspace, category, attrs)
       assert result.name == "Updated String Key Category"
     end
 
-    test "with authorization failure returns unauthorized error", %{book: book, category: category} do
+    test "with authorization failure returns unauthorized error", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Updated Category"}
 
       reject(CategoryRepository, :update, 3)
 
-      assert {:error, :unauthorized} = UpdateCategory.call(scope, book, category, attrs)
+      assert {:error, :unauthorized} = UpdateCategory.call(scope, workspace, category, attrs)
     end
 
-    test "with repository error returns changeset error", %{book: book, category: category} do
+    test "with repository error returns changeset error", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: ""}
@@ -65,13 +65,13 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
         {:error, changeset}
       end)
 
-      assert {:error, returned_changeset} = UpdateCategory.call(scope, book, category, attrs)
+      assert {:error, returned_changeset} = UpdateCategory.call(scope, workspace, category, attrs)
       assert returned_changeset == changeset
     end
 
-    test "with preload option preloads associations", %{book: book, category: category} do
+    test "with preload option preloads associations", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       updated_category = %{category | name: "Updated Category"}
@@ -84,14 +84,17 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
 
       attrs = %{name: "Updated Category"}
 
-      assert {:ok, %Category{} = result} = UpdateCategory.call(scope, book, category, attrs, preload: [:envelopes])
+      assert {:ok, %Category{} = result} = UpdateCategory.call(scope, workspace, category, attrs, preload: [:envelopes])
       assert result.name == "Updated Category"
       assert Enum.any?(result.envelopes, &(&1.id == envelope.id))
     end
 
-    test "without preload option returns category without loaded associations", %{book: book, category: category} do
+    test "without preload option returns category without loaded associations", %{
+      workspace: workspace,
+      category: category
+    } do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       updated_category = %{category | name: "Updated Category"}
@@ -103,13 +106,13 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
 
       attrs = %{name: "Updated Category"}
 
-      assert {:ok, %Category{} = result} = UpdateCategory.call(scope, book, category, attrs)
+      assert {:ok, %Category{} = result} = UpdateCategory.call(scope, workspace, category, attrs)
       refute Ecto.assoc_loaded?(result.envelopes)
     end
 
-    test "invokes BroadcastBook with correct parameters", %{book: book, category: category} do
+    test "invokes BroadcastWorkspace with correct parameters", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       updated_category = %{category | name: "Broadcast Test Category"}
@@ -118,8 +121,8 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
         {:ok, updated_category}
       end)
 
-      expect(BroadcastBook, :call, fn received_book, {:category_updated, received_category} ->
-        assert received_book.id == book.id
+      expect(BroadcastWorkspace, :call, fn received_workspace, {:category_updated, received_category} ->
+        assert received_workspace.id == workspace.id
         assert received_category.id == updated_category.id
         assert received_category.name == "Broadcast Test Category"
         :ok
@@ -127,7 +130,7 @@ defmodule PurseCraft.Budgeting.Commands.Categories.UpdateCategoryTest do
 
       attrs = %{name: "Broadcast Test Category"}
 
-      assert {:ok, %Category{}} = UpdateCategory.call(scope, book, category, attrs)
+      assert {:ok, %Category{}} = UpdateCategory.call(scope, workspace, category, attrs)
 
       verify!()
     end

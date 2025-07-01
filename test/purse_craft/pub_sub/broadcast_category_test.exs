@@ -8,8 +8,8 @@ defmodule PurseCraft.PubSub.BroadcastCategoryTest do
 
   describe "call/2" do
     test "broadcasts envelope_repositioned message to category channel" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book: book)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace: workspace)
       envelope = BudgetingFactory.insert(:envelope, category: category)
 
       PubSub.subscribe(PurseCraft.PubSub, "category:#{category.external_id}")
@@ -19,8 +19,8 @@ defmodule PurseCraft.PubSub.BroadcastCategoryTest do
     end
 
     test "broadcasts envelope_removed message to category channel" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book: book)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace: workspace)
       envelope = BudgetingFactory.insert(:envelope, category: category)
 
       PubSub.subscribe(PurseCraft.PubSub, "category:#{category.external_id}")
@@ -30,8 +30,8 @@ defmodule PurseCraft.PubSub.BroadcastCategoryTest do
     end
 
     test "broadcasts envelope_created message to category channel" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book: book)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace: workspace)
       envelope = BudgetingFactory.insert(:envelope, category: category)
 
       PubSub.subscribe(PurseCraft.PubSub, "category:#{category.external_id}")
@@ -41,8 +41,8 @@ defmodule PurseCraft.PubSub.BroadcastCategoryTest do
     end
 
     test "broadcasts envelope_updated message to category channel" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book: book)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace: workspace)
       envelope = BudgetingFactory.insert(:envelope, category: category)
 
       PubSub.subscribe(PurseCraft.PubSub, "category:#{category.external_id}")
@@ -52,8 +52,8 @@ defmodule PurseCraft.PubSub.BroadcastCategoryTest do
     end
 
     test "broadcasts envelope_deleted message to category channel" do
-      book = CoreFactory.insert(:book)
-      category = BudgetingFactory.insert(:category, book: book)
+      workspace = CoreFactory.insert(:workspace)
+      category = BudgetingFactory.insert(:category, workspace: workspace)
       envelope = BudgetingFactory.insert(:envelope, category: category)
 
       PubSub.subscribe(PurseCraft.PubSub, "category:#{category.external_id}")

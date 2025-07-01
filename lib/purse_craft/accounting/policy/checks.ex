@@ -3,9 +3,9 @@ defmodule PurseCraft.Accounting.Policy.Checks do
   `LetMe.Policy` check module for the `Accounting` schema
   """
 
-  alias PurseCraft.Authorization.BookChecks
+  alias PurseCraft.Authorization.WorkspaceChecks
 
   # coveralls-ignore-next-line
-  defdelegate own_resource(scope, object), to: BookChecks
-  defdelegate role(scope, object, role), to: BookChecks
+  defdelegate own_resource(scope, object), to: WorkspaceChecks
+  defdelegate role(scope, object, role), to: WorkspaceChecks
 end

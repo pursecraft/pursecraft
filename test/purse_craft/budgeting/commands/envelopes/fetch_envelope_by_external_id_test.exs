@@ -11,38 +11,38 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalIdTest 
   alias PurseCraft.IdentityFactory
 
   setup do
-    book = CoreFactory.insert(:book)
-    category = BudgetingFactory.insert(:category, book_id: book.id)
+    workspace = CoreFactory.insert(:workspace)
+    category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
     %{
-      book: book,
+      workspace: workspace,
       category: category
     }
   end
 
   describe "call/4" do
-    test "with owner role (authorized scope) returns envelope", %{book: book, category: category} do
+    test "with owner role (authorized scope) returns envelope", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Test Envelope", category_id: category.id, external_id: Ecto.UUID.generate()}
 
-      stub(EnvelopeRepository, :get_by_external_id_and_book_id, fn external_id, book_id, _opts ->
+      stub(EnvelopeRepository, :get_by_external_id_and_workspace_id, fn external_id, workspace_id, _opts ->
         assert external_id == envelope.external_id
-        assert book_id == book.id
+        assert workspace_id == workspace.id
         envelope
       end)
 
-      assert {:ok, ^envelope} = FetchEnvelopeByExternalId.call(scope, book, envelope.external_id)
+      assert {:ok, ^envelope} = FetchEnvelopeByExternalId.call(scope, workspace, envelope.external_id)
     end
 
     test "with preload option returns envelope with preloaded associations", %{
-      book: book,
+      workspace: workspace,
       category: category
     } do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{
@@ -53,87 +53,88 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.FetchEnvelopeByExternalIdTest 
         category: category
       }
 
-      stub(EnvelopeRepository, :get_by_external_id_and_book_id, fn external_id, book_id, opts ->
+      stub(EnvelopeRepository, :get_by_external_id_and_workspace_id, fn external_id, workspace_id, opts ->
         assert external_id == envelope.external_id
-        assert book_id == book.id
+        assert workspace_id == workspace.id
         assert opts == [preload: [:category]]
         envelope
       end)
 
-      assert {:ok, ^envelope} = FetchEnvelopeByExternalId.call(scope, book, envelope.external_id, preload: [:category])
+      assert {:ok, ^envelope} =
+               FetchEnvelopeByExternalId.call(scope, workspace, envelope.external_id, preload: [:category])
     end
 
-    test "with invalid external_id returns not found error", %{book: book} do
+    test "with invalid external_id returns not found error", %{workspace: workspace} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       external_id = Ecto.UUID.generate()
 
-      stub(EnvelopeRepository, :get_by_external_id_and_book_id, fn ^external_id, _book_id, _opts ->
+      stub(EnvelopeRepository, :get_by_external_id_and_workspace_id, fn ^external_id, _workspace_id, _opts ->
         nil
       end)
 
-      assert {:error, :not_found} = FetchEnvelopeByExternalId.call(scope, book, external_id)
+      assert {:error, :not_found} = FetchEnvelopeByExternalId.call(scope, workspace, external_id)
     end
 
-    test "with editor role (authorized scope) returns envelope", %{book: book, category: category} do
+    test "with editor role (authorized scope) returns envelope", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Editor Envelope", category_id: category.id, external_id: Ecto.UUID.generate()}
 
-      stub(EnvelopeRepository, :get_by_external_id_and_book_id, fn _external_id, _book_id, _opts ->
+      stub(EnvelopeRepository, :get_by_external_id_and_workspace_id, fn _external_id, _workspace_id, _opts ->
         envelope
       end)
 
-      assert {:ok, ^envelope} = FetchEnvelopeByExternalId.call(scope, book, envelope.external_id)
+      assert {:ok, ^envelope} = FetchEnvelopeByExternalId.call(scope, workspace, envelope.external_id)
     end
 
-    test "with commenter role (authorized scope) returns envelope", %{book: book, category: category} do
+    test "with commenter role (authorized scope) returns envelope", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Commenter Envelope", category_id: category.id, external_id: Ecto.UUID.generate()}
 
-      stub(EnvelopeRepository, :get_by_external_id_and_book_id, fn _external_id, _book_id, _opts ->
+      stub(EnvelopeRepository, :get_by_external_id_and_workspace_id, fn _external_id, _workspace_id, _opts ->
         envelope
       end)
 
-      assert {:ok, ^envelope} = FetchEnvelopeByExternalId.call(scope, book, envelope.external_id)
+      assert {:ok, ^envelope} = FetchEnvelopeByExternalId.call(scope, workspace, envelope.external_id)
     end
 
-    test "with no association to book (unauthorized scope) returns error", %{book: book} do
+    test "with no association to workspace (unauthorized scope) returns error", %{workspace: workspace} do
       user = IdentityFactory.insert(:user)
       scope = IdentityFactory.build(:scope, user: user)
 
       external_id = Ecto.UUID.generate()
 
-      assert {:error, :unauthorized} = FetchEnvelopeByExternalId.call(scope, book, external_id)
+      assert {:error, :unauthorized} = FetchEnvelopeByExternalId.call(scope, workspace, external_id)
     end
 
-    test "with envelope from different book returns not found", %{category: category} do
-      different_book = CoreFactory.insert(:book)
+    test "with envelope from different workspace returns not found", %{category: category} do
+      different_workspace = CoreFactory.insert(:workspace)
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: different_book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: different_workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{
         id: 1,
-        name: "Different Book Envelope",
+        name: "Different Workspace Envelope",
         category_id: category.id,
         external_id: Ecto.UUID.generate()
       }
 
-      stub(EnvelopeRepository, :get_by_external_id_and_book_id, fn external_id, book_id, _opts ->
+      stub(EnvelopeRepository, :get_by_external_id_and_workspace_id, fn external_id, workspace_id, _opts ->
         assert external_id == envelope.external_id
-        assert book_id == different_book.id
+        assert workspace_id == different_workspace.id
         nil
       end)
 
-      assert {:error, :not_found} = FetchEnvelopeByExternalId.call(scope, different_book, envelope.external_id)
+      assert {:error, :not_found} = FetchEnvelopeByExternalId.call(scope, different_workspace, envelope.external_id)
     end
   end
 end

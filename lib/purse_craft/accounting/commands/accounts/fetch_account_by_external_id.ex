@@ -6,7 +6,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalId do
   alias PurseCraft.Accounting.Policy
   alias PurseCraft.Accounting.Repositories.AccountRepository
   alias PurseCraft.Accounting.Schemas.Account
-  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Utilities
 
@@ -18,19 +18,19 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalId do
 
   ## Examples
 
-      iex> FetchAccountByExternalId.call(scope, book, "account-uuid")
+      iex> FetchAccountByExternalId.call(scope, workspace, "account-uuid")
       {:ok, %Account{}}
 
-      iex> FetchAccountByExternalId.call(scope, book, "invalid-uuid")
+      iex> FetchAccountByExternalId.call(scope, workspace, "invalid-uuid")
       {:error, :not_found}
 
-      iex> FetchAccountByExternalId.call(unauthorized_scope, book, "account-uuid")
+      iex> FetchAccountByExternalId.call(unauthorized_scope, workspace, "account-uuid")
       {:error, :unauthorized}
 
   """
-  @spec call(Scope.t(), Book.t(), String.t(), options()) :: {:ok, Account.t()} | {:error, atom()}
-  def call(scope, book, external_id, opts \\ []) do
-    with :ok <- Policy.authorize(:account_read, scope, %{book: book}) do
+  @spec call(Scope.t(), Workspace.t(), String.t(), options()) :: {:ok, Account.t()} | {:error, atom()}
+  def call(scope, workspace, external_id, opts \\ []) do
+    with :ok <- Policy.authorize(:account_read, scope, %{workspace: workspace}) do
       external_id
       |> AccountRepository.get_by_external_id(opts)
       |> Utilities.to_result()

@@ -3,8 +3,8 @@ defmodule PurseCraft.Budgeting.Policy.Checks do
   `LetMe.Policy` check module for the `Budgeting` schema
   """
 
-  alias PurseCraft.Authorization.BookChecks
+  alias PurseCraft.Authorization.WorkspaceChecks
 
-  defdelegate own_resource(scope, object), to: BookChecks
-  defdelegate role(scope, object, role), to: BookChecks
+  defdelegate own_resource(scope, object), to: WorkspaceChecks
+  defdelegate role(scope, object, role), to: WorkspaceChecks
 end

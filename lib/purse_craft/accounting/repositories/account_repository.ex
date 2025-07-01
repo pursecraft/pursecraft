@@ -13,7 +13,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
           optional(:name) => String.t(),
           optional(:account_type) => String.t(),
           optional(:description) => String.t(),
-          required(:book_id) => integer(),
+          required(:workspace_id) => integer(),
           required(:position) => String.t()
         }
 
@@ -29,14 +29,14 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
         }
 
   @doc """
-  Creates an account for a book.
+  Creates an account for a workspace.
 
   ## Examples
 
-      iex> create(%{name: "Checking Account", account_type: "checking", book_id: 1, position: "m"})
+      iex> create(%{name: "Checking Account", account_type: "checking", workspace_id: 1, position: "m"})
       {:ok, %Account{}}
 
-      iex> create(%{name: "", account_type: "invalid", book_id: 1, position: "m"})
+      iex> create(%{name: "", account_type: "invalid", workspace_id: 1, position: "m"})
       {:error, %Ecto.Changeset{}}
 
   """
@@ -103,7 +103,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
   end
 
   @doc """
-  Gets the position of the first account in a book (ordered by position).
+  Gets the position of the first account in a workspace (ordered by position).
 
   Returns the position as a string, or nil if no accounts exist.
 
@@ -117,9 +117,9 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
 
   """
   @spec get_first_position(integer()) :: String.t() | nil
-  def get_first_position(book_id) do
-    book_id
-    |> AccountQuery.by_book_id()
+  def get_first_position(workspace_id) do
+    workspace_id
+    |> AccountQuery.by_workspace_id()
     |> AccountQuery.order_by_position()
     |> AccountQuery.limit(1)
     |> AccountQuery.select_position()
@@ -139,8 +139,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
       iex> get_by_external_id("account-uuid")
       %Account{}
 
-      iex> get_by_external_id("account-uuid", preload: [:book])
-      %Account{book: %Book{}}
+      iex> get_by_external_id("account-uuid", preload: [:workspace])
+      %Account{workspace: %Workspace{}}
 
       iex> get_by_external_id("account-uuid", active_only: false)
       %Account{}
@@ -159,7 +159,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
   end
 
   @doc """
-  Lists all accounts for a book.
+  Lists all accounts for a workspace.
 
   ## Options
 
@@ -168,23 +168,23 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
 
   ## Examples
 
-      iex> list_by_book(1)
+      iex> list_by_workspace(1)
       [%Account{}, %Account{}]
 
-      iex> list_by_book(1, preload: [:book])
-      [%Account{book: %Book{}}, %Account{book: %Book{}}]
+      iex> list_by_workspace(1, preload: [:workspace])
+      [%Account{workspace: %Workspace{}}, %Account{workspace: %Workspace{}}]
 
-      iex> list_by_book(1, active_only: false)
+      iex> list_by_workspace(1, active_only: false)
       [%Account{}, %Account{closed_at: ~U[2024-01-01 00:00:00Z]}]
 
-      iex> list_by_book(999)
+      iex> list_by_workspace(999)
       []
 
   """
-  @spec list_by_book(integer(), list_options()) :: list(Account.t())
-  def list_by_book(book_id, opts \\ []) do
-    book_id
-    |> AccountQuery.by_book_id()
+  @spec list_by_workspace(integer(), list_options()) :: list(Account.t())
+  def list_by_workspace(workspace_id, opts \\ []) do
+    workspace_id
+    |> AccountQuery.by_workspace_id()
     |> maybe_active_only(opts)
     |> AccountQuery.order_by_position()
     |> Repo.all()
@@ -222,8 +222,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
       iex> list_by_external_ids(["id1", "id2", "id3"])
       [%Account{}, %Account{}]
 
-      iex> list_by_external_ids(["id1", "id2"], preload: [:book])
-      [%Account{book: %Book{}}, %Account{book: %Book{}}]
+      iex> list_by_external_ids(["id1", "id2"], preload: [:workspace])
+      [%Account{workspace: %Workspace{}}, %Account{workspace: %Workspace{}}]
 
   """
   @spec list_by_external_ids([Ecto.UUID.t()], list_options()) :: list(Account.t())

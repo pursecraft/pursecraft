@@ -17,16 +17,16 @@ defmodule PurseCraft.Utilities.MaybePreload do
       iex> call(%User{}, [])
       %User{}
 
-      iex> call(%User{}, preload: [:books])
-      %User{books: [...]}
+      iex> call(%User{}, preload: [:workspaces])
+      %User{workspaces: [...]}
 
-      iex> call([%User{}, %User{}], preload: [:books])
-      [%User{books: [...]}, %User{books: [...]}]
+      iex> call([%User{}, %User{}], preload: [:workspaces])
+      [%User{workspaces: [...]}, %User{workspaces: [...]}]
 
-      iex> call(nil, preload: [:books])
+      iex> call(nil, preload: [:workspaces])
       nil
 
-      iex> call([], preload: [:books])
+      iex> call([], preload: [:workspaces])
       []
 
   """

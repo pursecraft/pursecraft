@@ -6,14 +6,14 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.MobileSidebarTest do
   setup :register_and_log_in_user
 
   setup %{user: user} do
-    book = PurseCraft.CoreFactory.insert(:book, name: "Test Budget Book")
-    PurseCraft.CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
-    %{book: book}
+    workspace = PurseCraft.CoreFactory.insert(:workspace, name: "Test Budget Workspace")
+    PurseCraft.CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
+    %{workspace: workspace}
   end
 
   describe "Mobile sidebar" do
-    test "toggles sidebar visibility on button click", %{conn: conn, book: book} do
-      {:ok, view, _html} = live(conn, ~p"/books/#{book.external_id}/budget")
+    test "toggles sidebar visibility on button click", %{conn: conn, workspace: workspace} do
+      {:ok, view, _html} = live(conn, ~p"/workspaces/#{workspace.external_id}/budget")
 
       # Check that sidebar is initially hidden on mobile
       html = render(view)

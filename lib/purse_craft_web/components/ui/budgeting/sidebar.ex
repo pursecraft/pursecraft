@@ -70,19 +70,19 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
           <nav class="space-y-1 mb-6">
             <.sidebar_link
               current_path={@current_path}
-              path={get_book_path(@current_path, "budget")}
+              path={get_workspace_path(@current_path, "budget")}
               icon="hero-banknotes"
               label="Budget"
             />
             <.sidebar_link
               current_path={@current_path}
-              path={get_book_path(@current_path, "reports")}
+              path={get_workspace_path(@current_path, "reports")}
               icon="hero-chart-bar"
               label="Reports"
             />
             <.sidebar_link
               current_path={@current_path}
-              path={get_book_path(@current_path, "accounts")}
+              path={get_workspace_path(@current_path, "accounts")}
               icon="hero-credit-card"
               label="All Accounts"
             />
@@ -127,7 +127,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
 
             <div class="mt-1 px-2">
               <.link
-                href={get_book_path(@current_path, "accounts/new")}
+                href={get_workspace_path(@current_path, "accounts/new")}
                 class="text-xs flex items-center gap-1 text-base-content/70 hover:text-base-content"
               >
                 <Icon.icon name="hero-plus-small" class="h-3 w-3" />
@@ -209,14 +209,14 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
     """
   end
 
-  defp get_book_path(current_path, page_name) do
-    case Regex.run(~r"/books/([a-zA-Z0-9-]+)", current_path) do
+  defp get_workspace_path(current_path, page_name) do
+    case Regex.run(~r"/workspaces/([a-zA-Z0-9-]+)", current_path) do
       [_match, external_id] ->
-        "/books/#{external_id}/#{page_name}"
+        "/workspaces/#{external_id}/#{page_name}"
 
       # coveralls-ignore-start
       _no_match ->
-        "/books"
+        "/workspaces"
         # coveralls-ignore-stop
     end
   end

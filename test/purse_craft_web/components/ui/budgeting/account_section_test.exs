@@ -11,7 +11,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.AccountSectionTest do
         id: "budget-accounts",
         title: "BUDGET ACCOUNTS",
         accounts: [],
-        current_path: "/books/test-book/budget",
+        current_path: "/workspaces/test-workspace/budget",
         total: "$1,234.56"
       }
 
@@ -26,7 +26,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.AccountSectionTest do
         id: "budget-accounts",
         title: "BUDGET ACCOUNTS",
         accounts: [],
-        current_path: "/books/test-book/budget",
+        current_path: "/workspaces/test-workspace/budget",
         total: "$0.00"
       }
 
@@ -55,7 +55,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.AccountSectionTest do
         id: "budget-accounts",
         title: "BUDGET ACCOUNTS",
         accounts: accounts,
-        current_path: "/books/test-book/budget",
+        current_path: "/workspaces/test-workspace/budget",
         total: "$5,000.00"
       }
 
@@ -79,13 +79,13 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.AccountSectionTest do
         id: "budget-accounts",
         title: "BUDGET ACCOUNTS",
         accounts: accounts,
-        current_path: "/books/test-book-456/budget",
+        current_path: "/workspaces/test-workspace-456/budget",
         total: "$1,000.00"
       }
 
       result = render_component(&AccountSection.account_section/1, assigns)
 
-      assert result =~ "/books/test-book-456/accounts/test-account-123"
+      assert result =~ "/workspaces/test-workspace-456/accounts/test-account-123"
     end
 
     test "shows placeholder balance for accounts" do
@@ -102,7 +102,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.AccountSectionTest do
         id: "budget-accounts",
         title: "BUDGET ACCOUNTS",
         accounts: accounts,
-        current_path: "/books/test-book/budget",
+        current_path: "/workspaces/test-workspace/budget",
         total: "$1,000.00"
       }
 
@@ -225,7 +225,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.AccountSectionTest do
       assert Enum.count(result.tracking) == 1
     end
 
-    test "handles invalid current_path by redirecting to books" do
+    test "handles invalid current_path by redirecting to workspaces" do
       account = %{external_id: "test-account-id", name: "Test Account", account_type: "checking", closed_at: nil}
       invalid_path = "/invalid/path"
 
@@ -240,7 +240,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.AccountSectionTest do
       result = render_component(&AccountSection.account_section/1, assigns)
 
       assert result =~ "TEST ACCOUNTS"
-      assert result =~ "href=\"/books\""
+      assert result =~ "href=\"/workspaces\""
     end
   end
 end

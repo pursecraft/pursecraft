@@ -1,6 +1,6 @@
 defmodule PurseCraft.Budgeting.Schemas.Category do
   @moduledoc """
-  A `Category` represents a group of envelopes in a `Book`.
+  A `Category` represents a group of envelopes in a `Workspace`.
 
   Categories help to organize envelopes into logical groupings.
   """
@@ -11,7 +11,7 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
 
   alias Ecto.Association.NotLoaded
   alias PurseCraft.Budgeting.Schemas.Envelope
-  alias PurseCraft.Core.Schemas.Book
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Utilities
   alias PurseCraft.Utilities.EncryptedBinary
   alias PurseCraft.Utilities.HashedHMAC
@@ -23,8 +23,8 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
           name_hash: binary() | nil,
           position: String.t() | nil,
           external_id: Ecto.UUID.t() | nil,
-          book: Book.t() | NotLoaded.t() | nil,
-          book_id: integer() | nil,
+          workspace: Workspace.t() | NotLoaded.t() | nil,
+          workspace_id: integer() | nil,
           envelopes: [Envelope.t()] | NotLoaded.t() | nil,
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
@@ -33,7 +33,7 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
   @type changeset_attrs :: %{
           optional(:name) => String.t(),
           optional(:position) => String.t(),
-          optional(:book_id) => integer()
+          optional(:workspace_id) => integer()
         }
 
   schema "categories" do
@@ -42,7 +42,7 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
     field :position, :string
     field :external_id, Ecto.UUID, autogenerate: true
 
-    belongs_to :book, Book
+    belongs_to :workspace, Workspace
     has_many :envelopes, Envelope, preload_order: [asc: :position]
 
     timestamps(type: :utc_datetime)
@@ -52,9 +52,9 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
   @spec changeset(t(), changeset_attrs()) :: Ecto.Changeset.t()
   def changeset(category, attrs) do
     category
-    |> cast(attrs, [:name, :position, :book_id])
+    |> cast(attrs, [:name, :position, :workspace_id])
     |> Utilities.put_hashed_field(:name)
-    |> validate_required([:name, :position, :book_id])
+    |> validate_required([:name, :position, :workspace_id])
   end
 
   @doc false
@@ -64,6 +64,6 @@ defmodule PurseCraft.Budgeting.Schemas.Category do
     |> cast(attrs, [:position])
     |> validate_required([:position])
     |> validate_format(:position, ~r/^[a-z]+$/, message: "must contain only lowercase letters")
-    |> unique_constraint(:position, name: :categories_book_id_position_index)
+    |> unique_constraint(:position, name: :categories_workspace_id_position_index)
   end
 end

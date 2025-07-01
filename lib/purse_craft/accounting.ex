@@ -12,96 +12,96 @@ defmodule PurseCraft.Accounting do
   alias PurseCraft.Accounting.Commands.Accounts.UpdateAccount
 
   @doc """
-  Creates an account and associates it with the given `Book`.
+  Creates an account and associates it with the given `Workspace`.
 
   ## Examples
 
-      iex> create_account(scope, book, %{name: "Checking Account", account_type: "checking"})
+      iex> create_account(scope, workspace, %{name: "Checking Account", account_type: "checking"})
       {:ok, %Account{}}
 
-      iex> create_account(scope, book, %{name: "", account_type: "invalid"})
+      iex> create_account(scope, workspace, %{name: "", account_type: "invalid"})
       {:error, %Ecto.Changeset{}}
 
   """
   # coveralls-ignore-next-line
-  defdelegate create_account(scope, book, attrs \\ %{}), to: CreateAccount, as: :call
+  defdelegate create_account(scope, workspace, attrs \\ %{}), to: CreateAccount, as: :call
 
   @doc """
   Fetches an account by external ID.
 
   ## Examples
 
-      iex> fetch_account_by_external_id(scope, book, "account-uuid")
+      iex> fetch_account_by_external_id(scope, workspace, "account-uuid")
       {:ok, %Account{}}
 
-      iex> fetch_account_by_external_id(scope, book, "invalid-uuid")
+      iex> fetch_account_by_external_id(scope, workspace, "invalid-uuid")
       {:error, :not_found}
 
   """
   # coveralls-ignore-next-line
-  defdelegate fetch_account_by_external_id(scope, book, external_id, opts \\ []),
+  defdelegate fetch_account_by_external_id(scope, workspace, external_id, opts \\ []),
     to: FetchAccountByExternalId,
     as: :call
 
   @doc """
-  Lists all accounts for a book.
+  Lists all accounts for a workspace.
 
   ## Examples
 
-      iex> list_accounts(scope, book)
+      iex> list_accounts(scope, workspace)
       [%Account{}, %Account{}]
 
-      iex> list_accounts(scope, book, preload: [:book])
-      [%Account{book: %Book{}}, %Account{book: %Book{}}]
+      iex> list_accounts(scope, workspace, preload: [:workspace])
+      [%Account{workspace: %Workspace{}}, %Account{workspace: %Workspace{}}]
 
   """
   # coveralls-ignore-next-line
-  defdelegate list_accounts(scope, book, opts \\ []), to: ListAccounts, as: :call
+  defdelegate list_accounts(scope, workspace, opts \\ []), to: ListAccounts, as: :call
 
   @doc """
-  Updates an account for a book.
+  Updates an account for a workspace.
 
   ## Examples
 
-      iex> update_account(scope, book, "account-uuid", %{name: "New Name"})
+      iex> update_account(scope, workspace, "account-uuid", %{name: "New Name"})
       {:ok, %Account{}}
 
-      iex> update_account(scope, book, "account-uuid", %{name: ""})
+      iex> update_account(scope, workspace, "account-uuid", %{name: ""})
       {:error, %Ecto.Changeset{}}
 
   """
   # coveralls-ignore-next-line
-  defdelegate update_account(scope, book, external_id, attrs), to: UpdateAccount, as: :call
+  defdelegate update_account(scope, workspace, external_id, attrs), to: UpdateAccount, as: :call
 
   @doc """
-  Deletes an account for a book.
+  Deletes an account for a workspace.
 
   ## Examples
 
-      iex> delete_account(scope, book, "account-uuid")
+      iex> delete_account(scope, workspace, "account-uuid")
       {:ok, %Account{}}
 
-      iex> delete_account(scope, book, "invalid-uuid")
+      iex> delete_account(scope, workspace, "invalid-uuid")
       {:error, :not_found}
 
   """
   # coveralls-ignore-next-line
-  defdelegate delete_account(scope, book, external_id), to: DeleteAccount, as: :call
+  defdelegate delete_account(scope, workspace, external_id), to: DeleteAccount, as: :call
 
   @doc """
-  Closes an account for a book by setting the closed_at timestamp.
+  Closes an account for a workspace by setting the closed_at timestamp.
 
   ## Examples
 
-      iex> close_account(scope, book, "account-uuid")
+      iex> close_account(scope, workspace, "account-uuid")
       {:ok, %Account{closed_at: ~U[2024-01-01 00:00:00Z]}}
 
-      iex> close_account(scope, book, "invalid-uuid")
+      iex> close_account(scope, workspace, "invalid-uuid")
       {:error, :not_found}
 
   """
   # coveralls-ignore-next-line
-  defdelegate close_account(scope, book, external_id), to: CloseAccount, as: :call
+  defdelegate close_account(scope, workspace, external_id), to: CloseAccount, as: :call
 
   @doc """
   Repositions an account between two other accounts using fractional indexing.

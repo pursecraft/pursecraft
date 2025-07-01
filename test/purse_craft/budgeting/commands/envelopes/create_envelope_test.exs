@@ -9,22 +9,22 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
-  alias PurseCraft.PubSub.BroadcastBook
+  alias PurseCraft.PubSub.BroadcastWorkspace
 
   setup do
-    book = CoreFactory.insert(:book)
-    category = BudgetingFactory.insert(:category, book_id: book.id)
+    workspace = CoreFactory.insert(:workspace)
+    category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
     %{
-      book: book,
+      workspace: workspace,
       category: category
     }
   end
 
   describe "call/4" do
-    test "with string keys in attrs creates an envelope correctly", %{book: book, category: category} do
+    test "with string keys in attrs creates an envelope correctly", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "String Key Envelope", category_id: category.id}
@@ -40,12 +40,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
       attrs = %{"name" => "String Key Envelope"}
 
-      assert {:ok, ^envelope} = CreateEnvelope.call(scope, book, category, attrs)
+      assert {:ok, ^envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
     end
 
-    test "with invalid data returns error changeset", %{book: book, category: category} do
+    test "with invalid data returns error changeset", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       changeset = %Ecto.Changeset{valid?: false}
@@ -58,12 +58,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
       attrs = %{name: ""}
 
-      assert {:error, ^changeset} = CreateEnvelope.call(scope, book, category, attrs)
+      assert {:error, ^changeset} = CreateEnvelope.call(scope, workspace, category, attrs)
     end
 
-    test "with owner role (authorized scope) creates an envelope", %{book: book, category: category} do
+    test "with owner role (authorized scope) creates an envelope", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Owner Envelope", category_id: category.id}
@@ -79,12 +79,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
       attrs = %{name: "Owner Envelope"}
 
-      assert {:ok, ^envelope} = CreateEnvelope.call(scope, book, category, attrs)
+      assert {:ok, ^envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
     end
 
-    test "with editor role (authorized scope) creates an envelope", %{book: book, category: category} do
+    test "with editor role (authorized scope) creates an envelope", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :editor)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Editor Envelope", category_id: category.id}
@@ -100,31 +100,34 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
       attrs = %{name: "Editor Envelope"}
 
-      assert {:ok, ^envelope} = CreateEnvelope.call(scope, book, category, attrs)
+      assert {:ok, ^envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
     end
 
-    test "with commenter role (unauthorized scope) returns error", %{book: book, category: category} do
+    test "with commenter role (unauthorized scope) returns error", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :commenter)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Commenter Envelope"}
 
-      assert {:error, :unauthorized} = CreateEnvelope.call(scope, book, category, attrs)
+      assert {:error, :unauthorized} = CreateEnvelope.call(scope, workspace, category, attrs)
     end
 
-    test "with no association to book (unauthorized scope) returns error", %{book: book, category: category} do
+    test "with no association to workspace (unauthorized scope) returns error", %{
+      workspace: workspace,
+      category: category
+    } do
       user = IdentityFactory.insert(:user)
       scope = IdentityFactory.build(:scope, user: user)
 
       attrs = %{name: "Unauthorized Envelope"}
 
-      assert {:error, :unauthorized} = CreateEnvelope.call(scope, book, category, attrs)
+      assert {:error, :unauthorized} = CreateEnvelope.call(scope, workspace, category, attrs)
     end
 
-    test "invokes BroadcastBook when envelope is created successfully", %{book: book, category: category} do
+    test "invokes BroadcastWorkspace when envelope is created successfully", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "Broadcast Test Envelope", category_id: category.id}
@@ -133,18 +136,18 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
       stub(EnvelopeRepository, :create, fn _attrs -> {:ok, envelope} end)
 
-      expect(BroadcastBook, :call, fn ^book, {:envelope_created, ^envelope} -> :ok end)
+      expect(BroadcastWorkspace, :call, fn ^workspace, {:envelope_created, ^envelope} -> :ok end)
 
       attrs = %{name: "Broadcast Test Envelope"}
 
-      assert {:ok, ^envelope} = CreateEnvelope.call(scope, book, category, attrs)
+      assert {:ok, ^envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
 
       verify!()
     end
 
-    test "assigns position before existing envelope", %{book: book, category: category} do
+    test "assigns position before existing envelope", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       envelope = %Envelope{id: 1, name: "New Envelope", category_id: category.id}
@@ -158,19 +161,19 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
 
       attrs = %{name: "New Envelope"}
 
-      assert {:ok, ^envelope} = CreateEnvelope.call(scope, book, category, attrs)
+      assert {:ok, ^envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
     end
 
-    test "returns error when cannot place at top", %{book: book, category: category} do
+    test "returns error when cannot place at top", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:book_user, book_id: book.id, user_id: user.id, role: :owner)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
       stub(EnvelopeRepository, :get_first_position, fn _category_id -> "a" end)
 
       attrs = %{name: "New Envelope"}
 
-      assert {:error, :cannot_place_at_top} = CreateEnvelope.call(scope, book, category, attrs)
+      assert {:error, :cannot_place_at_top} = CreateEnvelope.call(scope, workspace, category, attrs)
     end
   end
 end
