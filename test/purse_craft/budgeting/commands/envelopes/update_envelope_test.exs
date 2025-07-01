@@ -4,98 +4,57 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.UpdateEnvelopeTest do
   import Mimic
 
   alias PurseCraft.Budgeting.Commands.Envelopes.UpdateEnvelope
-  alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.PubSub.BroadcastWorkspace
 
   setup do
+    user = IdentityFactory.insert(:user)
     workspace = CoreFactory.insert(:workspace)
     category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
     envelope = BudgetingFactory.insert(:envelope, category_id: category.id)
+    scope = IdentityFactory.build(:scope, user: user)
 
     %{
+      user: user,
       workspace: workspace,
       category: category,
-      envelope: envelope
+      envelope: envelope,
+      scope: scope
     }
   end
 
   describe "call/4" do
-    test "with string keys in attrs updates an envelope correctly", %{workspace: workspace, envelope: envelope} do
-      user = IdentityFactory.insert(:user)
+    test "with owner role (authorized scope) updates envelope successfully", %{
+      user: user,
+      scope: scope,
+      workspace: workspace,
+      envelope: envelope
+    } do
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
-      scope = IdentityFactory.build(:scope, user: user)
+      attrs = %{name: "Updated Envelope Name"}
 
-      updated_envelope = %{envelope | name: "String Key Updated Envelope"}
-
-      stub(EnvelopeRepository, :update, fn ^envelope, attrs ->
-        assert attrs.name == "String Key Updated Envelope"
-        {:ok, updated_envelope}
-      end)
-
-      attrs = %{"name" => "String Key Updated Envelope"}
-
-      assert {:ok, ^updated_envelope} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
+      assert {:ok, updated_envelope} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
+      assert updated_envelope.name == "Updated Envelope Name"
+      assert updated_envelope.id == envelope.id
     end
 
-    test "with invalid data returns error changeset", %{workspace: workspace, envelope: envelope} do
-      user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
-      scope = IdentityFactory.build(:scope, user: user)
-
-      changeset = %Ecto.Changeset{valid?: false}
-
-      stub(EnvelopeRepository, :update, fn ^envelope, _attrs ->
-        {:error, changeset}
-      end)
-
-      attrs = %{name: ""}
-
-      assert {:error, ^changeset} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
-    end
-
-    test "with owner role (authorized scope) updates an envelope", %{workspace: workspace, envelope: envelope} do
-      user = IdentityFactory.insert(:user)
-      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
-      scope = IdentityFactory.build(:scope, user: user)
-
-      updated_envelope = %{envelope | name: "Owner Updated Envelope"}
-
-      stub(EnvelopeRepository, :update, fn ^envelope, attrs ->
-        assert attrs.name == "Owner Updated Envelope"
-        {:ok, updated_envelope}
-      end)
-
-      attrs = %{name: "Owner Updated Envelope"}
-
-      assert {:ok, ^updated_envelope} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
-    end
-
-    test "with editor role (authorized scope) updates an envelope", %{workspace: workspace, envelope: envelope} do
+    test "with editor role (authorized scope) updates envelope successfully", %{workspace: workspace, envelope: envelope} do
       user = IdentityFactory.insert(:user)
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
-
-      updated_envelope = %{envelope | name: "Editor Updated Envelope"}
-
-      stub(EnvelopeRepository, :update, fn ^envelope, attrs ->
-        assert attrs.name == "Editor Updated Envelope"
-        {:ok, updated_envelope}
-      end)
-
       attrs = %{name: "Editor Updated Envelope"}
 
-      assert {:ok, ^updated_envelope} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
+      assert {:ok, updated_envelope} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
+      assert updated_envelope.name == "Editor Updated Envelope"
     end
 
     test "with commenter role (unauthorized scope) returns error", %{workspace: workspace, envelope: envelope} do
       user = IdentityFactory.insert(:user)
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :commenter)
       scope = IdentityFactory.build(:scope, user: user)
-
-      attrs = %{name: "Commenter Updated Envelope"}
+      attrs = %{name: "Commenter Envelope"}
 
       assert {:error, :unauthorized} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
     end
@@ -106,26 +65,55 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.UpdateEnvelopeTest do
     } do
       user = IdentityFactory.insert(:user)
       scope = IdentityFactory.build(:scope, user: user)
-
-      attrs = %{name: "Unauthorized Updated Envelope"}
+      attrs = %{name: "Unauthorized Envelope"}
 
       assert {:error, :unauthorized} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
     end
 
-    test "invokes BroadcastWorkspace when envelope is updated successfully", %{workspace: workspace, envelope: envelope} do
-      user = IdentityFactory.insert(:user)
+    test "with invalid attributes returns changeset error", %{
+      user: user,
+      scope: scope,
+      workspace: workspace,
+      envelope: envelope
+    } do
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
-      scope = IdentityFactory.build(:scope, user: user)
+      attrs = %{name: ""}
 
-      updated_envelope = %{envelope | name: "Broadcast Test Updated Envelope"}
+      assert {:error, changeset} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
 
-      stub(EnvelopeRepository, :update, fn ^envelope, _attrs -> {:ok, updated_envelope} end)
+    test "with string keys in attrs updates envelope correctly", %{
+      user: user,
+      scope: scope,
+      workspace: workspace,
+      envelope: envelope
+    } do
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
+      attrs = %{"name" => "String Key Updated"}
 
-      expect(BroadcastWorkspace, :call, fn ^workspace, {:envelope_updated, ^updated_envelope} -> :ok end)
+      assert {:ok, updated_envelope} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
+      assert updated_envelope.name == "String Key Updated"
+    end
 
-      attrs = %{name: "Broadcast Test Updated Envelope"}
+    test "broadcasts envelope_updated event when envelope is updated successfully", %{
+      user: user,
+      scope: scope,
+      workspace: workspace,
+      envelope: envelope
+    } do
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
 
-      assert {:ok, ^updated_envelope} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
+      expect(BroadcastWorkspace, :call, fn received_workspace, {:envelope_updated, received_envelope} ->
+        assert received_workspace.id == workspace.id
+        assert received_envelope.name == "Broadcast Test Envelope"
+        :ok
+      end)
+
+      attrs = %{name: "Broadcast Test Envelope"}
+
+      assert {:ok, updated_envelope} = UpdateEnvelope.call(scope, workspace, envelope, attrs)
+      assert updated_envelope.name == "Broadcast Test Envelope"
 
       verify!()
     end

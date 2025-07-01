@@ -4,7 +4,6 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
   import Mimic
 
   alias PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelope
-  alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
   alias PurseCraft.Budgeting.Schemas.Envelope
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.CoreFactory
@@ -27,20 +26,12 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
-      envelope = %Envelope{id: 1, name: "String Key Envelope", category_id: category.id}
-
-      stub(EnvelopeRepository, :get_first_position, fn _category_id -> nil end)
-
-      stub(EnvelopeRepository, :create, fn attrs ->
-        assert attrs.name == "String Key Envelope"
-        assert attrs.category_id == category.id
-        assert attrs.position == "m"
-        {:ok, envelope}
-      end)
-
       attrs = %{"name" => "String Key Envelope"}
 
-      assert {:ok, ^envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert {:ok, %Envelope{} = envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert envelope.name == "String Key Envelope"
+      assert envelope.category_id == category.id
+      assert envelope.position == "m"
     end
 
     test "with invalid data returns error changeset", %{workspace: workspace, category: category} do
@@ -48,17 +39,10 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
-      changeset = %Ecto.Changeset{valid?: false}
-
-      stub(EnvelopeRepository, :get_first_position, fn _category_id -> nil end)
-
-      stub(EnvelopeRepository, :create, fn _attrs ->
-        {:error, changeset}
-      end)
-
       attrs = %{name: ""}
 
-      assert {:error, ^changeset} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert {:error, changeset} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
     end
 
     test "with owner role (authorized scope) creates an envelope", %{workspace: workspace, category: category} do
@@ -66,20 +50,11 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
-      envelope = %Envelope{id: 1, name: "Owner Envelope", category_id: category.id}
-
-      stub(EnvelopeRepository, :get_first_position, fn _category_id -> nil end)
-
-      stub(EnvelopeRepository, :create, fn attrs ->
-        assert attrs.name == "Owner Envelope"
-        assert attrs.category_id == category.id
-        assert attrs.position == "m"
-        {:ok, envelope}
-      end)
-
       attrs = %{name: "Owner Envelope"}
 
-      assert {:ok, ^envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert {:ok, %Envelope{} = envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert envelope.name == "Owner Envelope"
+      assert envelope.category_id == category.id
     end
 
     test "with editor role (authorized scope) creates an envelope", %{workspace: workspace, category: category} do
@@ -87,20 +62,11 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :editor)
       scope = IdentityFactory.build(:scope, user: user)
 
-      envelope = %Envelope{id: 1, name: "Editor Envelope", category_id: category.id}
-
-      stub(EnvelopeRepository, :get_first_position, fn _category_id -> nil end)
-
-      stub(EnvelopeRepository, :create, fn attrs ->
-        assert attrs.name == "Editor Envelope"
-        assert attrs.category_id == category.id
-        assert attrs.position == "m"
-        {:ok, envelope}
-      end)
-
       attrs = %{name: "Editor Envelope"}
 
-      assert {:ok, ^envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert {:ok, %Envelope{} = envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert envelope.name == "Editor Envelope"
+      assert envelope.category_id == category.id
     end
 
     test "with commenter role (unauthorized scope) returns error", %{workspace: workspace, category: category} do
@@ -125,53 +91,79 @@ defmodule PurseCraft.Budgeting.Commands.Envelopes.CreateEnvelopeTest do
       assert {:error, :unauthorized} = CreateEnvelope.call(scope, workspace, category, attrs)
     end
 
-    test "invokes BroadcastWorkspace when envelope is created successfully", %{workspace: workspace, category: category} do
+    test "broadcasts envelope_created event when envelope is created successfully", %{
+      workspace: workspace,
+      category: category
+    } do
       user = IdentityFactory.insert(:user)
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
-      envelope = %Envelope{id: 1, name: "Broadcast Test Envelope", category_id: category.id}
-
-      stub(EnvelopeRepository, :get_first_position, fn _category_id -> nil end)
-
-      stub(EnvelopeRepository, :create, fn _attrs -> {:ok, envelope} end)
-
-      expect(BroadcastWorkspace, :call, fn ^workspace, {:envelope_created, ^envelope} -> :ok end)
+      expect(BroadcastWorkspace, :call, fn broadcast_workspace, {:envelope_created, broadcast_envelope} ->
+        assert broadcast_workspace.id == workspace.id
+        assert broadcast_envelope.name == "Broadcast Test Envelope"
+        :ok
+      end)
 
       attrs = %{name: "Broadcast Test Envelope"}
 
-      assert {:ok, ^envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert {:ok, %Envelope{}} = CreateEnvelope.call(scope, workspace, category, attrs)
 
       verify!()
     end
 
-    test "assigns position before existing envelope", %{workspace: workspace, category: category} do
+    test "assigns position 'm' for first envelope in a category", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
-      envelope = %Envelope{id: 1, name: "New Envelope", category_id: category.id}
+      attrs = %{name: "First Envelope"}
 
-      stub(EnvelopeRepository, :get_first_position, fn _category_id -> "m" end)
-
-      stub(EnvelopeRepository, :create, fn attrs ->
-        assert attrs.position == "g"
-        {:ok, envelope}
-      end)
-
-      attrs = %{name: "New Envelope"}
-
-      assert {:ok, ^envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert {:ok, %Envelope{} = envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert envelope.position == "m"
     end
 
-    test "returns error when cannot place at top", %{workspace: workspace, category: category} do
+    test "assigns position before existing envelopes", %{workspace: workspace, category: category} do
       user = IdentityFactory.insert(:user)
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
       scope = IdentityFactory.build(:scope, user: user)
 
-      stub(EnvelopeRepository, :get_first_position, fn _category_id -> "a" end)
+      # Create first envelope
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
 
-      attrs = %{name: "New Envelope"}
+      attrs = %{name: "Second Envelope"}
+
+      assert {:ok, %Envelope{} = envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert envelope.position < "m"
+      assert envelope.position == "g"
+    end
+
+    test "handles multiple envelopes being added at the top", %{workspace: workspace, category: category} do
+      user = IdentityFactory.insert(:user)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      # Create initial envelopes
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "t")
+
+      attrs = %{name: "New Top Envelope"}
+
+      assert {:ok, %Envelope{} = envelope} = CreateEnvelope.call(scope, workspace, category, attrs)
+      assert envelope.position < "g"
+      assert envelope.position == "d"
+    end
+
+    test "returns error when first envelope is already at 'a'", %{workspace: workspace, category: category} do
+      user = IdentityFactory.insert(:user)
+      CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
+      scope = IdentityFactory.build(:scope, user: user)
+
+      # Create an envelope at the boundary
+      BudgetingFactory.insert(:envelope, category_id: category.id, position: "a")
+
+      attrs = %{name: "Cannot Place At Top"}
 
       assert {:error, :cannot_place_at_top} = CreateEnvelope.call(scope, workspace, category, attrs)
     end
