@@ -149,5 +149,4 @@ defmodule PurseCraft.Core do
   """
   @spec change_workspace(Workspace.t(), map()) :: Ecto.Changeset.t()
   defdelegate change_workspace(workspace, attrs \\ %{}), to: ChangeWorkspace, as: :call
-
 end
