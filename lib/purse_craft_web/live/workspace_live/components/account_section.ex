@@ -1,8 +1,5 @@
-defmodule PurseCraftWeb.Components.UI.Budgeting.AccountSection do
-  @moduledoc """
-  Component for displaying accounts grouped by type (budget vs tracking) in the sidebar.
-  """
-
+defmodule PurseCraftWeb.WorkspaceLive.Components.AccountSection do
+  @moduledoc false
   use PurseCraftWeb, :html
 
   @type account :: %{

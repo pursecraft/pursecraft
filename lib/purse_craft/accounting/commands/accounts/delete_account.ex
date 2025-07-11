@@ -33,6 +33,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.DeleteAccount do
          {:ok, account} <- FetchAccountByExternalId.call(scope, workspace, external_id),
          {:ok, deleted_account} <- AccountRepository.delete(account) do
       PubSub.broadcast_workspace(workspace, {:account_deleted, deleted_account})
+      PubSub.broadcast_account(deleted_account, {:deleted, deleted_account})
 
       {:ok, deleted_account}
     end

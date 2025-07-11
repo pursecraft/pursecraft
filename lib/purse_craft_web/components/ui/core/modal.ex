@@ -1,9 +1,5 @@
-defmodule PurseCraftWeb.Components.UI.Budgeting.Modal do
-  @moduledoc """
-  Modal component for the budgeting layout.
-  Uses DaisyUI 5 modal classes.
-  """
-
+defmodule PurseCraftWeb.Components.UI.Core.Modal do
+  @moduledoc false
   use PurseCraftWeb, :html
 
   attr :id, :string, required: true
@@ -40,7 +36,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Modal do
 
   def confirmation_modal(assigns) do
     ~H"""
-    <div :if={@show} class="modal modal-open" role="dialog">
+    <div :if={@show} id={@id} class="modal modal-open" role="dialog">
       <div class="modal-box">
         <h3 class="font-bold text-lg mb-4">{@title}</h3>
         {render_slot(@inner_block)}
@@ -71,7 +67,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Modal do
 
   def form_modal(assigns) do
     ~H"""
-    <div :if={@show} class="modal modal-open" role="dialog">
+    <div :if={@show} id={@id} class="modal modal-open" role="dialog">
       <div class="modal-box">
         <h3 class="font-bold text-lg mb-4">{@title}</h3>
         {render_slot(@inner_block)}

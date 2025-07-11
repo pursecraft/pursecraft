@@ -13,6 +13,9 @@ defmodule PurseCraftWeb.WorkspaceLive.IndexTest do
 
   describe "List Workspaces" do
     test "returns all scoped workspaces", %{conn: conn, user: user} do
+      # Stub PubSub calls to prevent connection leaks
+      stub(PubSub, :subscribe_user_workspaces, fn _scope -> :ok end)
+
       workspace = CoreFactory.insert(:workspace, name: "Workspace 1")
       CoreFactory.insert(:workspace, name: "Workspace 2")
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id)
@@ -27,6 +30,9 @@ defmodule PurseCraftWeb.WorkspaceLive.IndexTest do
 
   describe "Create Workspace" do
     test "with valid data creates new workspace", %{conn: conn} do
+      # Stub PubSub calls to prevent connection leaks
+      stub(PubSub, :subscribe_user_workspaces, fn _scope -> :ok end)
+
       attrs = %{
         name: "Some Workspace"
       }

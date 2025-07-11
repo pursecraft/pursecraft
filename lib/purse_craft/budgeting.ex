@@ -236,5 +236,6 @@ defmodule PurseCraft.Budgeting do
 
   """
   @spec change_envelope(Envelope.t(), ChangeEnvelope.attrs()) :: Ecto.Changeset.t()
+  # coveralls-ignore-next-line
   defdelegate change_envelope(envelope, attrs \\ %{}), to: ChangeEnvelope, as: :call
 end

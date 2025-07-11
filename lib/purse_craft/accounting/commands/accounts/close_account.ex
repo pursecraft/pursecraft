@@ -35,6 +35,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CloseAccount do
          {:ok, account} <- FetchAccountByExternalId.call(scope, workspace, external_id),
          {:ok, closed_account} <- AccountRepository.close(account) do
       PubSub.broadcast_workspace(workspace, {:account_closed, closed_account})
+      PubSub.broadcast_account(closed_account, {:closed, closed_account})
 
       {:ok, closed_account}
     end

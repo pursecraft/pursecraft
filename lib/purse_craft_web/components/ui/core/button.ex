@@ -1,9 +1,5 @@
-defmodule PurseCraftWeb.Components.UI.Budgeting.Button do
-  @moduledoc """
-  Button components for the budgeting layout.
-  Uses DaisyUI 5 button classes.
-  """
-
+defmodule PurseCraftWeb.Components.UI.Core.Button do
+  @moduledoc false
   use PurseCraftWeb, :html
 
   attr :type, :string, default: "button"
@@ -79,7 +75,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Button do
   attr :variant, :string, values: ~w(primary secondary danger outline ghost), default: "secondary"
   attr :size, :string, values: ~w(xs sm md lg), default: "md"
   attr :class, :string, default: ""
-  attr :rest, :global, include: ~w(phx-click phx-value-id phx-disable-with disabled form)
+  attr :rest, :global, include: ~w(phx-click phx-value-id phx-disable-with disabled form phx-target)
   slot :inner_block, required: true
 
   def button(assigns) do

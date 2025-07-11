@@ -38,7 +38,6 @@ defmodule PurseCraftWeb.WorkspaceLive.Form do
      |> apply_action(socket.assigns.live_action, params)}
   end
 
-  defp return_to("show"), do: "show"
   defp return_to(_action), do: "index"
 
   defp apply_action(socket, :edit, %{"external_id" => external_id}) do
@@ -109,5 +108,4 @@ defmodule PurseCraftWeb.WorkspaceLive.Form do
   end
 
   defp return_path(_scope, "index", _workspace), do: ~p"/workspaces"
-  defp return_path(_scope, "show", workspace), do: ~p"/workspaces/#{workspace}"
 end

@@ -1,14 +1,10 @@
-defmodule PurseCraftWeb.Components.UI.Budgeting.Form do
-  @moduledoc """
-  Form components for the budgeting layout.
-  Uses DaisyUI 5 form classes.
-  """
-
+defmodule PurseCraftWeb.Components.UI.Core.Form do
+  @moduledoc false
   use PurseCraftWeb, :html
 
   alias Phoenix.HTML.Form
   alias Phoenix.HTML.FormField
-  alias PurseCraftWeb.Components.UI.Budgeting.Icon
+  alias PurseCraftWeb.Components.UI.Core.Icon
 
   @doc """
   Renders an input with label and error messages.
@@ -155,7 +151,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Form do
     ~H"""
     <label class="label">
       <span class="label-text-alt text-error flex items-center gap-1">
-        <Icon.icon name="hero-exclamation-circle-mini" class="size-4" />
+        <Icon.render name="hero-exclamation-circle-mini" class="size-4" />
         {render_slot(@inner_block)}
       </span>
     </label>

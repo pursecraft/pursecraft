@@ -35,6 +35,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.UpdateAccount do
          {:ok, account} <- FetchAccountByExternalId.call(scope, workspace, external_id),
          {:ok, updated_account} <- AccountRepository.update(account, attrs) do
       PubSub.broadcast_workspace(workspace, {:account_updated, updated_account})
+      PubSub.broadcast_account(updated_account, {:updated, updated_account})
 
       {:ok, updated_account}
     end

@@ -1,12 +1,10 @@
-defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
-  @moduledoc """
-  Sidebar component for the budgeting layout.
-  """
+defmodule PurseCraftWeb.WorkspaceLive.Components.Sidebar do
+  @moduledoc false
   use PurseCraftWeb, :live_component
 
   alias Phoenix.LiveView.JS
-  alias PurseCraftWeb.Components.UI.Budgeting.AccountSection
-  alias PurseCraftWeb.Components.UI.Budgeting.Icon
+  alias PurseCraftWeb.Components.UI.Core.Icon
+  alias PurseCraftWeb.WorkspaceLive.Components.AccountSection
 
   @impl Phoenix.LiveComponent
   def mount(socket) do
@@ -130,7 +128,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
                 href={get_workspace_path(@current_path, "accounts/new")}
                 class="text-xs flex items-center gap-1 text-base-content/70 hover:text-base-content"
               >
-                <Icon.icon name="hero-plus-small" class="h-3 w-3" />
+                <Icon.render name="hero-plus-small" class="h-3 w-3" />
                 <span>Add Account</span>
               </.link>
             </div>
@@ -161,7 +159,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
               class="btn btn-ghost btn-sm"
               aria-label="Log out"
             >
-              <Icon.icon name="hero-arrow-right-on-rectangle" class="h-5 w-5" />
+              <Icon.render name="hero-arrow-right-on-rectangle" class="h-5 w-5" />
             </.link>
           </div>
 
@@ -177,7 +175,7 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
           phx-click={JS.push("toggle", target: @myself)}
           aria-label="Toggle menu"
         >
-          <Icon.icon name="hero-bars-3" class="h-6 w-6" />
+          <Icon.render name="hero-bars-3" class="h-6 w-6" />
         </button>
       </div>
     </div>
@@ -200,10 +198,10 @@ defmodule PurseCraftWeb.Components.UI.Budgeting.Sidebar do
 
     ~H"""
     <.link
-      href={@path}
+      patch={@path}
       class={"flex items-center px-3 py-2 text-sm rounded-lg #{if @active, do: "bg-primary text-primary-content", else: "text-base-content hover:bg-base-300"}"}
     >
-      <Icon.icon name={@icon} class="mr-3 h-5 w-5" />
+      <Icon.render name={@icon} class="mr-3 h-5 w-5" />
       {@label}
     </.link>
     """
