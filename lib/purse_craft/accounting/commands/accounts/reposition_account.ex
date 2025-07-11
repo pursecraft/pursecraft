@@ -66,6 +66,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.RepositionAccount do
       case result do
         {:ok, updated} ->
           PubSub.broadcast_workspace(account.workspace, {:account_repositioned, updated})
+          PubSub.broadcast_account(updated, {:repositioned, updated})
           {:ok, updated}
 
         {:error, reason} ->

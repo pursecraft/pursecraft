@@ -42,6 +42,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccount do
          attrs = build_attrs(attrs, workspace.id, position),
          {:ok, account} <- AccountRepository.create(attrs) do
       PubSub.broadcast_workspace(workspace, {:account_created, account})
+      PubSub.broadcast_account(account, {:created, account})
       {:ok, account}
     end
   end

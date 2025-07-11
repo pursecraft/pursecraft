@@ -1,9 +1,5 @@
-defmodule PurseCraftWeb.Components.UI.Budgeting.Card do
-  @moduledoc """
-  Card components for the budgeting layout.
-  Uses DaisyUI 5 card classes.
-  """
-
+defmodule PurseCraftWeb.Components.UI.Core.Card do
+  @moduledoc false
   use PurseCraftWeb, :html
 
   attr :title, :string, required: true

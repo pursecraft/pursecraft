@@ -8,10 +8,16 @@
     "lib/purse_craft_web/components/core_components.ex",
     "lib/purse_craft_web/components/layouts.ex",
     "lib/purse_craft_web/components/ui/budgeting/card.ex",
+    "lib/purse_craft_web/components/ui/core",
     "lib/purse_craft_web/endpoint.ex",
     "lib/purse_craft_web/gettext.ex",
     "lib/purse_craft_web/router.ex",
     "lib/purse_craft_web/telemetry.ex",
+    "lib/purse_craft_web/live/workspace_live/show.ex",
+    "lib/purse_craft_web/live/workspace_live/accounts_component.ex",
+    "lib/purse_craft_web/live/workspace_live/budget_component.ex",
+    "lib/purse_craft_web/live/workspace_live/reports_component.ex",
+    "lib/purse_craft_web/live/workspace_live/components",
     "test"
   ]
 }

@@ -62,9 +62,9 @@ defmodule PurseCraftWeb.Router do
       live "/workspaces/:external_id", WorkspaceLive.Show, :show
       live "/workspaces/:external_id/edit", WorkspaceLive.Form, :edit
 
-      live "/workspaces/:external_id/budget", BudgetLive.Index, :index
-      live "/workspaces/:external_id/reports", ReportsLive.Index, :index
-      live "/workspaces/:external_id/accounts", AccountsLive.Index, :index
+      live "/workspaces/:external_id/budget", WorkspaceLive.Show, :budget
+      live "/workspaces/:external_id/reports", WorkspaceLive.Show, :reports
+      live "/workspaces/:external_id/accounts", WorkspaceLive.Show, :accounts
 
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
