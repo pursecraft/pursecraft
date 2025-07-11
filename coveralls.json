@@ -14,9 +14,9 @@
     "lib/purse_craft_web/router.ex",
     "lib/purse_craft_web/telemetry.ex",
     "lib/purse_craft_web/live/workspace_live/show.ex",
-    "lib/purse_craft_web/live/workspace_live/accounts_component.ex",
-    "lib/purse_craft_web/live/workspace_live/budget_component.ex",
-    "lib/purse_craft_web/live/workspace_live/reports_component.ex",
+    "lib/purse_craft_web/live/workspace_live/show/accounts_page.ex",
+    "lib/purse_craft_web/live/workspace_live/show/budget_page.ex",
+    "lib/purse_craft_web/live/workspace_live/show/reports_page.ex",
     "lib/purse_craft_web/live/workspace_live/components",
     "test"
   ]

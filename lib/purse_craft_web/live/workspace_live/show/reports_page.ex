@@ -1,4 +1,4 @@
-defmodule PurseCraftWeb.WorkspaceLive.ReportsComponent do
+defmodule PurseCraftWeb.WorkspaceLive.Show.ReportsPage do
   @moduledoc false
   use PurseCraftWeb, :live_component
 

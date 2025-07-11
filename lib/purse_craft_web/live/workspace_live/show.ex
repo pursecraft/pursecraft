@@ -8,10 +8,10 @@ defmodule PurseCraftWeb.WorkspaceLive.Show do
   alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.PubSub
   alias PurseCraftWeb.Components.UI.Core.FlashGroup
-  alias PurseCraftWeb.WorkspaceLive.AccountsComponent
-  alias PurseCraftWeb.WorkspaceLive.BudgetComponent
   alias PurseCraftWeb.WorkspaceLive.Components.Sidebar
-  alias PurseCraftWeb.WorkspaceLive.ReportsComponent
+  alias PurseCraftWeb.WorkspaceLive.Show.AccountsPage
+  alias PurseCraftWeb.WorkspaceLive.Show.BudgetPage
+  alias PurseCraftWeb.WorkspaceLive.Show.ReportsPage
 
   @impl Phoenix.LiveView
   def render(assigns) do
@@ -32,7 +32,7 @@ defmodule PurseCraftWeb.WorkspaceLive.Show do
         <main class="flex-1 overflow-y-auto">
           <.live_component
             :if={@live_action == :budget}
-            module={BudgetComponent}
+            module={BudgetPage}
             id="budget-component"
             workspace={@workspace}
             current_scope={@current_scope}
@@ -40,7 +40,7 @@ defmodule PurseCraftWeb.WorkspaceLive.Show do
 
           <.live_component
             :if={@live_action == :reports}
-            module={ReportsComponent}
+            module={ReportsPage}
             id="reports-component"
             workspace={@workspace}
             current_scope={@current_scope}
@@ -48,7 +48,7 @@ defmodule PurseCraftWeb.WorkspaceLive.Show do
 
           <.live_component
             :if={@live_action == :accounts}
-            module={AccountsComponent}
+            module={AccountsPage}
             id="accounts-component"
             workspace={@workspace}
             current_scope={@current_scope}
@@ -174,70 +174,69 @@ defmodule PurseCraftWeb.WorkspaceLive.Show do
     {:noreply, assign(socket, :accounts, accounts)}
   end
 
-  # Forward category/envelope events to BudgetComponent
   def handle_info({:category_repositioned, _category}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :category_repositioned)
+    send_update(BudgetPage, id: "budget-component", action: :category_repositioned)
     {:noreply, socket}
   end
 
   def handle_info({:category_created, _category}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :category_created)
+    send_update(BudgetPage, id: "budget-component", action: :category_created)
     {:noreply, socket}
   end
 
   def handle_info({:category_updated, _category}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :category_updated)
+    send_update(BudgetPage, id: "budget-component", action: :category_updated)
     {:noreply, socket}
   end
 
   def handle_info({:category_deleted, _category}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :category_deleted)
+    send_update(BudgetPage, id: "budget-component", action: :category_deleted)
     {:noreply, socket}
   end
 
   def handle_info({:envelope_repositioned, %{category_id: _category_id} = data}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :envelope_repositioned, data: data)
+    send_update(BudgetPage, id: "budget-component", action: :envelope_repositioned, data: data)
     {:noreply, socket}
   end
 
   def handle_info({:envelope_created, _envelope}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :envelope_created)
+    send_update(BudgetPage, id: "budget-component", action: :envelope_created)
     {:noreply, socket}
   end
 
   def handle_info({:envelope_updated, _envelope}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :envelope_updated)
+    send_update(BudgetPage, id: "budget-component", action: :envelope_updated)
     {:noreply, socket}
   end
 
   def handle_info({:envelope_deleted, _envelope}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :envelope_deleted)
+    send_update(BudgetPage, id: "budget-component", action: :envelope_deleted)
     {:noreply, socket}
   end
 
   def handle_info({:envelope_removed, %{category_id: _category_id} = data}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :envelope_removed, data: data)
+    send_update(BudgetPage, id: "budget-component", action: :envelope_removed, data: data)
     {:noreply, socket}
   end
 
   # Handle action messages (for testing)
   def handle_info({:delete_category, %{"id" => _external_id} = params}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :delete_category, params: params)
+    send_update(BudgetPage, id: "budget-component", action: :delete_category, params: params)
     {:noreply, socket}
   end
 
   def handle_info({:delete_envelope, %{"id" => _external_id} = params}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :delete_envelope, params: params)
+    send_update(BudgetPage, id: "budget-component", action: :delete_envelope, params: params)
     {:noreply, socket}
   end
 
   def handle_info({:reposition_category, %{"category_id" => _category_id} = params}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :reposition_category, params: params)
+    send_update(BudgetPage, id: "budget-component", action: :reposition_category, params: params)
     {:noreply, socket}
   end
 
   def handle_info({:reposition_envelope, %{"envelope_id" => _envelope_id} = params}, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :reposition_envelope, params: params)
+    send_update(BudgetPage, id: "budget-component", action: :reposition_envelope, params: params)
     {:noreply, socket}
   end
 
@@ -246,31 +245,27 @@ defmodule PurseCraftWeb.WorkspaceLive.Show do
     {:noreply, put_flash(socket, type, message)}
   end
 
-  # Forward drag-and-drop events to BudgetComponent
   @impl Phoenix.LiveView
   def handle_event("reposition_envelope", params, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :reposition_envelope, params: params)
+    send_update(BudgetPage, id: "budget-component", action: :reposition_envelope, params: params)
     {:noreply, socket}
   end
 
-  # Forward delete category event to BudgetComponent
   @impl Phoenix.LiveView
   def handle_event("delete_category", params, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :delete_category, params: params)
+    send_update(BudgetPage, id: "budget-component", action: :delete_category, params: params)
     {:noreply, socket}
   end
 
-  # Forward category repositioning event to BudgetComponent
   @impl Phoenix.LiveView
   def handle_event("reposition_category", params, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :reposition_category, params: params)
+    send_update(BudgetPage, id: "budget-component", action: :reposition_category, params: params)
     {:noreply, socket}
   end
 
-  # Forward delete envelope event to BudgetComponent
   @impl Phoenix.LiveView
   def handle_event("delete_envelope", params, socket) do
-    send_update(BudgetComponent, id: "budget-component", action: :delete_envelope, params: params)
+    send_update(BudgetPage, id: "budget-component", action: :delete_envelope, params: params)
     {:noreply, socket}
   end
 end
