@@ -198,7 +198,7 @@ defmodule PurseCraftWeb.WorkspaceLive.Components.Sidebar do
 
     ~H"""
     <.link
-      href={@path}
+      patch={@path}
       class={"flex items-center px-3 py-2 text-sm rounded-lg #{if @active, do: "bg-primary text-primary-content", else: "text-base-content hover:bg-base-300"}"}
     >
       <Icon.render name={@icon} class="mr-3 h-5 w-5" />
