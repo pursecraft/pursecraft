@@ -9,7 +9,7 @@ defmodule PurseCraft.Vault do
       Keyword.put(config, :ciphers,
         default: {
           Cloak.Ciphers.AES.GCM,
-          tag: "AES.GCM.V1", key: decode_env!("PURSECRAFT_CLOAK_KEY"), iv_length: 12
+          tag: "AES.GCM.V1", key: decode_env!("PURSECRAFT_DATA_KEY"), iv_length: 12
         }
       )
 
