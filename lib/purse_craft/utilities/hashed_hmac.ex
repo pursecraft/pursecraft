@@ -10,7 +10,7 @@ defmodule PurseCraft.Utilities.HashedHMAC do
     config =
       Keyword.merge(config,
         algorithm: :sha256,
-        secret: decode_env!("PURSECRAFT_HMAC_SECRET")
+        secret: decode_env!("PURSECRAFT_INDEX_KEY")
       )
 
     {:ok, config}
