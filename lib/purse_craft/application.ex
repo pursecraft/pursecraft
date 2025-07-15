@@ -14,6 +14,7 @@ defmodule PurseCraft.Application do
       PurseCraft.Vault,
       {DNSCluster, query: Application.get_env(:purse_craft, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: PurseCraft.PubSub},
+      {Oban, Application.fetch_env!(:purse_craft, Oban)},
       # Start a worker by calling: PurseCraft.Worker.start_link(arg)
       # {PurseCraft.Worker, arg},
       # Start to serve requests, typically the last entry

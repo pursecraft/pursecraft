@@ -25,6 +25,11 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+config :purse_craft, Oban,
+  engine: Oban.Engines.Basic,
+  queues: [default: 10],
+  repo: PurseCraft.Repo
+
 config :purse_craft, PurseCraft.Cache,
   # When using :shards as backend
   # backend: :shards,
