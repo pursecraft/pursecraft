@@ -81,7 +81,8 @@ defmodule PurseCraft.MixProject do
       {:swoosh, "1.18.4"},
       {:tailwind, "0.3.1", runtime: Mix.env() == :dev},
       {:telemetry_metrics, "1.1.0"},
-      {:telemetry_poller, "1.2.0"}
+      {:telemetry_poller, "1.2.0"},
+      {:tidewave, "0.2.0", only: :dev}
     ]
   end
 
