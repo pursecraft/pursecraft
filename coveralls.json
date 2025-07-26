@@ -18,6 +18,7 @@
     "lib/purse_craft_web/live/workspace_live/show/budget_page.ex",
     "lib/purse_craft_web/live/workspace_live/show/reports_page.ex",
     "lib/purse_craft_web/live/workspace_live/components",
+    "lib/purse_craft/utilities/search_token.ex",
     "test"
   ]
 }

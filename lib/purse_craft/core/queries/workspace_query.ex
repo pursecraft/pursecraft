@@ -9,6 +9,28 @@ defmodule PurseCraft.Core.Queries.WorkspaceQuery do
   alias PurseCraft.Core.Schemas.WorkspaceUser
 
   @doc """
+  Returns a query for finding a workspace by its ID.
+
+  ## Examples
+
+      iex> by_id(123)
+      #Ecto.Query<...>
+
+      iex> Workspace |> by_id(123)
+      #Ecto.Query<...>
+
+  """
+  @spec by_id(integer()) :: Ecto.Query.t()
+  def by_id(id) do
+    by_id(Workspace, id)
+  end
+
+  @spec by_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
+  def by_id(queryable, id) do
+    from(w in queryable, where: w.id == ^id)
+  end
+
+  @doc """
   Returns a query for workspaces associated with a specific user.
 
   ## Examples

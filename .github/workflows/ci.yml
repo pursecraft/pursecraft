@@ -12,6 +12,7 @@ env:
   MIX_ENV: test
   PURSECRAFT_DATA_KEY: ${{ secrets.PURSECRAFT_DATA_KEY }}
   PURSECRAFT_INDEX_KEY: ${{ secrets.PURSECRAFT_INDEX_KEY }}
+  PURSECRAFT_SEARCH_KEY: ${{ secrets.PURSECRAFT_SEARCH_KEY }}
 
 permissions:
   contents: read
