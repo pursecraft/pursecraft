@@ -42,6 +42,38 @@ defmodule PurseCraft.Core.Repositories.WorkspaceRepository do
   end
 
   @doc """
+  Gets a workspace by its ID with optional preloading.
+
+  Returns the workspace if it exists, or `nil` if not found.
+
+  ## Options
+
+  The `:preload` option accepts a list of associations to preload. For example:
+
+  - `[preload: [:categories]]` - preloads only categories
+  - `[preload: [categories: :envelopes]]` - preloads categories and their envelopes
+
+  ## Examples
+
+      iex> get_by_id(123)
+      %Workspace{}
+
+      iex> get_by_id(123, preload: [:categories])
+      %Workspace{categories: [...]}
+
+      iex> get_by_id(999)
+      nil
+
+  """
+  @spec get_by_id(integer(), get_workspace_options()) :: Workspace.t() | nil
+  def get_by_id(id, opts \\ []) do
+    id
+    |> WorkspaceQuery.by_id()
+    |> Repo.one()
+    |> Utilities.maybe_preload(opts)
+  end
+
+  @doc """
   Gets a workspace by its external ID.
 
   Raises `Ecto.NoResultsError` if the Workspace does not exist.
