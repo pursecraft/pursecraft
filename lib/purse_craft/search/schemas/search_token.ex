@@ -2,8 +2,6 @@ defmodule PurseCraft.Search.Schemas.SearchToken do
   @moduledoc false
   use Ecto.Schema
 
-  import Ecto.Changeset
-
   @valid_entity_types [
     "account",
     "category",
@@ -39,23 +37,4 @@ defmodule PurseCraft.Search.Schemas.SearchToken do
 
   @spec valid_entity_types() :: list(String.t())
   def valid_entity_types, do: @valid_entity_types
-
-  @spec changeset(t(), map()) :: Ecto.Changeset.t()
-  def changeset(search_token, attrs) do
-    search_token
-    |> cast(attrs, [
-      :entity_type,
-      :entity_id,
-      :field_name,
-      :token_hash,
-      :workspace_id,
-      :algorithm_version,
-      :token_length
-    ])
-    |> validate_required([:entity_type, :entity_id, :field_name, :token_hash, :workspace_id])
-    |> validate_inclusion(:entity_type, @valid_entity_types)
-    |> validate_number(:algorithm_version, greater_than: 0)
-    |> validate_number(:token_length, greater_than: 0)
-    |> foreign_key_constraint(:workspace_id)
-  end
 end
