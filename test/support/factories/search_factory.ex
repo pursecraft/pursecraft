@@ -6,20 +6,20 @@ defmodule PurseCraft.SearchFactory do
   alias PurseCraft.Search.Schemas.SearchToken
 
   def search_token_factory(attrs) do
-    field_name = Map.get(attrs, :field_name, "name")
-    token_hash = Map.get(attrs, :token_hash, "hel")
+    # Build a minimal struct with defaults
+    base_token = %SearchToken{
+      field_name: "name",
+      algorithm_version: 1,
+      token_length: 3
+    }
 
-    search_token =
-      %SearchToken{}
-      |> SearchToken.changeset(%{
-        field_name: field_name,
-        token_hash: token_hash,
-        algorithm_version: 1,
-        token_length: 3
-      })
+    # Create a changeset just for the token_hash field to apply encryption
+    token_with_hash =
+      base_token
+      |> Ecto.Changeset.cast(%{token_hash: "hel"}, [:token_hash])
       |> Ecto.Changeset.apply_changes()
 
-    search_token
+    token_with_hash
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()
   end
