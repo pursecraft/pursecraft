@@ -10,22 +10,49 @@ defmodule PurseCraft.Accounting.Policy do
     end
 
     action :read do
-      allow role: :owner
-      allow role: :editor
-      allow role: :commenter
-      desc "Read Account details"
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      allow [:own_resource, role: :commenter]
+      desc "Read an Account"
     end
 
     action :update do
-      allow role: :owner
-      allow role: :editor
-      desc "Update Account details"
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      desc "Update an Account"
     end
 
     action :delete do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      desc "Delete an Account"
+    end
+  end
+
+  object :payee do
+    action :create do
       allow role: :owner
       allow role: :editor
-      desc "Delete Account"
+      desc "Create a new Payee"
+    end
+
+    action :read do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      allow [:own_resource, role: :commenter]
+      desc "Read a Payee"
+    end
+
+    action :update do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      desc "Update a Payee"
+    end
+
+    action :delete do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      desc "Delete a Payee"
     end
   end
 end

@@ -65,6 +65,7 @@ defmodule PurseCraft.Search.Commands.Search.PerformSearch do
     # Entity type priority (commonly searched entities rank higher)
     type_multiplier =
       case entity.entity_type do
+        "payee" -> 1.3
         "account" -> 1.2
         "category" -> 1.1
         "envelope" -> 1.0

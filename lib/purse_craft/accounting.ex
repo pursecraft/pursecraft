@@ -10,6 +10,8 @@ defmodule PurseCraft.Accounting do
   alias PurseCraft.Accounting.Commands.Accounts.ListAccounts
   alias PurseCraft.Accounting.Commands.Accounts.RepositionAccount
   alias PurseCraft.Accounting.Commands.Accounts.UpdateAccount
+  alias PurseCraft.Accounting.Commands.Payees.CreatePayee
+  alias PurseCraft.Accounting.Commands.Payees.FindOrCreatePayee
 
   @doc """
   Creates an account and associates it with the given `Workspace`.
@@ -117,4 +119,31 @@ defmodule PurseCraft.Accounting do
   """
   # coveralls-ignore-next-line
   defdelegate reposition_account(scope, account_id, prev_account_id, next_account_id), to: RepositionAccount, as: :call
+
+  @doc """
+  Creates a payee and associates it with the given `Workspace`.
+
+  ## Examples
+
+      iex> create_payee(scope, workspace, %{name: "Amazon"})
+      {:ok, %Payee{}}
+
+      iex> create_payee(scope, workspace, %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate create_payee(scope, workspace, attrs), to: CreatePayee, as: :call
+
+  @doc """
+  Finds or creates a payee with the given name in the workspace.
+
+  ## Examples
+
+      iex> find_or_create_payee(scope, workspace, "Amazon")
+      {:ok, %Payee{}}
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate find_or_create_payee(scope, workspace, payee_name), to: FindOrCreatePayee, as: :call
 end

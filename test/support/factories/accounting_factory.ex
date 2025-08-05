@@ -4,6 +4,7 @@ defmodule PurseCraft.AccountingFactory do
   use PurseCraft.FactoryTemplate
 
   alias PurseCraft.Accounting.Schemas.Account
+  alias PurseCraft.Accounting.Schemas.Payee
   alias PurseCraft.TestHelpers.PositionHelper
 
   def account_factory(attrs) do
@@ -22,6 +23,19 @@ defmodule PurseCraft.AccountingFactory do
       |> Ecto.Changeset.apply_changes()
 
     account
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
+  end
+
+  def payee_factory(attrs) do
+    name = Map.get(attrs, :name, Faker.Company.name())
+
+    payee =
+      %Payee{}
+      |> Payee.changeset(%{name: name})
+      |> Ecto.Changeset.apply_changes()
+
+    payee
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()
   end
