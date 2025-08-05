@@ -6,6 +6,7 @@ defmodule PurseCraft.Search.Schemas.SearchToken do
     "account",
     "category",
     "envelope",
+    "payee",
     "workspace"
   ]
 
