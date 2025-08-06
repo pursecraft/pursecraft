@@ -10,6 +10,7 @@ defmodule PurseCraft.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      compilers: [:phoenix_live_view] ++ Mix.compilers(),
       listeners: [Phoenix.CodeReloader],
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
@@ -26,6 +27,12 @@ defmodule PurseCraft.MixProject do
         plt_file: {:no_warn, "priv/plts/project.plt"},
         list_unused_filter: true
       ]
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [precommit: :test]
     ]
   end
 
@@ -54,9 +61,9 @@ defmodule PurseCraft.MixProject do
       {:cloak_ecto, "1.3.0"},
       {:credo, "1.7.11", only: [:dev, :test], runtime: false},
       {:dialyxir, "1.4.5", only: [:dev, :test], runtime: false},
-      {:dns_cluster, "0.1.3"},
-      {:ecto_sql, "3.12.1"},
-      {:esbuild, "0.9.0", runtime: Mix.env() == :dev},
+      {:dns_cluster, "0.2.0"},
+      {:ecto_sql, "3.13.2"},
+      {:esbuild, "0.10.0", runtime: Mix.env() == :dev},
       {:ex_machina, "2.8.0", only: :test},
       {:excoveralls, "0.18.5", only: :test},
       {:faker, "0.18.0", only: :test},
@@ -64,17 +71,18 @@ defmodule PurseCraft.MixProject do
       {:gettext, "0.26.2"},
       {:mimic, "1.11.2", only: :test},
       {:heroicons,
-       github: "tailwindlabs/heroicons", tag: "v2.1.1", sparse: "optimized", app: false, compile: false, depth: 1},
+       github: "tailwindlabs/heroicons", tag: "v2.2.0", sparse: "optimized", app: false, compile: false, depth: 1},
       {:jason, "1.4.4"},
+      {:lazy_html, "0.1.5", only: :test},
       {:let_me, "1.2.5"},
       {:nebulex, "2.6.4"},
       {:oban, "2.19.4"},
-      {:phoenix, "1.8.0-rc.0", override: true},
+      {:phoenix, "1.8.0", override: true},
       {:phoenix_ecto, "4.6.3"},
       {:phoenix_html, "4.2.1"},
       {:phoenix_live_dashboard, "0.8.6"},
       {:phoenix_live_reload, "1.5.3", only: :dev},
-      {:phoenix_live_view, "1.0.9"},
+      {:phoenix_live_view, "1.1.3"},
       {:postgrex, "0.20.0"},
       {:req, "0.5.10"},
       {:styler, "1.4.1", only: [:dev, :test], runtime: false},
@@ -108,7 +116,8 @@ defmodule PurseCraft.MixProject do
         "phx.digest"
       ],
       lint: ["format", "credo"],
-      "lint.ci": ["format --check-formatted", "credo"]
+      "lint.ci": ["format --check-formatted", "credo"],
+      precommit: ["compile --warning-as-errors", "deps.unlock --unused", "lint", "test"]
     ]
   end
 end
