@@ -77,9 +77,9 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form_password", user: %{email: "test@email.com", password: "123456", remember_me: true})
+        form(lv, "#login_form_password", user: %{email: "test@email.com", password: "123456"})
 
-      render_submit(form)
+      render_submit(form, %{user: %{remember_me: true}})
 
       conn = follow_trigger_action(form, conn)
       assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Invalid email or password"
@@ -93,7 +93,7 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
 
       {:ok, _login_live, login_html} =
         lv
-        |> element(~s|main a:fl-contains("Sign up")|)
+        |> element("main a", "Sign up")
         |> render_click()
         |> follow_redirect(conn, ~p"/users/register")
 

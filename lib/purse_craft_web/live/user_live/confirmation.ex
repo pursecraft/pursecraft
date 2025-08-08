@@ -9,7 +9,9 @@ defmodule PurseCraftWeb.UserLive.Confirmation do
     ~H"""
     <Layouts.marketing flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto max-w-sm">
-        <CoreComponents.header class="text-center">Welcome {@user.email}</CoreComponents.header>
+        <div class="text-center">
+          <CoreComponents.header>Welcome {@user.email}</CoreComponents.header>
+        </div>
 
         <.form
           :if={!@user.confirmed_at}
@@ -20,14 +22,16 @@ defmodule PurseCraftWeb.UserLive.Confirmation do
           phx-trigger-action={@trigger_submit}
         >
           <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
-          <CoreComponents.input
-            :if={!@current_scope}
-            field={@form[:remember_me]}
-            type="checkbox"
-            label="Keep me logged in"
-          />
-          <CoreComponents.button variant="primary" phx-disable-with="Confirming..." class="w-full">
-            Confirm my account
+          <CoreComponents.button
+            name={@form[:remember_me].name}
+            value="true"
+            phx-disable-with="Confirming..."
+            class="btn btn-primary w-full"
+          >
+            Confirm and stay logged in
+          </CoreComponents.button>
+          <CoreComponents.button phx-disable-with="Confirming..." class="btn btn-primary btn-soft w-full mt-2">
+            Confirm and log in only this time
           </CoreComponents.button>
         </.form>
 
@@ -40,15 +44,23 @@ defmodule PurseCraftWeb.UserLive.Confirmation do
           phx-trigger-action={@trigger_submit}
         >
           <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
-          <CoreComponents.input
-            :if={!@current_scope}
-            field={@form[:remember_me]}
-            type="checkbox"
-            label="Keep me logged in"
-          />
-          <CoreComponents.button variant="primary" phx-disable-with="Logging in..." class="w-full">
-            Log in
-          </CoreComponents.button>
+          <%= if @current_scope do %>
+            <CoreComponents.button phx-disable-with="Logging in..." class="btn btn-primary w-full">
+              Log in
+            </CoreComponents.button>
+          <% else %>
+            <CoreComponents.button
+              name={@form[:remember_me].name}
+              value="true"
+              phx-disable-with="Logging in..."
+              class="btn btn-primary w-full"
+            >
+              Keep me logged in on this device
+            </CoreComponents.button>
+            <CoreComponents.button phx-disable-with="Logging in..." class="btn btn-primary btn-soft w-full mt-2">
+              Log me in only this time
+            </CoreComponents.button>
+          <% end %>
         </.form>
 
         <p :if={!@user.confirmed_at} class="alert alert-outline mt-8">
@@ -59,11 +71,13 @@ defmodule PurseCraftWeb.UserLive.Confirmation do
     """
   end
 
+  @impl Phoenix.LiveView
   def mount(%{"token" => token}, _session, socket) do
     if user = Identity.get_user_by_magic_link_token(token) do
       form = to_form(%{"token" => token}, as: "user")
 
-      {:ok, assign(socket, user: user, form: form, trigger_submit: false), temporary_assigns: [form: nil]}
+      {:ok, assign(socket, user: user, form: form, trigger_submit: false),
+       temporary_assigns: [form: nil]}
     else
       {:ok,
        socket
@@ -72,6 +86,7 @@ defmodule PurseCraftWeb.UserLive.Confirmation do
     end
   end
 
+  @impl Phoenix.LiveView
   def handle_event("submit", %{"user" => params}, socket) do
     {:noreply, assign(socket, form: to_form(params, as: "user"), trigger_submit: true)}
   end

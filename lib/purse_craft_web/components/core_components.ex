@@ -29,7 +29,6 @@ defmodule PurseCraftWeb.CoreComponents do
   use Phoenix.Component
   use Gettext, backend: PurseCraftWeb.Gettext
 
-  alias Phoenix.HTML.FormField
   alias Phoenix.LiveView.JS
 
   @doc """
@@ -65,15 +64,15 @@ defmodule PurseCraftWeb.CoreComponents do
         @kind == :info && "alert-info",
         @kind == :error && "alert-error"
       ]}>
-        <.icon :if={@kind == :info} name="hero-information-circle-mini" class="size-5 shrink-0" />
-        <.icon :if={@kind == :error} name="hero-exclamation-circle-mini" class="size-5 shrink-0" />
+        <.icon :if={@kind == :info} name="hero-information-circle" class="size-5 shrink-0" />
+        <.icon :if={@kind == :error} name="hero-exclamation-circle" class="size-5 shrink-0" />
         <div>
           <p :if={@title} class="font-semibold">{@title}</p>
           <p>{msg}</p>
         </div>
         <div class="flex-1" />
         <button type="button" class="group self-start cursor-pointer" aria-label={gettext("close")}>
-          <.icon name="hero-x-mark-solid" class="size-5 opacity-40 group-hover:opacity-70" />
+          <.icon name="hero-x-mark" class="size-5 opacity-40 group-hover:opacity-70" />
         </button>
       </div>
     </div>
@@ -89,23 +88,28 @@ defmodule PurseCraftWeb.CoreComponents do
       <.button phx-click="go" variant="primary">Send!</.button>
       <.button navigate={~p"/"}>Home</.button>
   """
-  attr :rest, :global, include: ~w(href navigate patch)
+  attr :rest, :global, include: ~w(href navigate patch method download name value disabled)
+  attr :class, :string
   attr :variant, :string, values: ~w(primary)
   slot :inner_block, required: true
 
   def button(%{rest: rest} = assigns) do
     variants = %{"primary" => "btn-primary", nil => "btn-primary btn-soft"}
-    assigns = assign(assigns, :class, Map.fetch!(variants, assigns[:variant]))
+
+    assigns =
+      assign_new(assigns, :class, fn ->
+        ["btn", Map.fetch!(variants, assigns[:variant])]
+      end)
 
     if rest[:href] || rest[:navigate] || rest[:patch] do
       ~H"""
-      <.link class={["btn", @class]} {@rest}>
+      <.link class={@class} {@rest}>
         {render_slot(@inner_block)}
       </.link>
       """
     else
       ~H"""
-      <button class={["btn", @class]} {@rest}>
+      <button class={@class} {@rest}>
         {render_slot(@inner_block)}
       </button>
       """
@@ -146,20 +150,24 @@ defmodule PurseCraftWeb.CoreComponents do
   attr :type, :string,
     default: "text",
     values: ~w(checkbox color date datetime-local email file month number password
-               range search select tel text textarea time url week)
+               search select tel text textarea time url week)
 
-  attr :field, FormField, doc: "a form field struct retrieved from the form, for example: @form[:email]"
+  attr :field, Phoenix.HTML.FormField,
+    doc: "a form field struct retrieved from the form, for example: @form[:email]"
 
   attr :errors, :list, default: []
   attr :checked, :boolean, doc: "the checked flag for checkbox inputs"
   attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
   attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
   attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
+  attr :class, :string, default: nil, doc: "the input class to use over defaults"
+  attr :error_class, :string, default: nil, doc: "the input error class to use over defaults"
 
-  attr :rest, :global, include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
+  attr :rest, :global,
+    include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
                 multiple pattern placeholder readonly required rows size step)
 
-  def input(%{field: %FormField{} = field} = assigns) do
+  def input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
     errors = if Phoenix.Component.used_input?(field), do: field.errors, else: []
 
     assigns
@@ -177,35 +185,35 @@ defmodule PurseCraftWeb.CoreComponents do
       end)
 
     ~H"""
-    <fieldset class="fieldset mb-2">
+    <div class="fieldset mb-2">
       <label>
         <input type="hidden" name={@name} value="false" disabled={@rest[:disabled]} />
-        <span class="fieldset-label">
+        <span class="label">
           <input
             type="checkbox"
             id={@id}
             name={@name}
             value="true"
             checked={@checked}
-            class="checkbox checkbox-sm"
+            class={@class || "checkbox checkbox-sm"}
             {@rest}
           />{@label}
         </span>
       </label>
       <.error :for={msg <- @errors}>{msg}</.error>
-    </fieldset>
+    </div>
     """
   end
 
   def input(%{type: "select"} = assigns) do
     ~H"""
-    <fieldset class="fieldset mb-2">
+    <div class="fieldset mb-2">
       <label>
-        <span :if={@label} class="fieldset-label mb-1">{@label}</span>
+        <span :if={@label} class="label mb-1">{@label}</span>
         <select
           id={@id}
           name={@name}
-          class={["w-full select", @errors != [] && "select-error"]}
+          class={[@class || "w-full select", @errors != [] && (@error_class || "select-error")]}
           multiple={@multiple}
           {@rest}
         >
@@ -214,44 +222,50 @@ defmodule PurseCraftWeb.CoreComponents do
         </select>
       </label>
       <.error :for={msg <- @errors}>{msg}</.error>
-    </fieldset>
+    </div>
     """
   end
 
   def input(%{type: "textarea"} = assigns) do
     ~H"""
-    <fieldset class="fieldset mb-2">
+    <div class="fieldset mb-2">
       <label>
-        <span :if={@label} class="fieldset-label mb-1">{@label}</span>
+        <span :if={@label} class="label mb-1">{@label}</span>
         <textarea
           id={@id}
           name={@name}
-          class={["w-full textarea", @errors != [] && "textarea-error"]}
+          class={[
+            @class || "w-full textarea",
+            @errors != [] && (@error_class || "textarea-error")
+          ]}
           {@rest}
         >{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
       </label>
       <.error :for={msg <- @errors}>{msg}</.error>
-    </fieldset>
+    </div>
     """
   end
 
   # All other inputs text, datetime-local, url, password, etc. are handled here...
   def input(assigns) do
     ~H"""
-    <fieldset class="fieldset mb-2">
+    <div class="fieldset mb-2">
       <label>
-        <span :if={@label} class="fieldset-label mb-1">{@label}</span>
+        <span :if={@label} class="label mb-1">{@label}</span>
         <input
           type={@type}
           name={@name}
           id={@id}
           value={Phoenix.HTML.Form.normalize_value(@type, @value)}
-          class={["w-full input", @errors != [] && "input-error"]}
+          class={[
+            @class || "w-full input",
+            @errors != [] && (@error_class || "input-error")
+          ]}
           {@rest}
         />
       </label>
       <.error :for={msg <- @errors}>{msg}</.error>
-    </fieldset>
+    </div>
     """
   end
 
@@ -259,7 +273,7 @@ defmodule PurseCraftWeb.CoreComponents do
   defp error(assigns) do
     ~H"""
     <p class="mt-1.5 flex gap-2 items-center text-sm text-error">
-      <.icon name="hero-exclamation-circle-mini" class="size-5" />
+      <.icon name="hero-exclamation-circle" class="size-5" />
       {render_slot(@inner_block)}
     </p>
     """
@@ -268,15 +282,13 @@ defmodule PurseCraftWeb.CoreComponents do
   @doc """
   Renders a header with title.
   """
-  attr :class, :string, default: nil
-
   slot :inner_block, required: true
   slot :subtitle
   slot :actions
 
   def header(assigns) do
     ~H"""
-    <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-4", @class]}>
+    <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-4"]}>
       <div>
         <h1 class="text-lg font-semibold leading-8">
           {render_slot(@inner_block)}
@@ -290,7 +302,7 @@ defmodule PurseCraftWeb.CoreComponents do
     """
   end
 
-  @doc ~S"""
+  @doc """
   Renders a table with generic styling.
 
   ## Examples
@@ -371,7 +383,7 @@ defmodule PurseCraftWeb.CoreComponents do
     ~H"""
     <ul class="list">
       <li :for={item <- @item} class="list-row">
-        <div>
+        <div class="list-col-grow">
           <div class="font-bold">{item.title}</div>
           <div>{render_slot(item)}</div>
         </div>
@@ -395,7 +407,7 @@ defmodule PurseCraftWeb.CoreComponents do
 
   ## Examples
 
-      <.icon name="hero-x-mark-solid" />
+      <.icon name="hero-x-mark" />
       <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
   """
   attr :name, :string, required: true
@@ -414,7 +426,8 @@ defmodule PurseCraftWeb.CoreComponents do
       to: selector,
       time: 300,
       transition:
-        {"transition-all ease-out duration-300", "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95",
+        {"transition-all ease-out duration-300",
+         "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95",
          "opacity-100 translate-y-0 sm:scale-100"}
     )
   end
