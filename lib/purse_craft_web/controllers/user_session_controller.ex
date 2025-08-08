@@ -15,7 +15,7 @@ defmodule PurseCraftWeb.UserSessionController do
   # magic link login
   defp create(conn, %{"user" => %{"token" => token} = user_params}, info) do
     case Identity.login_user_by_magic_link(token) do
-      {:ok, user, tokens_to_disconnect} ->
+      {:ok, {user, tokens_to_disconnect}} ->
         UserAuth.disconnect_sessions(tokens_to_disconnect)
 
         conn
@@ -49,7 +49,7 @@ defmodule PurseCraftWeb.UserSessionController do
   def update_password(conn, %{"user" => user_params} = params) do
     user = conn.assigns.current_scope.user
     true = Identity.sudo_mode?(user)
-    {:ok, _user, expired_tokens} = Identity.update_user_password(user, user_params)
+    {:ok, {_user, expired_tokens}} = Identity.update_user_password(user, user_params)
 
     # disconnect all existing LiveViews with old sessions
     UserAuth.disconnect_sessions(expired_tokens)

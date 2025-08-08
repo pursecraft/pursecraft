@@ -152,10 +152,10 @@ defmodule PurseCraft.Identity do
     context = "change:#{user.email}"
 
     with {:ok, query} <- UserToken.verify_change_email_token_query(token, context),
-         %UserToken{sent_to: email} <- Repo.one(query),
+         user_token when not is_nil(user_token) <- Repo.one(query),
          {:ok, _result} <-
            user
-           |> user_email_multi(email, context)
+           |> user_email_multi(user_token.sent_to, context)
            |> Repo.transaction() do
       :ok
     else
@@ -168,7 +168,7 @@ defmodule PurseCraft.Identity do
 
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, changeset)
-    |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, [context]))
+    |> Ecto.Multi.delete_all(:tokens, from(t in UserToken, where: t.user_id == ^user.id and t.context == ^context))
   end
 
   @doc """
@@ -211,10 +211,6 @@ defmodule PurseCraft.Identity do
     user
     |> User.password_changeset(attrs)
     |> update_user_and_delete_all_tokens()
-    |> case do
-      {:ok, user, expired_tokens} -> {:ok, user, expired_tokens}
-      {:error, :user, changeset, _other_changes} -> {:error, changeset}
-    end
   end
 
   ## Session
@@ -232,7 +228,9 @@ defmodule PurseCraft.Identity do
   @doc """
   Gets the user with the given signed token.
   """
-  @spec get_user_by_session_token(binary()) :: User.t() | nil
+  @spec get_user_by_session_token(binary() | nil) :: {User.t(), NaiveDateTime.t()} | nil
+  def get_user_by_session_token(nil), do: nil
+  
   def get_user_by_session_token(token) do
     {:ok, query} = UserToken.verify_session_token_query(token)
     Repo.one(query)
@@ -298,9 +296,9 @@ defmodule PurseCraft.Identity do
   def deliver_user_update_email_instructions(%User{} = user, current_email, update_email_url_fun)
       when is_function(update_email_url_fun, 1) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "change:#{current_email}")
-    updated_user_token = UserToken.put_hashed_fields(%{user_token | sent_to: user.email})
-
-    Repo.insert!(updated_user_token)
+    # Use changeset to properly handle encryption and hashing for the sent_to field
+    changeset = UserToken.changeset(user_token, %{})
+    Repo.insert!(changeset)
     UserNotifier.deliver_update_email_instructions(user, update_email_url_fun.(encoded_token))
   end
 
@@ -311,8 +309,9 @@ defmodule PurseCraft.Identity do
           {:ok, Swoosh.Email.t()} | {:error, atom()}
   def deliver_login_instructions(%User{} = user, magic_link_url_fun) when is_function(magic_link_url_fun, 1) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "login")
-    updated_user_token = UserToken.put_hashed_fields(%{user_token | sent_to: user.email})
-    Repo.insert!(updated_user_token)
+    # Use changeset to properly handle encryption and hashing
+    changeset = UserToken.changeset(user_token, %{sent_to: String.downcase(user.email)})
+    Repo.insert!(changeset)
     UserNotifier.deliver_login_instructions(user, magic_link_url_fun.(encoded_token))
   end
 
@@ -321,10 +320,7 @@ defmodule PurseCraft.Identity do
   """
   @spec delete_user_session_token(binary()) :: :ok
   def delete_user_session_token(token) do
-    token
-    |> UserToken.by_token_and_context_query("session")
-    |> Repo.delete_all()
-
+    Repo.delete_all(from(UserToken, where: [token: ^token, context: "session"]))
     :ok
   end
 
@@ -350,7 +346,7 @@ defmodule PurseCraft.Identity do
 
         user ->
           Repo.delete!(user_token)
-          {:ok, user, []}
+          {:ok, {user, []}}
       end
     else
       {:error, :not_found}
@@ -358,17 +354,14 @@ defmodule PurseCraft.Identity do
   end
 
   defp update_user_and_delete_all_tokens(changeset) do
-    %{data: %User{} = user} = changeset
+    Repo.transact(fn ->
+      with {:ok, user} <- Repo.update(changeset) do
+        tokens_to_expire = Repo.all(from(t in UserToken, where: t.user_id == ^user.id))
 
-    with {:ok, %{user: user, tokens_to_expire: expired_tokens}} <-
-           Ecto.Multi.new()
-           |> Ecto.Multi.update(:user, changeset)
-           |> Ecto.Multi.all(:tokens_to_expire, UserToken.by_user_and_contexts_query(user, :all))
-           |> Ecto.Multi.delete_all(:tokens, fn %{tokens_to_expire: tokens_to_expire} ->
-             UserToken.delete_all_query(tokens_to_expire)
-           end)
-           |> Repo.transaction() do
-      {:ok, user, expired_tokens}
-    end
+        Repo.delete_all(from(t in UserToken, where: t.id in ^Enum.map(tokens_to_expire, & &1.id)))
+
+        {:ok, {user, tokens_to_expire}}
+      end
+    end)
   end
 end
