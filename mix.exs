@@ -30,12 +30,6 @@ defmodule PurseCraft.MixProject do
     ]
   end
 
-  def cli do
-    [
-      preferred_envs: [precommit: :test]
-    ]
-  end
-
   # Configuration for the OTP application.
   #
   # Type `mix help compile.app` for more information.
@@ -43,6 +37,12 @@ defmodule PurseCraft.MixProject do
     [
       mod: {PurseCraft.Application, []},
       extra_applications: [:logger, :runtime_tools]
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [precommit: :test]
     ]
   end
 
