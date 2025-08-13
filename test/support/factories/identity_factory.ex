@@ -45,8 +45,16 @@ defmodule PurseCraft.IdentityFactory do
     user_token = %UserToken{token: token}
 
     user_token
-    |> UserToken.put_hashed_fields()
+    |> put_hashed_fields()
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()
   end
+
+  defp put_hashed_fields(%UserToken{sent_to: nil} = user_token), do: user_token
+
+  defp put_hashed_fields(%UserToken{sent_to: sent_to} = user_token) when is_binary(sent_to) do
+    %{user_token | sent_to_hash: String.downcase(sent_to)}
+  end
+
+  defp put_hashed_fields(user_token), do: user_token
 end

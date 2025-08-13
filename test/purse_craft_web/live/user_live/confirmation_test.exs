@@ -22,7 +22,7 @@ defmodule PurseCraftWeb.UserLive.ConfirmationTest do
         end)
 
       {:ok, _lv, html} = live(conn, ~p"/users/log-in/#{token}")
-      assert html =~ "Confirm my account"
+      assert html =~ "Confirm my account and stay logged in"
     end
 
     test "renders login page for confirmed user", %{conn: conn, confirmed_user: user} do

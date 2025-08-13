@@ -21,6 +21,7 @@ defmodule PurseCraft.Repo.Migrations.CreateUsersAuthTables do
       add :context, :string, null: false
       add :sent_to, :binary
       add :sent_to_hash, :binary
+      add :authenticated_at, :utc_datetime
 
       timestamps(type: :utc_datetime, updated_at: false)
     end
