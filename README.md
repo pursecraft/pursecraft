@@ -1,7 +1,7 @@
 # PurseCraft
 
-[![gh-actions](https://github.com/pursecraft/pursecraft/workflows/CI/badge.svg)](https://github.com/pursecraft/pursecraft/actions?workflow=CI)
-[![codecov](https://codecov.io/gh/pursecraft/pursecraft/graph/badge.svg?token=V2XIAKYFOo)](https://codecov.io/gh/pursecraft/pursecraft)
+[![gh-actions](https://github.com/pursecraft/pursecraft/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pursecraft/pursecraft/actions?workflow=CI)
+[![codecov](https://codecov.io/gh/pursecraft/pursecraft/branch/main/graph/badge.svg?token=V2XIAKYFOo)](https://codecov.io/gh/pursecraft/pursecraft)
 
 ## Quick Start
 
