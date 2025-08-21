@@ -22,6 +22,7 @@ import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
+import {hooks as colocatedHooks} from "phoenix-colocated/purse_craft"
 import topbar from "../vendor/topbar"
 
 // Import hooks
@@ -32,7 +33,8 @@ import EnvelopeDragDrop from "./hooks/envelope_drag_drop.js"
 const Hooks = {
   DragDrop,
   CategoryDragDrop,
-  EnvelopeDragDrop
+  EnvelopeDragDrop,
+  ...colocatedHooks,
 }
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")

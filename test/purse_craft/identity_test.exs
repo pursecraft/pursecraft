@@ -156,28 +156,27 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "updates the email with a valid token", %{user: user, token: token, email: email} do
-      assert Identity.update_user_email(user, token) == :ok
-      changed_user = Repo.get!(User, user.id)
+      assert {:ok, changed_user} = Identity.update_user_email(user, token)
       assert changed_user.email != user.email
       assert changed_user.email == email
       refute Repo.get_by(UserToken, user_id: user.id)
     end
 
     test "does not update email with invalid token", %{user: user} do
-      assert Identity.update_user_email(user, "oops") == :error
+      assert {:error, _reason} = Identity.update_user_email(user, "oops")
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
     test "does not update email if user email changed", %{user: user, token: token} do
-      assert Identity.update_user_email(%{user | email: "current@example.com"}, token) == :error
+      assert {:error, _reason} = Identity.update_user_email(%{user | email: "current@example.com"}, token)
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
     test "does not update email if token expired", %{user: user, token: token} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
-      assert Identity.update_user_email(user, token) == :error
+      assert {:error, _reason} = Identity.update_user_email(user, token)
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
@@ -233,7 +232,7 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "updates the password", %{user: user} do
-      {:ok, user, expired_tokens} =
+      {:ok, {user, expired_tokens}} =
         Identity.update_user_password(user, %{
           password: "new valid password"
         })
@@ -246,7 +245,7 @@ defmodule PurseCraft.IdentityTest do
     test "deletes all tokens for the given user", %{user: user} do
       _token = Identity.generate_user_session_token(user)
 
-      {:ok, _user, _expired_tokens} =
+      {:ok, {_user, _expired_tokens}} =
         Identity.update_user_password(user, %{
           password: "new valid password"
         })
@@ -284,12 +283,18 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "returns user by token", %{user: user, token: token} do
-      assert session_user = Identity.get_user_by_session_token(token)
+      assert {session_user, token_inserted_at} = Identity.get_user_by_session_token(token)
       assert session_user.id == user.id
+      assert session_user.authenticated_at != nil
+      assert token_inserted_at != nil
     end
 
     test "does not return user for invalid token" do
       refute Identity.get_user_by_session_token("oops")
+    end
+
+    test "does not return user for nil token" do
+      refute Identity.get_user_by_session_token(nil)
     end
 
     test "does not return user for expired token", %{token: token} do
@@ -326,7 +331,7 @@ defmodule PurseCraft.IdentityTest do
       refute user.confirmed_at
       {encoded_token, hashed_token} = IdentityHelper.generate_user_magic_link_token(user)
 
-      assert {:ok, user, [%{token: ^hashed_token}]} =
+      assert {:ok, {user, [%{token: ^hashed_token}]}} =
                Identity.login_user_by_magic_link(encoded_token)
 
       assert user.confirmed_at
@@ -336,7 +341,7 @@ defmodule PurseCraft.IdentityTest do
       user = IdentityFactory.insert(:user)
       assert user.confirmed_at
       {encoded_token, _hashed_token} = IdentityHelper.generate_user_magic_link_token(user)
-      assert {:ok, returned_user, []} = Identity.login_user_by_magic_link(encoded_token)
+      assert {:ok, {returned_user, []}} = Identity.login_user_by_magic_link(encoded_token)
       assert returned_user.id == user.id
       assert returned_user.email == user.email
       # one time use only

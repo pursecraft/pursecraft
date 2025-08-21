@@ -7,13 +7,16 @@ defmodule PurseCraftWeb.UserLive.Settings do
 
   on_mount {PurseCraftWeb.UserAuth, :require_sudo_mode}
 
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.marketing flash={@flash} current_scope={@current_scope}>
-      <CoreComponents.header class="text-center">
-        Account Settings
-        <:subtitle>Manage your account email address and password settings</:subtitle>
-      </CoreComponents.header>
+      <div class="text-center">
+        <CoreComponents.header>
+          Account Settings
+          <:subtitle>Manage your account email address and password settings</:subtitle>
+        </CoreComponents.header>
+      </div>
 
       <.form for={@email_form} id="email_form" phx-submit="update_email" phx-change="validate_email">
         <CoreComponents.input
@@ -67,13 +70,14 @@ defmodule PurseCraftWeb.UserLive.Settings do
     """
   end
 
+  @impl Phoenix.LiveView
   def mount(%{"token" => token}, _session, socket) do
     socket =
       case Identity.update_user_email(socket.assigns.current_scope.user, token) do
-        :ok ->
+        {:ok, _updated_user} ->
           put_flash(socket, :info, "Email changed successfully.")
 
-        :error ->
+        {:error, _reason} ->
           put_flash(socket, :error, "Email change link is invalid or it has expired.")
       end
 
@@ -82,7 +86,7 @@ defmodule PurseCraftWeb.UserLive.Settings do
 
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
-    email_changeset = Identity.change_user_email(user, %{}, validate_email: false)
+    email_changeset = Identity.change_user_email(user, %{}, validate_unique: false)
     password_changeset = Identity.change_user_password(user, %{}, hash_password: false)
 
     socket =
@@ -95,12 +99,13 @@ defmodule PurseCraftWeb.UserLive.Settings do
     {:ok, socket}
   end
 
+  @impl Phoenix.LiveView
   def handle_event("validate_email", params, socket) do
     %{"user" => user_params} = params
 
     email_form =
       socket.assigns.current_scope.user
-      |> Identity.change_user_email(user_params, validate_email: false)
+      |> Identity.change_user_email(user_params, validate_unique: false)
       |> Map.put(:action, :validate)
       |> to_form()
 

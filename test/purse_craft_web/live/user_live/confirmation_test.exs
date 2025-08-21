@@ -22,7 +22,7 @@ defmodule PurseCraftWeb.UserLive.ConfirmationTest do
         end)
 
       {:ok, _lv, html} = live(conn, ~p"/users/log-in/#{token}")
-      assert html =~ "Confirm my account"
+      assert html =~ "Confirm and stay logged in"
     end
 
     test "renders login page for confirmed user", %{conn: conn, confirmed_user: user} do
@@ -107,6 +107,22 @@ defmodule PurseCraftWeb.UserLive.ConfirmationTest do
         |> follow_redirect(conn, ~p"/users/log-in")
 
       assert html =~ "Magic link is invalid or it has expired"
+    end
+
+    test "shows log in button when user is already authenticated", %{conn: conn, confirmed_user: user} do
+      # Log in the user first
+      authenticated_conn = log_in_user(conn, user)
+
+      token =
+        IdentityHelper.extract_user_token(fn url ->
+          Identity.deliver_login_instructions(user, url)
+        end)
+
+      {:ok, _lv, html} = live(authenticated_conn, ~p"/users/log-in/#{token}")
+
+      # Should show the "Log in" button since user is already authenticated (has current_scope)
+      assert html =~ "Log in"
+      assert html =~ "btn-primary"
     end
   end
 end

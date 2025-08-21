@@ -15,6 +15,33 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
       assert html =~ "Start Free Trial"
       assert html =~ "Log in with email"
     end
+
+    test "shows local mail adapter notice when using local adapter", %{conn: conn} do
+      original_adapter = Application.get_env(:purse_craft, PurseCraft.Mailer)[:adapter]
+
+      Application.put_env(
+        :purse_craft,
+        PurseCraft.Mailer,
+        :purse_craft
+        |> Application.get_env(PurseCraft.Mailer)
+        |> Keyword.put(:adapter, Swoosh.Adapters.Local)
+      )
+
+      on_exit(fn ->
+        Application.put_env(
+          :purse_craft,
+          PurseCraft.Mailer,
+          :purse_craft
+          |> Application.get_env(PurseCraft.Mailer)
+          |> Keyword.put(:adapter, original_adapter)
+        )
+      end)
+
+      {:ok, _lv, html} = live(conn, ~p"/users/log-in")
+
+      assert html =~ "You are running the local mail adapter"
+      assert html =~ "hero-information-circle"
+    end
   end
 
   describe "user login - magic link" do
@@ -77,9 +104,9 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form_password", user: %{email: "test@email.com", password: "123456", remember_me: true})
+        form(lv, "#login_form_password", user: %{email: "test@email.com", password: "123456"})
 
-      render_submit(form)
+      render_submit(form, %{user: %{remember_me: true}})
 
       conn = follow_trigger_action(form, conn)
       assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Invalid email or password"
@@ -93,7 +120,7 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
 
       {:ok, _login_live, login_html} =
         lv
-        |> element(~s|main a:fl-contains("Sign up")|)
+        |> element("main a", "Sign up")
         |> render_click()
         |> follow_redirect(conn, ~p"/users/register")
 
