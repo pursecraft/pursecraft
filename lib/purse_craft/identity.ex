@@ -18,7 +18,7 @@ defmodule PurseCraft.Identity do
           optional(:email) => String.t()
         }
 
-  @type change_user_email_option :: {:validate_email, boolean()}
+  @type change_user_email_option :: {:validate_unique, boolean()}
   @type change_user_email_options :: [change_user_email_option()]
 
   @type change_user_password_attrs :: %{
@@ -206,7 +206,7 @@ defmodule PurseCraft.Identity do
 
   """
   @spec update_user_password(User.t(), update_user_password_attrs()) ::
-          {:ok, User.t(), list(binary())} | {:error, Ecto.Changeset.t()}
+          {:ok, {User.t(), list(binary())}} | {:error, Ecto.Changeset.t()}
   def update_user_password(user, attrs) do
     user
     |> User.password_changeset(attrs)
@@ -269,7 +269,7 @@ defmodule PurseCraft.Identity do
      `mix help phx.gen.auth`.
   """
   @spec login_user_by_magic_link(binary()) ::
-          {:ok, User.t(), list(binary())} | {:error, :not_found}
+          {:ok, {User.t(), list(binary())}} | {:error, :not_found}
   def login_user_by_magic_link(token) do
     {:ok, query} = UserToken.verify_magic_link_token_query(token)
 

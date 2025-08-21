@@ -100,7 +100,7 @@ defmodule PurseCraftWeb.UserAuth do
     token_age =
       :second
       |> DateTime.utc_now()
-      |> DateTime.diff(token_inserted_at, :day)
+      |> DateTime.diff(DateTime.from_naive!(token_inserted_at, "Etc/UTC"), :day)
 
     if token_age >= @session_reissue_age_in_days do
       create_or_extend_session(conn, user, %{})
