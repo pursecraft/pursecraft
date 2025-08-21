@@ -41,20 +41,21 @@ defmodule PurseCraft.IdentityFactory do
 
   def user_token_factory(attrs) do
     token = :crypto.strong_rand_bytes(UserToken.rand_size())
+    sent_to = Map.get(attrs, :sent_to)
 
-    user_token = %UserToken{token: token}
+    base_token = %UserToken{token: token}
+
+    user_token =
+      if sent_to do
+        base_token
+        |> UserToken.changeset(%{sent_to: sent_to})
+        |> Ecto.Changeset.apply_changes()
+      else
+        base_token
+      end
 
     user_token
-    |> put_hashed_fields()
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()
   end
-
-  defp put_hashed_fields(%UserToken{sent_to: nil} = user_token), do: user_token
-
-  defp put_hashed_fields(%UserToken{sent_to: sent_to} = user_token) when is_binary(sent_to) do
-    %{user_token | sent_to_hash: String.downcase(sent_to)}
-  end
-
-  defp put_hashed_fields(%UserToken{} = user_token), do: user_token
 end
