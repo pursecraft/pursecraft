@@ -163,20 +163,20 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "does not update email with invalid token", %{user: user} do
-      assert {:error, _} = Identity.update_user_email(user, "oops")
+      assert {:error, _reason} = Identity.update_user_email(user, "oops")
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
     test "does not update email if user email changed", %{user: user, token: token} do
-      assert {:error, _} = Identity.update_user_email(%{user | email: "current@example.com"}, token)
+      assert {:error, _reason} = Identity.update_user_email(%{user | email: "current@example.com"}, token)
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
     test "does not update email if token expired", %{user: user, token: token} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
-      assert {:error, _} = Identity.update_user_email(user, token)
+      assert {:error, _reason} = Identity.update_user_email(user, token)
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end

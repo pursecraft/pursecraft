@@ -320,7 +320,10 @@ defmodule PurseCraft.Identity do
   """
   @spec delete_user_session_token(binary()) :: :ok
   def delete_user_session_token(token) do
-    Repo.delete_all(from(UserToken, where: [token: ^token, context: "session"]))
+    UserToken
+    |> where([t], t.token == ^token and t.context == "session")
+    |> Repo.delete_all()
+
     :ok
   end
 

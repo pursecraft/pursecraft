@@ -85,14 +85,22 @@ defmodule PurseCraftWeb.UserAuth do
       conn = fetch_cookies(conn, signed: [@remember_me_cookie])
 
       if token = conn.cookies[@remember_me_cookie] do
-        {token, conn |> put_token_in_session(token) |> put_session(:user_remember_me, true)}
+        updated_conn =
+          conn
+          |> put_token_in_session(token)
+          |> put_session(:user_remember_me, true)
+
+        {token, updated_conn}
       end
     end
   end
 
   # Reissue the session token if it is older than the configured reissue age.
   defp maybe_reissue_user_session_token(conn, user, token_inserted_at) do
-    token_age = DateTime.diff(DateTime.utc_now(:second), token_inserted_at, :day)
+    token_age =
+      :second
+      |> DateTime.utc_now()
+      |> DateTime.diff(token_inserted_at, :day)
 
     if token_age >= @session_reissue_age_in_days do
       create_or_extend_session(conn, user, %{})
@@ -141,7 +149,7 @@ defmodule PurseCraftWeb.UserAuth do
   #       |> put_session(:preferred_locale, preferred_locale)
   #     end
   #
-  defp renew_session(conn, _user) do
+  defp renew_session(conn, _ignored_user) do
     delete_csrf_token()
 
     conn
@@ -149,12 +157,12 @@ defmodule PurseCraftWeb.UserAuth do
     |> clear_session()
   end
 
-  defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}, _),
+  defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}, _remember_me),
     do: write_remember_me_cookie(conn, token)
 
   defp maybe_write_remember_me_cookie(conn, token, _params, true), do: write_remember_me_cookie(conn, token)
 
-  defp maybe_write_remember_me_cookie(conn, _token, _params, _), do: conn
+  defp maybe_write_remember_me_cookie(conn, _token, _params, _remember_me), do: conn
 
   defp write_remember_me_cookie(conn, token) do
     conn

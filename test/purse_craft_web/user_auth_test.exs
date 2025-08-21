@@ -220,7 +220,7 @@ defmodule PurseCraftWeb.UserAuthTest do
       %{value: signed_token} = logged_in_conn.resp_cookies[@remember_me_cookie]
 
       offset_user_token(token, -10, :day)
-      {user, _} = Identity.get_user_by_session_token(token)
+      {user, _token_inserted_at} = Identity.get_user_by_session_token(token)
 
       conn =
         conn
@@ -351,11 +351,11 @@ defmodule PurseCraftWeb.UserAuthTest do
         |> DateTime.utc_now()
         |> DateTime.add(-11, :minute)
 
-      user = %{user | authenticated_at: eleven_minutes_ago}
-      user_token = Identity.generate_user_session_token(user)
-      {user, token_inserted_at} = Identity.get_user_by_session_token(user_token)
+      updated_user = %{user | authenticated_at: eleven_minutes_ago}
+      user_token = Identity.generate_user_session_token(updated_user)
+      {session_user, token_inserted_at} = Identity.get_user_by_session_token(user_token)
 
-      assert DateTime.after?(token_inserted_at, user.authenticated_at)
+      assert DateTime.after?(token_inserted_at, session_user.authenticated_at)
 
       session =
         conn
