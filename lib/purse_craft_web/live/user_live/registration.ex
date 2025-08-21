@@ -10,16 +10,18 @@ defmodule PurseCraftWeb.UserLive.Registration do
     ~H"""
     <Layouts.marketing flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto max-w-sm">
-        <CoreComponents.header class="text-center">
-          Register for an account
-          <:subtitle>
-            Already registered?
-            <.link navigate={~p"/users/log-in"} class="font-semibold text-brand hover:underline">
-              Log in
-            </.link>
-            to your account now.
-          </:subtitle>
-        </CoreComponents.header>
+        <div class="text-center">
+          <CoreComponents.header>
+            Register for an account
+            <:subtitle>
+              Already registered?
+              <.link navigate={~p"/users/log-in"} class="font-semibold text-brand hover:underline">
+                Log in
+              </.link>
+              to your account now.
+            </:subtitle>
+          </CoreComponents.header>
+        </div>
 
         <.form for={@form} id="registration_form" phx-submit="save" phx-change="validate">
           <CoreComponents.input
@@ -32,9 +34,8 @@ defmodule PurseCraftWeb.UserLive.Registration do
           />
 
           <CoreComponents.button
-            variant="primary"
             phx-disable-with="Creating account..."
-            class="w-full"
+            class="btn btn-primary w-full"
           >
             Create an account
           </CoreComponents.button>
@@ -49,7 +50,7 @@ defmodule PurseCraftWeb.UserLive.Registration do
   end
 
   def mount(_params, _session, socket) do
-    changeset = Identity.change_user_email(%User{})
+    changeset = Identity.change_user_email(%User{}, %{}, validate_unique: false)
 
     {:ok, assign_form(socket, changeset), temporary_assigns: [form: nil]}
   end
@@ -77,7 +78,7 @@ defmodule PurseCraftWeb.UserLive.Registration do
   end
 
   def handle_event("validate", %{"user" => user_params}, socket) do
-    changeset = Identity.change_user_email(%User{}, user_params)
+    changeset = Identity.change_user_email(%User{}, user_params, validate_unique: false)
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
 

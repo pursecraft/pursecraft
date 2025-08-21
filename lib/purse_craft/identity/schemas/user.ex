@@ -43,7 +43,7 @@ defmodule PurseCraft.Identity.Schemas.User do
           optional(:email) => String.t()
         }
 
-  @type email_changeset_option :: {:validate_email, boolean()}
+  @type email_changeset_option :: {:validate_unique, boolean()}
   @type email_changeset_options :: [email_changeset_option()]
 
   @type password_changeset_attrs :: %{
@@ -60,7 +60,7 @@ defmodule PurseCraft.Identity.Schemas.User do
 
   ## Options
 
-    * `:validate_email` - Set to false if you don't want to validate the
+    * `:validate_unique` - Set to false if you don't want to validate the
       uniqueness of the email, useful when displaying live validations.
       Defaults to `true`.
   """
@@ -80,7 +80,7 @@ defmodule PurseCraft.Identity.Schemas.User do
       |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/, message: "must have the @ sign and no spaces")
       |> validate_length(:email, max: 160)
 
-    if Keyword.get(opts, :validate_email, true) do
+    if Keyword.get(opts, :validate_unique, true) do
       changeset
       |> unsafe_validate_unique(:email_hash, PurseCraft.Repo)
       |> unique_constraint(:email_hash)

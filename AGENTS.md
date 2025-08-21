@@ -17,6 +17,79 @@ This is a web application written using the Phoenix web framework.
 - If you override the default input classes (`<.input class="myclass px-2 py-1 rounded-lg">)`) class with your own values, no default classes are inherited, so your
 custom classes must fully style the input
 
+<!-- phoenix-gen-auth-start -->
+## Authentication
+
+- **Always** handle authentication flow at the router level with proper redirects
+- **Always** be mindful of where to place routes. The authentication system creates multiple router plugs and `live_session` scopes:
+  - A plug `:fetch_current_scope_for_user` that is included in the default browser pipeline
+  - A plug `:require_authenticated_user` that redirects to the log in page when the user is not authenticated
+  - A `live_session :current_user` scope - For routes that need the current user but don't require authentication
+  - A `live_session :require_authenticated_user` scope - For routes that require authentication
+  - In both cases, a `@current_scope` is assigned to the Plug connection and LiveView socket
+  - A plug `redirect_if_user_is_authenticated` that redirects to a default path in case the user is authenticated
+- **Always let the user know in which router scopes, `live_session`, and pipeline you are placing the route, AND SAY WHY**
+- The auth system assigns the `current_scope` assign with enhanced user context and authentication state
+- To derive/access `current_user`, **always use the `current_scope.user` assign**, never use **`@current_user`** in templates or LiveViews
+- **Never** duplicate `live_session` names. Each `live_session` can only be defined once in the router
+- Anytime you hit `current_scope` errors or the logged in session isn't displaying the right content, **always double check the router and ensure you are using the correct plug and `live_session`**
+
+### Routes that require authentication
+
+LiveViews that require login should **always be placed inside the existing `live_session :require_authenticated_user` block**:
+
+    scope "/", PurseCraftWeb do
+      pipe_through [:browser, :require_authenticated_user]
+
+      live_session :require_authenticated_user,
+        on_mount: [{PurseCraftWeb.UserAuth, :require_authenticated}] do
+        # auth routes
+        live "/users/settings", UserLive.Settings, :edit
+        live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+        # workspace routes
+        live "/workspaces", WorkspaceLive.Index, :index
+        live "/workspaces/:external_id", WorkspaceLive.Show, :show
+        live "/workspaces/:external_id/budget", WorkspaceLive.Show, :budget
+        live "/workspaces/:external_id/accounts", WorkspaceLive.Show, :accounts
+        live "/workspaces/:external_id/reports", WorkspaceLive.Show, :reports
+      end
+    end
+
+Controller routes must be placed in a scope that sets the `:require_authenticated_user` plug:
+
+    scope "/", PurseCraftWeb do
+      pipe_through [:browser, :require_authenticated_user]
+
+      post "/users/update-password", UserSessionController, :update_password
+    end
+
+### Routes that work with or without authentication
+
+LiveViews that can work with or without authentication, **always use the existing `:current_user` scope**:
+
+    scope "/", PurseCraftWeb do
+      pipe_through [:browser]
+
+      live_session :current_user,
+        on_mount: [{PurseCraftWeb.UserAuth, :mount_current_scope}] do
+        live "/", MarketingLive.Home, :index
+        live "/users/register", UserLive.Registration, :new
+        live "/users/log-in", UserLive.Login, :new
+        live "/users/log-in/:token", UserLive.Confirmation, :new
+      end
+    end
+
+Controllers automatically have the `current_scope` available if they use the `:browser` pipeline.
+
+### Layout-specific authentication
+
+- **Marketing Layout**: Uses `<Layouts.marketing>` with authentication navigation in the header component
+- **Budgeting Layout**: Uses `<Layouts.budgeting>` with workspace-specific sidebar navigation  
+- **App Layout**: Uses `<Layouts.app>` for general authenticated content
+- All layouts require `current_scope={@current_scope}` to be passed for proper authentication state
+
+<!-- phoenix-gen-auth-end -->
+
 <!-- usage-rules-start -->
 <!-- phoenix:elixir-start -->
 ## Elixir guidelines

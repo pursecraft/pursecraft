@@ -11,7 +11,7 @@ defmodule PurseCraft.TestHelpers.IdentityHelper do
   alias PurseCraft.Repo
 
   def set_password(user) do
-    {:ok, user, _expired_tokens} =
+    {:ok, {user, _expired_tokens}} =
       Identity.update_user_password(user, %{password: valid_password()})
 
     user
@@ -32,15 +32,33 @@ defmodule PurseCraft.TestHelpers.IdentityHelper do
     )
   end
 
+  def override_token_authenticated_at(token, authenticated_at) when is_binary(token) do
+    Repo.update_all(
+      from(t in UserToken,
+        where: t.token == ^token
+      ),
+      set: [authenticated_at: authenticated_at]
+    )
+  end
+
   def generate_user_magic_link_token(user) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "login")
-    # Override sent_to with the decrypted email for proper verification
-    user_token = %{user_token | sent_to: String.downcase(user.email)}
-    Repo.insert!(user_token)
+    # Use changeset to properly handle encryption and hashing
+    changeset = UserToken.changeset(user_token, %{sent_to: String.downcase(user.email)})
+    user_token = Repo.insert!(changeset)
     {encoded_token, user_token.token}
   end
 
   def user_scope_fixture do
     insert(:user)
+  end
+
+  def offset_user_token(token, amount_to_add, unit) do
+    dt = DateTime.add(DateTime.utc_now(:second), amount_to_add, unit)
+
+    Repo.update_all(
+      from(t in UserToken, where: t.token == ^token),
+      set: [inserted_at: dt, authenticated_at: dt]
+    )
   end
 end
