@@ -293,6 +293,10 @@ defmodule PurseCraft.IdentityTest do
       refute Identity.get_user_by_session_token("oops")
     end
 
+    test "does not return user for nil token" do
+      refute Identity.get_user_by_session_token(nil)
+    end
+
     test "does not return user for expired token", %{token: token} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
       refute Identity.get_user_by_session_token(token)

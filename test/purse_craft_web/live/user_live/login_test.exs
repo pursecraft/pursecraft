@@ -15,6 +15,33 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
       assert html =~ "Start Free Trial"
       assert html =~ "Log in with email"
     end
+
+    test "shows local mail adapter notice when using local adapter", %{conn: conn} do
+      original_adapter = Application.get_env(:purse_craft, PurseCraft.Mailer)[:adapter]
+
+      Application.put_env(
+        :purse_craft,
+        PurseCraft.Mailer,
+        :purse_craft
+        |> Application.get_env(PurseCraft.Mailer)
+        |> Keyword.put(:adapter, Swoosh.Adapters.Local)
+      )
+
+      on_exit(fn ->
+        Application.put_env(
+          :purse_craft,
+          PurseCraft.Mailer,
+          :purse_craft
+          |> Application.get_env(PurseCraft.Mailer)
+          |> Keyword.put(:adapter, original_adapter)
+        )
+      end)
+
+      {:ok, _lv, html} = live(conn, ~p"/users/log-in")
+
+      assert html =~ "You are running the local mail adapter"
+      assert html =~ "hero-information-circle"
+    end
   end
 
   describe "user login - magic link" do
