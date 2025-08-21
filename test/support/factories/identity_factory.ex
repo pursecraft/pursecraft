@@ -56,5 +56,5 @@ defmodule PurseCraft.IdentityFactory do
     %{user_token | sent_to_hash: String.downcase(sent_to)}
   end
 
-  defp put_hashed_fields(user_token), do: user_token
+  defp put_hashed_fields(%UserToken{} = user_token), do: user_token
 end
