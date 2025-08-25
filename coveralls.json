@@ -4,6 +4,8 @@
     "lib/purse_craft/application.ex",
     "lib/purse_craft/release.ex",
     "lib/purse_craft/repo.ex",
+    "lib/purse_craft/accounting/schemas/transaction.ex",
+    "lib/purse_craft/accounting/schemas/transaction_line.ex",
     "lib/purse_craft_web.ex",
     "lib/purse_craft_web/components/core_components.ex",
     "lib/purse_craft_web/components/layouts.ex",
