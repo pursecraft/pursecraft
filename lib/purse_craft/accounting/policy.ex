@@ -55,4 +55,31 @@ defmodule PurseCraft.Accounting.Policy do
       desc "Delete a Payee"
     end
   end
+
+  object :transaction do
+    action :create do
+      allow role: :owner
+      allow role: :editor
+      desc "Create a new Transaction"
+    end
+
+    action :read do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      allow [:own_resource, role: :commenter]
+      desc "Read a Transaction"
+    end
+
+    action :update do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      desc "Update a Transaction"
+    end
+
+    action :delete do
+      allow [:own_resource, role: :owner]
+      allow [:own_resource, role: :editor]
+      desc "Delete a Transaction"
+    end
+  end
 end

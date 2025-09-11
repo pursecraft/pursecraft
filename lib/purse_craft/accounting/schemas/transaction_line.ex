@@ -8,10 +8,13 @@ defmodule PurseCraft.Accounting.Schemas.TransactionLine do
 
   use Ecto.Schema
 
+  import Ecto.Changeset
+
   alias Ecto.Association.NotLoaded
   alias PurseCraft.Accounting.Schemas.Payee
   alias PurseCraft.Accounting.Schemas.Transaction
   alias PurseCraft.Budgeting.Schemas.Envelope
+  alias PurseCraft.Utilities
   alias PurseCraft.Utilities.EncryptedBinary
   alias PurseCraft.Utilities.HashedHMAC
 
@@ -43,5 +46,19 @@ defmodule PurseCraft.Accounting.Schemas.TransactionLine do
     belongs_to :payee, Payee
 
     timestamps(type: :utc_datetime)
+  end
+
+  @doc """
+  Creates a changeset for transaction line creation.
+  """
+  @spec changeset(t(), map()) :: Ecto.Changeset.t()
+  def changeset(transaction_line, attrs) do
+    transaction_line
+    |> cast(attrs, [:amount, :memo, :transaction_id, :envelope_id, :payee_id])
+    |> Utilities.put_hashed_field(:memo)
+    |> validate_required([:amount, :transaction_id])
+    |> foreign_key_constraint(:transaction_id)
+    |> foreign_key_constraint(:envelope_id)
+    |> foreign_key_constraint(:payee_id)
   end
 end
