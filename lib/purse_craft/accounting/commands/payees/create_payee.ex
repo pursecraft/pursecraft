@@ -50,13 +50,17 @@ defmodule PurseCraft.Accounting.Commands.Payees.CreatePayee do
   end
 
   defp schedule_search_token_generation(payee, workspace) do
-    %{
-      "workspace_id" => workspace.id,
-      "entity_type" => "payee",
-      "entity_id" => payee.id,
-      "searchable_fields" => %{"name" => payee.name}
-    }
-    |> GenerateTokensWorker.new()
-    |> Oban.insert()
+    searchable_fields = Utilities.build_searchable_fields(payee, [:name])
+
+    if map_size(searchable_fields) > 0 do
+      %{
+        "workspace_id" => workspace.id,
+        "entity_type" => "payee",
+        "entity_id" => payee.id,
+        "searchable_fields" => searchable_fields
+      }
+      |> GenerateTokensWorker.new()
+      |> Oban.insert()
+    end
   end
 end

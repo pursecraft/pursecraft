@@ -5,6 +5,8 @@ defmodule PurseCraft.AccountingFactory do
 
   alias PurseCraft.Accounting.Schemas.Account
   alias PurseCraft.Accounting.Schemas.Payee
+  alias PurseCraft.Accounting.Schemas.Transaction
+  alias PurseCraft.Accounting.Schemas.TransactionLine
   alias PurseCraft.TestHelpers.PositionHelper
 
   def account_factory(attrs) do
@@ -36,6 +38,44 @@ defmodule PurseCraft.AccountingFactory do
       |> Ecto.Changeset.apply_changes()
 
     payee
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
+  end
+
+  def transaction_factory(attrs) do
+    date = Map.get(attrs, :date, Date.utc_today())
+    amount = Map.get(attrs, :amount, Enum.random(-10_000..-100))
+    memo = Map.get(attrs, :memo, Faker.Lorem.sentence())
+    cleared = Map.get(attrs, :cleared, false)
+
+    transaction =
+      %Transaction{}
+      |> Transaction.changeset(%{
+        date: date,
+        amount: amount,
+        memo: memo,
+        cleared: cleared
+      })
+      |> Ecto.Changeset.apply_changes()
+
+    transaction
+    |> merge_attributes(attrs)
+    |> evaluate_lazy_attributes()
+  end
+
+  def transaction_line_factory(attrs) do
+    amount = Map.get(attrs, :amount, Enum.random(100..10_000))
+    memo = Map.get(attrs, :memo, nil)
+
+    transaction_line =
+      %TransactionLine{}
+      |> TransactionLine.changeset(%{
+        amount: amount,
+        memo: memo
+      })
+      |> Ecto.Changeset.apply_changes()
+
+    transaction_line
     |> merge_attributes(attrs)
     |> evaluate_lazy_attributes()
   end

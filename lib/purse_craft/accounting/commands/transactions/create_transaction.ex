@@ -213,12 +213,14 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransaction do
   defp determine_line_payee_id(_other), do: nil
 
   defp schedule_search_token_generation(transaction, workspace) do
-    if transaction.memo do
+    searchable_fields = Utilities.build_searchable_fields(transaction, [:memo])
+
+    if map_size(searchable_fields) > 0 do
       %{
         "workspace_id" => workspace.id,
         "entity_type" => "transaction",
         "entity_id" => transaction.id,
-        "searchable_fields" => %{"memo" => transaction.memo}
+        "searchable_fields" => searchable_fields
       }
       |> GenerateTokensWorker.new()
       |> Oban.insert()
