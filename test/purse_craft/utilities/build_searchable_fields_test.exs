@@ -121,26 +121,30 @@ defmodule PurseCraft.Utilities.BuildSearchableFieldsTest do
   describe "integration with real entities" do
     test "works with account entities" do
       workspace = CoreFactory.insert(:workspace)
-      account = AccountingFactory.insert(:account,
-        workspace: workspace,
-        name: "Chase Checking",
-        description: "Primary checking account"
-      )
+
+      account =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          name: "Chase Checking",
+          description: "Primary checking account"
+        )
 
       searchable_fields = Utilities.build_searchable_fields(account, [:name, :description])
 
       assert searchable_fields == %{
-        "name" => "Chase Checking",
-        "description" => "Primary checking account"
-      }
+               "name" => "Chase Checking",
+               "description" => "Primary checking account"
+             }
     end
 
     test "works with payee entities" do
       workspace = CoreFactory.insert(:workspace)
-      payee = AccountingFactory.insert(:payee,
-        workspace: workspace,
-        name: "Kroger Store"
-      )
+
+      payee =
+        AccountingFactory.insert(:payee,
+          workspace: workspace,
+          name: "Kroger Store"
+        )
 
       searchable_fields = Utilities.build_searchable_fields(payee, [:name, :description])
 
@@ -150,10 +154,12 @@ defmodule PurseCraft.Utilities.BuildSearchableFieldsTest do
     test "works with envelope entities" do
       workspace = CoreFactory.insert(:workspace)
       category = BudgetingFactory.insert(:category, workspace: workspace)
-      envelope = BudgetingFactory.insert(:envelope,
-        category: category,
-        name: "Groceries"
-      )
+
+      envelope =
+        BudgetingFactory.insert(:envelope,
+          category: category,
+          name: "Groceries"
+        )
 
       searchable_fields = Utilities.build_searchable_fields(envelope, [:name])
 
@@ -179,7 +185,8 @@ defmodule PurseCraft.Utilities.BuildSearchableFieldsTest do
       payee_fields = Utilities.build_searchable_fields(payee, [:name])
 
       assert workspace_fields == %{"name" => "My Budget"}
-      assert account_fields == %{"name" => "Checking"}  # description is nil, so not included
+      # description is nil, so not included
+      assert account_fields == %{"name" => "Checking"}
       assert payee_fields == %{"name" => "Target"}
     end
   end
