@@ -66,18 +66,18 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransactionTest do
       workspace: workspace,
       scope: scope,
       account: account,
-      payee: payee
+      payee: payee,
+      envelope: envelope
     } do
-      category = BudgetingFactory.insert(:category, workspace: workspace)
-      envelope1 = BudgetingFactory.insert(:envelope, category: category)
-      envelope2 = BudgetingFactory.insert(:envelope, category: category)
+      category2 = BudgetingFactory.insert(:category, workspace: workspace)
+      envelope2 = BudgetingFactory.insert(:envelope, category: category2)
 
       attrs = %{
         source: account,
         with: payee,
         memo: "Split transaction",
         lines: [
-          %{destination: envelope1, amount: 3000, memo: "Groceries"},
+          %{destination: envelope, amount: 3000, memo: "Groceries"},
           %{destination: envelope2, amount: 2000, memo: "Gas"}
         ]
       }
@@ -104,7 +104,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransactionTest do
       assert line1.payee_id == payee.id
 
       assert line2.amount == 3000
-      assert line2.envelope_id == envelope1.id
+      assert line2.envelope_id == envelope.id
       assert line2.memo == "Groceries"
       # Inherits transaction-level payee
       assert line2.payee_id == payee.id
@@ -178,6 +178,157 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransactionTest do
       }
 
       assert {:error, :unauthorized} = CreateTransaction.call(scope, workspace, attrs)
+    end
+
+    test "creates income transaction from payee source to account destination", %{
+      workspace: workspace,
+      scope: scope,
+      account: account,
+      payee: payee
+    } do
+      attrs = %{
+        source: payee,
+        lines: [
+          %{destination: account, amount: 5000}
+        ]
+      }
+
+      assert {:ok, %Transaction{} = transaction} = CreateTransaction.call(scope, workspace, attrs)
+
+      assert transaction.amount == 5000
+      assert transaction.account_id == account.id
+      assert transaction.payee_id == payee.id
+    end
+
+    test "creates transaction with ready_to_assign destination", %{
+      workspace: workspace,
+      scope: scope,
+      account: account,
+      payee: payee
+    } do
+      attrs = %{
+        source: account,
+        lines: [
+          %{destination: :ready_to_assign, amount: 1000, with: payee}
+        ]
+      }
+
+      assert {:ok, %Transaction{} = transaction} = CreateTransaction.call(scope, workspace, attrs)
+
+      assert transaction.account_id == account.id
+      assert transaction.amount == -1000
+      assert length(transaction.transaction_lines) == 1
+
+      line = hd(transaction.transaction_lines)
+      assert line.envelope_id == nil
+      assert line.payee_id == payee.id
+    end
+
+    test "returns error for invalid transaction structure", %{
+      workspace: workspace,
+      scope: scope,
+      payee: payee
+    } do
+      attrs = %{
+        lines: [
+          %{destination: payee, amount: 1000}
+        ],
+        memo: "Invalid transaction"
+      }
+
+      assert {:error, "Cannot determine account impact - need either source account or destination account"} =
+               CreateTransaction.call(scope, workspace, attrs)
+    end
+
+    test "creates transaction without payee information", %{
+      workspace: workspace,
+      scope: scope,
+      account: account,
+      envelope: envelope
+    } do
+      attrs = %{
+        source: account,
+        destination: envelope,
+        amount: 1000,
+        memo: "No payee transaction"
+      }
+
+      assert {:ok, %Transaction{} = transaction} = CreateTransaction.call(scope, workspace, attrs)
+
+      assert transaction.payee_id == nil
+      assert transaction.account_id == account.id
+      assert transaction.amount == -1000
+    end
+
+    test "creates transaction with lines but no transaction-level 'with'", %{
+      workspace: workspace,
+      scope: scope,
+      account: account,
+      envelope: envelope,
+      payee: payee
+    } do
+      attrs = %{
+        source: account,
+        lines: [
+          %{destination: envelope, amount: 1500, with: payee}
+        ]
+      }
+
+      assert {:ok, %Transaction{} = transaction} = CreateTransaction.call(scope, workspace, attrs)
+
+      assert transaction.account_id == account.id
+      assert transaction.amount == -1500
+      assert length(transaction.transaction_lines) == 1
+
+      line = hd(transaction.transaction_lines)
+      assert line.payee_id == payee.id
+    end
+
+    test "creates transaction with non-envelope destination", %{
+      workspace: workspace,
+      scope: scope,
+      payee: payee
+    } do
+      other_account = AccountingFactory.insert(:account, workspace: workspace)
+
+      attrs = %{
+        source: payee,
+        lines: [
+          %{destination: other_account, amount: 2000}
+        ]
+      }
+
+      assert {:ok, %Transaction{} = transaction} = CreateTransaction.call(scope, workspace, attrs)
+
+      assert transaction.account_id == other_account.id
+      assert transaction.amount == 2000
+      assert length(transaction.transaction_lines) == 1
+
+      line = hd(transaction.transaction_lines)
+      assert line.envelope_id == nil
+    end
+
+    test "creates income transaction with payee source and account destination", %{
+      workspace: workspace,
+      scope: scope,
+      payee: payee,
+      account: account
+    } do
+      attrs = %{
+        source: payee,
+        lines: [
+          %{destination: account, amount: 1500}
+        ],
+        memo: "Income from payee"
+      }
+
+      assert {:ok, %Transaction{} = transaction} = CreateTransaction.call(scope, workspace, attrs)
+
+      assert transaction.account_id == account.id
+      assert transaction.amount == 1500
+      assert transaction.payee_id == payee.id
+      assert transaction.memo == "Income from payee"
+      assert length(transaction.transaction_lines) == 1
     end
   end
 end

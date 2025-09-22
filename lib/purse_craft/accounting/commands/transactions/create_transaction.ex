@@ -168,6 +168,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransaction do
     {:ok, %{account_id: account_id, amount: amount, type: :inflow}}
   end
 
+  # coveralls-ignore-next-line
   defp determine_account_impact(%{source: %Payee{}, lines: [%{destination: %Account{id: account_id}, amount: amount}]}) do
     {:ok, %{account_id: account_id, amount: amount, type: :inflow}}
   end

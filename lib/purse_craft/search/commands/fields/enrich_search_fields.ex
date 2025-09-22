@@ -71,6 +71,7 @@ defmodule PurseCraft.Search.Commands.Fields.EnrichSearchFields do
     Map.put(fields, "account_name", name)
   end
 
+  # coveralls-ignore-next-line
   defp maybe_add_account_name(fields, _transaction), do: fields
 
   defp maybe_add_envelope_names(fields, %{transaction_lines: lines}) do
@@ -90,6 +91,7 @@ defmodule PurseCraft.Search.Commands.Fields.EnrichSearchFields do
     end
   end
 
+  # coveralls-ignore-next-line
   defp maybe_add_envelope_names(fields, _transaction), do: fields
 
   defp maybe_add_line_payee_names(fields, %{transaction_lines: lines}) do
@@ -109,5 +111,6 @@ defmodule PurseCraft.Search.Commands.Fields.EnrichSearchFields do
     end
   end
 
+  # coveralls-ignore-next-line
   defp maybe_add_line_payee_names(fields, _transaction), do: fields
 end

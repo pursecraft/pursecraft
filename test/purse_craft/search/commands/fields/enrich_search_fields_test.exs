@@ -54,7 +54,8 @@ defmodule PurseCraft.Search.Commands.Fields.EnrichSearchFieldsTest do
       payee: payee,
       envelope: envelope
     } do
-      envelope2 = BudgetingFactory.insert(:envelope, category: envelope.category, name: "Household")
+      category2 = BudgetingFactory.insert(:category, workspace: workspace)
+      envelope2 = BudgetingFactory.insert(:envelope, category: category2, name: "Household")
 
       transaction =
         AccountingFactory.insert(:transaction,
@@ -151,6 +152,44 @@ defmodule PurseCraft.Search.Commands.Fields.EnrichSearchFieldsTest do
       assert {:ok, enriched_fields} = EnrichSearchFields.call("transaction", 99_999, base_fields)
 
       assert enriched_fields == base_fields
+    end
+
+    test "handles transaction without transaction_lines for envelope names", %{
+      workspace: workspace,
+      account: account
+    } do
+      transaction =
+        AccountingFactory.insert(:transaction,
+          workspace: workspace,
+          account: account,
+          memo: "No lines"
+        )
+
+      base_fields = %{"memo" => "No lines"}
+
+      assert {:ok, enriched_fields} = EnrichSearchFields.call("transaction", transaction.id, base_fields)
+
+      assert enriched_fields["memo"] == "No lines"
+      assert Map.has_key?(enriched_fields, "envelope_names") == false
+    end
+
+    test "handles transaction without transaction_lines for line payee names", %{
+      workspace: workspace,
+      account: account
+    } do
+      transaction =
+        AccountingFactory.insert(:transaction,
+          workspace: workspace,
+          account: account,
+          memo: "No line payees"
+        )
+
+      base_fields = %{"memo" => "No line payees"}
+
+      assert {:ok, enriched_fields} = EnrichSearchFields.call("transaction", transaction.id, base_fields)
+
+      assert enriched_fields["memo"] == "No line payees"
+      assert Map.has_key?(enriched_fields, "line_payee_names") == false
     end
   end
 end
