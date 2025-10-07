@@ -12,6 +12,7 @@ defmodule PurseCraft.Accounting do
   alias PurseCraft.Accounting.Commands.Accounts.UpdateAccount
   alias PurseCraft.Accounting.Commands.Payees.CreatePayee
   alias PurseCraft.Accounting.Commands.Payees.FindOrCreatePayee
+  alias PurseCraft.Accounting.Commands.Transactions.CreateTransaction
 
   @doc """
   Creates an account and associates it with the given `Workspace`.
@@ -146,4 +147,33 @@ defmodule PurseCraft.Accounting do
   """
   # coveralls-ignore-next-line
   defdelegate find_or_create_payee(scope, workspace, payee_name), to: FindOrCreatePayee, as: :call
+
+  @doc """
+  Creates a transaction with automatic double-entry handling.
+
+  Accepts either simple format (source + destination) or split format (source + lines).
+  All amounts are positive - the command determines debit/credit based on entity types.
+
+  ## Examples
+
+      iex> create_transaction(scope, workspace, %{
+      ...>   source: %Account{},
+      ...>   destination: %Envelope{},
+      ...>   with: %Payee{},
+      ...>   amount: 2500,
+      ...>   memo: "Groceries"
+      ...> })
+      {:ok, %Transaction{}}
+
+      iex> create_transaction(scope, workspace, %{
+      ...>   source: %Payee{},
+      ...>   destination: %Account{},
+      ...>   with: :ready_to_assign,
+      ...>   amount: 300000,
+      ...>   memo: "Salary"
+      ...> })
+      {:ok, %Transaction{}}
+
+  """
+  defdelegate create_transaction(scope, workspace, attrs), to: CreateTransaction, as: :call
 end
