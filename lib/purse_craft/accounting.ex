@@ -175,5 +175,6 @@ defmodule PurseCraft.Accounting do
       {:ok, %Transaction{}}
 
   """
+  # coveralls-ignore-next-line
   defdelegate create_transaction(scope, workspace, attrs), to: CreateTransaction, as: :call
 end
