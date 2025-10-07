@@ -3,6 +3,7 @@ defmodule PurseCraft.Utilities do
   Provides utility functions that can be used across the application.
   """
 
+  alias PurseCraft.Utilities.BuildSearchableFields
   alias PurseCraft.Utilities.MaybePreload
   alias PurseCraft.Utilities.PutHashedField
   alias PurseCraft.Utilities.Result
@@ -94,4 +95,20 @@ defmodule PurseCraft.Utilities do
   """
   @spec put_hashed_field(Ecto.Changeset.t(), [atom()] | atom()) :: Ecto.Changeset.t()
   defdelegate put_hashed_field(changeset, fields), to: PutHashedField, as: :call
+
+  @doc """
+  Builds a searchable fields map from a struct.
+
+  Takes a struct and a list of field names (atoms) to extract.
+  Only includes fields that have non-nil, non-empty string values.
+
+  ## Examples
+
+      iex> transaction = %{memo: "Groceries", amount: 2500}
+      iex> Utilities.build_searchable_fields(transaction, [:memo])
+      %{"memo" => "Groceries"}
+
+  """
+  @spec build_searchable_fields(struct() | map(), [atom()]) :: %{String.t() => String.t()}
+  defdelegate build_searchable_fields(struct, field_names), to: BuildSearchableFields, as: :call
 end

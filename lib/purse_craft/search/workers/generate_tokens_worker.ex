@@ -8,6 +8,7 @@ defmodule PurseCraft.Search.Workers.GenerateTokensWorker do
   use Oban.Worker, queue: :default
 
   alias PurseCraft.Core.Commands.Workspaces.FetchWorkspace
+  alias PurseCraft.Search.Commands.Fields.EnrichSearchFields
   alias PurseCraft.Search.Commands.Token.UpdateTokens
 
   @type searchable_fields :: %{String.t() => String.t()}
@@ -22,7 +23,8 @@ defmodule PurseCraft.Search.Workers.GenerateTokensWorker do
         }
       }) do
     with {:ok, workspace} <- FetchWorkspace.call(workspace_id),
-         {:ok, _tokens} <- UpdateTokens.call(workspace, entity_type, entity_id, searchable_fields) do
+         {:ok, enriched_fields} <- EnrichSearchFields.call(entity_type, entity_id, searchable_fields),
+         {:ok, _tokens} <- UpdateTokens.call(workspace, entity_type, entity_id, enriched_fields) do
       :ok
     end
   end
