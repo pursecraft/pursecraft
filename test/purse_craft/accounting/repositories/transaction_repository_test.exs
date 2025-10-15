@@ -65,15 +65,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
 
   describe "get_by_external_id/2" do
     test "returns transaction when found", %{workspace: workspace, account: account} do
-      attrs = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 1000,
-        date: Date.utc_today(),
-        lines: [%{amount: 1000, envelope_id: nil}]
-      }
-
-      assert {:ok, transaction} = TransactionRepository.create(attrs)
+      transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account, amount: 1000)
 
       result = TransactionRepository.get_by_external_id(transaction.external_id)
 
@@ -98,15 +90,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
       workspace: workspace,
       account: account
     } do
-      attrs = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 1000,
-        date: Date.utc_today(),
-        lines: [%{amount: 1000, envelope_id: nil}]
-      }
-
-      assert {:ok, transaction} = TransactionRepository.create(attrs)
+      transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account)
 
       result = TransactionRepository.get_by_external_id(transaction.external_id, preload: [:account])
 
@@ -116,15 +100,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
     end
 
     test "returns transaction without preload by default", %{workspace: workspace, account: account} do
-      attrs = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 1000,
-        date: Date.utc_today(),
-        lines: [%{amount: 1000, envelope_id: nil}]
-      }
-
-      assert {:ok, transaction} = TransactionRepository.create(attrs)
+      transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account)
 
       result = TransactionRepository.get_by_external_id(transaction.external_id)
 
@@ -145,33 +121,14 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
       workspace: workspace,
       account: account
     } do
-      attrs1 = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 1000,
-        date: ~D[2025-01-01],
-        lines: [%{amount: 1000, envelope_id: nil}]
-      }
+      transaction1 =
+        AccountingFactory.insert(:transaction, workspace: workspace, account: account, date: ~D[2025-01-01])
 
-      attrs2 = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 2000,
-        date: ~D[2025-01-03],
-        lines: [%{amount: 2000, envelope_id: nil}]
-      }
+      transaction2 =
+        AccountingFactory.insert(:transaction, workspace: workspace, account: account, date: ~D[2025-01-03])
 
-      attrs3 = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 3000,
-        date: ~D[2025-01-02],
-        lines: [%{amount: 3000, envelope_id: nil}]
-      }
-
-      assert {:ok, transaction1} = TransactionRepository.create(attrs1)
-      assert {:ok, transaction2} = TransactionRepository.create(attrs2)
-      assert {:ok, transaction3} = TransactionRepository.create(attrs3)
+      transaction3 =
+        AccountingFactory.insert(:transaction, workspace: workspace, account: account, date: ~D[2025-01-02])
 
       result = TransactionRepository.list_by_workspace(workspace.id)
 
@@ -186,24 +143,8 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
       other_workspace = CoreFactory.insert(:workspace)
       other_account = AccountingFactory.insert(:account, workspace: other_workspace)
 
-      attrs1 = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 1000,
-        date: Date.utc_today(),
-        lines: [%{amount: 1000, envelope_id: nil}]
-      }
-
-      attrs2 = %{
-        workspace_id: other_workspace.id,
-        account_id: other_account.id,
-        amount: 2000,
-        date: Date.utc_today(),
-        lines: [%{amount: 2000, envelope_id: nil}]
-      }
-
-      assert {:ok, transaction1} = TransactionRepository.create(attrs1)
-      assert {:ok, _transaction2} = TransactionRepository.create(attrs2)
+      transaction1 = AccountingFactory.insert(:transaction, workspace: workspace, account: account)
+      AccountingFactory.insert(:transaction, workspace: other_workspace, account: other_account)
 
       result = TransactionRepository.list_by_workspace(workspace.id)
 
@@ -214,33 +155,9 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
     end
 
     test "limits results when limit option provided", %{workspace: workspace, account: account} do
-      attrs1 = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 1000,
-        date: ~D[2025-01-01],
-        lines: [%{amount: 1000, envelope_id: nil}]
-      }
-
-      attrs2 = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 2000,
-        date: ~D[2025-01-02],
-        lines: [%{amount: 2000, envelope_id: nil}]
-      }
-
-      attrs3 = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 3000,
-        date: ~D[2025-01-03],
-        lines: [%{amount: 3000, envelope_id: nil}]
-      }
-
-      assert {:ok, _transaction1} = TransactionRepository.create(attrs1)
-      assert {:ok, _transaction2} = TransactionRepository.create(attrs2)
-      assert {:ok, _transaction3} = TransactionRepository.create(attrs3)
+      AccountingFactory.insert(:transaction, workspace: workspace, account: account, date: ~D[2025-01-01])
+      AccountingFactory.insert(:transaction, workspace: workspace, account: account, date: ~D[2025-01-02])
+      AccountingFactory.insert(:transaction, workspace: workspace, account: account, date: ~D[2025-01-03])
 
       result = TransactionRepository.list_by_workspace(workspace.id, limit: 2)
 
@@ -251,15 +168,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
       workspace: workspace,
       account: account
     } do
-      attrs = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 1000,
-        date: Date.utc_today(),
-        lines: [%{amount: 1000, envelope_id: nil}]
-      }
-
-      assert {:ok, _transaction} = TransactionRepository.create(attrs)
+      AccountingFactory.insert(:transaction, workspace: workspace, account: account)
 
       result = TransactionRepository.list_by_workspace(workspace.id, preload: [:account])
 
@@ -269,15 +178,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
     end
 
     test "returns transactions without preload by default", %{workspace: workspace, account: account} do
-      attrs = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 1000,
-        date: Date.utc_today(),
-        lines: [%{amount: 1000, envelope_id: nil}]
-      }
-
-      assert {:ok, _transaction} = TransactionRepository.create(attrs)
+      AccountingFactory.insert(:transaction, workspace: workspace, account: account)
 
       result = TransactionRepository.list_by_workspace(workspace.id)
 
@@ -287,33 +188,9 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
     end
 
     test "handles multiple options together", %{workspace: workspace, account: account} do
-      attrs1 = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 1000,
-        date: ~D[2025-01-01],
-        lines: [%{amount: 1000, envelope_id: nil}]
-      }
-
-      attrs2 = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 2000,
-        date: ~D[2025-01-02],
-        lines: [%{amount: 2000, envelope_id: nil}]
-      }
-
-      attrs3 = %{
-        workspace_id: workspace.id,
-        account_id: account.id,
-        amount: 3000,
-        date: ~D[2025-01-03],
-        lines: [%{amount: 3000, envelope_id: nil}]
-      }
-
-      assert {:ok, _transaction1} = TransactionRepository.create(attrs1)
-      assert {:ok, _transaction2} = TransactionRepository.create(attrs2)
-      assert {:ok, _transaction3} = TransactionRepository.create(attrs3)
+      AccountingFactory.insert(:transaction, workspace: workspace, account: account, date: ~D[2025-01-01])
+      AccountingFactory.insert(:transaction, workspace: workspace, account: account, date: ~D[2025-01-02])
+      AccountingFactory.insert(:transaction, workspace: workspace, account: account, date: ~D[2025-01-03])
 
       result = TransactionRepository.list_by_workspace(workspace.id, preload: [:account], limit: 2)
 

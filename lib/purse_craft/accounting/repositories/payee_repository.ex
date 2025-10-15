@@ -137,15 +137,8 @@ defmodule PurseCraft.Accounting.Repositories.PayeeRepository do
     workspace_id
     |> PayeeQuery.by_workspace_id()
     |> PayeeQuery.order_by_name()
-    |> maybe_limit(opts)
+    |> Utilities.maybe_limit(opts)
     |> Repo.all()
     |> Utilities.maybe_preload(opts)
-  end
-
-  defp maybe_limit(query, opts) do
-    case Keyword.get(opts, :limit) do
-      nil -> query
-      count -> PayeeQuery.limit(query, count)
-    end
   end
 end

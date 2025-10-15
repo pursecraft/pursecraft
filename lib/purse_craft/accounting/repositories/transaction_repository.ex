@@ -153,7 +153,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
     workspace_id
     |> TransactionQuery.by_workspace_id()
     |> TransactionQuery.order_by_date()
-    |> maybe_limit(opts)
+    |> Utilities.maybe_limit(opts)
     |> Repo.all()
     |> Utilities.maybe_preload(opts)
   end
@@ -187,12 +187,5 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
     preload_associations = Keyword.get(opts, :preload, [:transaction_lines])
 
     Repo.preload(transaction, preload_associations)
-  end
-
-  defp maybe_limit(query, opts) do
-    case Keyword.get(opts, :limit) do
-      nil -> query
-      count -> TransactionQuery.limit(query, count)
-    end
   end
 end

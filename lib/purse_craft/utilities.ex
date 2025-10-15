@@ -4,6 +4,7 @@ defmodule PurseCraft.Utilities do
   """
 
   alias PurseCraft.Utilities.BuildSearchableFields
+  alias PurseCraft.Utilities.MaybeLimit
   alias PurseCraft.Utilities.MaybePreload
   alias PurseCraft.Utilities.PutHashedField
   alias PurseCraft.Utilities.Result
@@ -59,6 +60,21 @@ defmodule PurseCraft.Utilities do
   """
   @spec to_result(any()) :: {:ok, any()} | {:error, any()}
   defdelegate to_result(value), to: Result, as: :normalize
+
+  @doc """
+  Applies a limit to a query if the `:limit` option is provided.
+
+  ## Examples
+
+      iex> Utilities.maybe_limit(query, [])
+      #Ecto.Query<...>
+
+      iex> Utilities.maybe_limit(query, limit: 10)
+      #Ecto.Query<from ... limit: 10>
+
+  """
+  @spec maybe_limit(Ecto.Queryable.t(), keyword()) :: Ecto.Query.t()
+  defdelegate maybe_limit(query, opts), to: MaybeLimit, as: :call
 
   @doc """
   Preloads associations on a struct or list of structs if preloads are provided in options.
