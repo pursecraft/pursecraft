@@ -164,49 +164,6 @@ defmodule PurseCraft.Accounting.Queries.PayeeQueryTest do
     end
   end
 
-  describe "preload_workspace/0" do
-    test "creates a query with workspace preload" do
-      query = PayeeQuery.preload_workspace()
-
-      assert query.from.source == {"payees", Payee}
-      assert query.preloads == [:workspace]
-    end
-  end
-
-  describe "preload_workspace/1" do
-    test "adds workspace preload to existing query" do
-      base_query = from(p in Payee, where: p.workspace_id == 1)
-
-      query = PayeeQuery.preload_workspace(base_query)
-
-      assert query.preloads == [:workspace]
-      assert length(query.wheres) == 1
-    end
-
-    test "works with Payee schema directly" do
-      query = PayeeQuery.preload_workspace(Payee)
-
-      assert query.from.source == {"payees", Payee}
-      assert query.preloads == [:workspace]
-    end
-
-    test "preserves other query attributes" do
-      base_query =
-        from(p in Payee,
-          where: p.workspace_id == 1,
-          order_by: p.name,
-          limit: 10
-        )
-
-      query = PayeeQuery.preload_workspace(base_query)
-
-      assert query.preloads == [:workspace]
-      assert query.limit.expr == 10
-      assert length(query.order_bys) == 1
-      assert length(query.wheres) == 1
-    end
-  end
-
   describe "order_by_name/0" do
     test "creates a query ordered by name in ascending order" do
       query = PayeeQuery.order_by_name()
@@ -357,13 +314,11 @@ defmodule PurseCraft.Accounting.Queries.PayeeQueryTest do
         |> PayeeQuery.by_workspace_id()
         |> PayeeQuery.by_external_id(external_id)
         |> PayeeQuery.by_name_hash(name_hash)
-        |> PayeeQuery.preload_workspace()
         |> PayeeQuery.order_by_name()
         |> PayeeQuery.limit(10)
 
       assert query.from.source == {"payees", Payee}
       assert length(query.wheres) == 3
-      assert query.preloads == [:workspace]
       assert length(query.order_bys) == 1
       assert query.limit.expr == {:^, [], [0]}
       assert query.limit.params == [{10, :integer}]

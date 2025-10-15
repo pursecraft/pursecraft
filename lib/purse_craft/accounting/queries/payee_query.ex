@@ -74,28 +74,6 @@ defmodule PurseCraft.Accounting.Queries.PayeeQuery do
   end
 
   @doc """
-  Preloads the workspace association.
-
-  ## Examples
-
-      iex> preload_workspace()
-      #Ecto.Query<...>
-
-      iex> Payee |> by_workspace_id(1) |> preload_workspace()
-      #Ecto.Query<...>
-
-  """
-  @spec preload_workspace() :: Ecto.Query.t()
-  def preload_workspace do
-    preload_workspace(Payee)
-  end
-
-  @spec preload_workspace(Ecto.Queryable.t()) :: Ecto.Query.t()
-  def preload_workspace(queryable) do
-    from(p in queryable, preload: [:workspace])
-  end
-
-  @doc """
   Orders payees by name in ascending order.
 
   ## Examples
