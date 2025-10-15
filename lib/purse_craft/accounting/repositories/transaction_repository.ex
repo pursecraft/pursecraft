@@ -3,10 +3,12 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
   Repository for `Transaction`.
   """
 
+  alias PurseCraft.Accounting.Queries.TransactionQuery
   alias PurseCraft.Accounting.Schemas.Transaction
   alias PurseCraft.Accounting.Schemas.TransactionLine
   alias PurseCraft.Repo
   alias PurseCraft.Types
+  alias PurseCraft.Utilities
 
   @type transaction_line_attrs :: %{
           required(:amount) => integer(),
@@ -28,6 +30,12 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
 
   @type create_option :: {:preload, Types.preload()}
   @type create_options :: [create_option()]
+
+  @type get_option :: {:preload, Types.preload()}
+  @type get_options :: [get_option()]
+
+  @type list_option :: {:preload, Types.preload()} | {:limit, integer()}
+  @type list_options :: [list_option()]
 
   @doc """
   Creates a transaction with associated transaction lines atomically.
@@ -93,6 +101,63 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
     end)
   end
 
+  @doc """
+  Gets a transaction by external ID.
+
+  ## Options
+
+  * `:preload` - List of associations to preload. Defaults to `[]`.
+
+  ## Examples
+
+      iex> get_by_external_id("transaction-uuid")
+      %Transaction{}
+
+      iex> get_by_external_id("transaction-uuid", preload: [:account])
+      %Transaction{account: %Account{}}
+
+      iex> get_by_external_id("invalid-uuid")
+      nil
+
+  """
+  @spec get_by_external_id(String.t(), get_options()) :: Transaction.t() | nil
+  def get_by_external_id(external_id, opts \\ []) do
+    external_id
+    |> TransactionQuery.by_external_id()
+    |> Repo.one()
+    |> Utilities.maybe_preload(opts)
+  end
+
+  @doc """
+  Lists all transactions for a workspace.
+
+  ## Options
+
+  * `:preload` - List of associations to preload. Defaults to `[]`.
+  * `:limit` - Maximum number of results to return. No default limit.
+
+  ## Examples
+
+      iex> list_by_workspace(1)
+      [%Transaction{}, %Transaction{}]
+
+      iex> list_by_workspace(1, preload: [:account])
+      [%Transaction{account: %Account{}}, %Transaction{account: %Account{}}]
+
+      iex> list_by_workspace(1, limit: 5)
+      [%Transaction{}, %Transaction{}]
+
+  """
+  @spec list_by_workspace(integer(), list_options()) :: list(Transaction.t())
+  def list_by_workspace(workspace_id, opts \\ []) do
+    workspace_id
+    |> TransactionQuery.by_workspace_id()
+    |> TransactionQuery.order_by_date()
+    |> maybe_limit(opts)
+    |> Repo.all()
+    |> Utilities.maybe_preload(opts)
+  end
+
   defp create_transaction(attrs) do
     transaction_attrs = Map.delete(attrs, :lines)
 
@@ -122,5 +187,12 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
     preload_associations = Keyword.get(opts, :preload, [:transaction_lines])
 
     Repo.preload(transaction, preload_associations)
+  end
+
+  defp maybe_limit(query, opts) do
+    case Keyword.get(opts, :limit) do
+      nil -> query
+      count -> TransactionQuery.limit(query, count)
+    end
   end
 end
