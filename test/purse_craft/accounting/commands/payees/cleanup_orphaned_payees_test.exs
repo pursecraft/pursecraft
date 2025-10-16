@@ -15,13 +15,13 @@ defmodule PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayeesTest do
     {:ok, workspace: workspace}
   end
 
-  describe "call/2" do
-    test "deletes all orphaned payees when given empty list", %{workspace: workspace} do
+  describe "call/1" do
+    test "deletes all orphaned payees", %{workspace: workspace} do
       orphaned1 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
       orphaned2 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
       orphaned3 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
 
-      assert {:ok, 3} = CleanupOrphanedPayees.call(workspace, [])
+      assert {:ok, 3} = CleanupOrphanedPayees.call(workspace)
 
       assert PayeeRepository.get_by_external_id(orphaned1.external_id) == nil
       assert PayeeRepository.get_by_external_id(orphaned2.external_id) == nil
@@ -39,7 +39,7 @@ defmodule PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayeesTest do
         payee_id: referenced.id
       )
 
-      assert {:ok, 1} = CleanupOrphanedPayees.call(workspace, [])
+      assert {:ok, 1} = CleanupOrphanedPayees.call(workspace)
 
       assert PayeeRepository.get_by_external_id(orphaned.external_id) == nil
       assert PayeeRepository.get_by_external_id(referenced.external_id) != nil
@@ -61,7 +61,7 @@ defmodule PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayeesTest do
         payee_id: line_referenced.id
       )
 
-      assert {:ok, 1} = CleanupOrphanedPayees.call(workspace, [])
+      assert {:ok, 1} = CleanupOrphanedPayees.call(workspace)
 
       assert PayeeRepository.get_by_external_id(orphaned.external_id) == nil
       assert PayeeRepository.get_by_external_id(line_referenced.external_id) != nil
@@ -77,48 +77,19 @@ defmodule PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayeesTest do
         payee_id: referenced.id
       )
 
-      assert {:ok, 0} = CleanupOrphanedPayees.call(workspace, [])
+      assert {:ok, 0} = CleanupOrphanedPayees.call(workspace)
       assert PayeeRepository.get_by_external_id(referenced.external_id) != nil
     end
 
     test "returns zero when workspace has no payees", %{workspace: workspace} do
-      assert {:ok, 0} = CleanupOrphanedPayees.call(workspace, [])
-    end
-
-    test "only deletes orphaned payees matching provided IDs", %{workspace: workspace} do
-      orphaned1 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
-      orphaned2 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
-      orphaned3 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
-
-      assert {:ok, 2} = CleanupOrphanedPayees.call(workspace, [orphaned1.id, orphaned3.id])
-
-      assert PayeeRepository.get_by_external_id(orphaned1.external_id) == nil
-      assert PayeeRepository.get_by_external_id(orphaned2.external_id) != nil
-      assert PayeeRepository.get_by_external_id(orphaned3.external_id) == nil
-    end
-
-    test "does not delete referenced payees even if IDs provided", %{workspace: workspace} do
-      account = AccountingFactory.insert(:account, workspace: workspace)
-      orphaned = AccountingFactory.insert(:payee, workspace_id: workspace.id)
-      referenced = AccountingFactory.insert(:payee, workspace_id: workspace.id)
-
-      AccountingFactory.insert(:transaction,
-        workspace_id: workspace.id,
-        account_id: account.id,
-        payee_id: referenced.id
-      )
-
-      assert {:ok, 1} = CleanupOrphanedPayees.call(workspace, [orphaned.id, referenced.id])
-
-      assert PayeeRepository.get_by_external_id(orphaned.external_id) == nil
-      assert PayeeRepository.get_by_external_id(referenced.external_id) != nil
+      assert {:ok, 0} = CleanupOrphanedPayees.call(workspace)
     end
 
     test "schedules search token deletion for deleted payees", %{workspace: workspace} do
       orphaned1 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
       orphaned2 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
 
-      assert {:ok, 2} = CleanupOrphanedPayees.call(workspace, [])
+      assert {:ok, 2} = CleanupOrphanedPayees.call(workspace)
 
       query =
         from(j in Oban.Job,
@@ -135,26 +106,6 @@ defmodule PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayeesTest do
       assert %{"entity_type" => "payee", "entity_id" => orphaned2.id} in job_args
     end
 
-    test "schedules search token deletion only for deleted payees when filtered", %{
-      workspace: workspace
-    } do
-      orphaned1 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
-      _orphaned2 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
-
-      assert {:ok, 1} = CleanupOrphanedPayees.call(workspace, [orphaned1.id])
-
-      query =
-        from(j in Oban.Job,
-          where: j.worker == "PurseCraft.Search.Workers.DeleteTokensWorker",
-          where: j.state == "available"
-        )
-
-      jobs = Repo.all(query)
-
-      assert length(jobs) == 1
-      assert hd(jobs).args == %{"entity_type" => "payee", "entity_id" => orphaned1.id}
-    end
-
     test "does not schedule token deletion when no payees deleted", %{workspace: workspace} do
       account = AccountingFactory.insert(:account, workspace: workspace)
       referenced = AccountingFactory.insert(:payee, workspace_id: workspace.id)
@@ -165,7 +116,7 @@ defmodule PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayeesTest do
         payee_id: referenced.id
       )
 
-      assert {:ok, 0} = CleanupOrphanedPayees.call(workspace, [])
+      assert {:ok, 0} = CleanupOrphanedPayees.call(workspace)
 
       query =
         from(j in Oban.Job,
@@ -197,7 +148,7 @@ defmodule PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayeesTest do
         payee_id: dual_referenced.id
       )
 
-      assert {:ok, 1} = CleanupOrphanedPayees.call(workspace, [])
+      assert {:ok, 1} = CleanupOrphanedPayees.call(workspace)
 
       assert PayeeRepository.get_by_external_id(orphaned.external_id) == nil
       assert PayeeRepository.get_by_external_id(dual_referenced.external_id) != nil
@@ -209,7 +160,7 @@ defmodule PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayeesTest do
       orphaned_ws1 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
       orphaned_ws2 = AccountingFactory.insert(:payee, workspace_id: other_workspace.id)
 
-      assert {:ok, 1} = CleanupOrphanedPayees.call(workspace, [])
+      assert {:ok, 1} = CleanupOrphanedPayees.call(workspace)
 
       assert PayeeRepository.get_by_external_id(orphaned_ws1.external_id) == nil
       assert PayeeRepository.get_by_external_id(orphaned_ws2.external_id) != nil
@@ -220,7 +171,7 @@ defmodule PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayeesTest do
     test "delegates to command", %{workspace: workspace} do
       orphaned = AccountingFactory.insert(:payee, workspace_id: workspace.id)
 
-      assert {:ok, 1} = Accounting.cleanup_orphaned(workspace, [])
+      assert {:ok, 1} = Accounting.cleanup_orphaned_payees(workspace)
 
       assert PayeeRepository.get_by_external_id(orphaned.external_id) == nil
     end

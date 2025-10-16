@@ -153,19 +153,15 @@ defmodule PurseCraft.Accounting do
   Cleans up orphaned payees in a workspace.
 
   System maintenance - removes payees with no transaction references.
-  Accepts an optional list of payee IDs to filter cleanup.
 
   ## Examples
 
-      iex> cleanup_orphaned(workspace, [])
+      iex> cleanup_orphaned_payees(workspace)
       {:ok, 3}
-
-      iex> cleanup_orphaned(workspace, [1, 2, 3])
-      {:ok, 2}
 
   """
   # coveralls-ignore-next-line
-  defdelegate cleanup_orphaned(workspace, payee_ids), to: CleanupOrphanedPayees, as: :call
+  defdelegate cleanup_orphaned_payees(workspace), to: CleanupOrphanedPayees, as: :call
 
   @doc """
   Creates a transaction with automatic double-entry handling.
