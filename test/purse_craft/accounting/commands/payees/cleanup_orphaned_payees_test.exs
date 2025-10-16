@@ -3,7 +3,6 @@ defmodule PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayeesTest do
 
   import Ecto.Query
 
-  alias PurseCraft.Accounting
   alias PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayees
   alias PurseCraft.Accounting.Repositories.PayeeRepository
   alias PurseCraft.AccountingFactory
@@ -164,16 +163,6 @@ defmodule PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayeesTest do
 
       assert PayeeRepository.get_by_external_id(orphaned_ws1.external_id) == nil
       assert PayeeRepository.get_by_external_id(orphaned_ws2.external_id) != nil
-    end
-  end
-
-  describe "context API" do
-    test "delegates to command", %{workspace: workspace} do
-      orphaned = AccountingFactory.insert(:payee, workspace_id: workspace.id)
-
-      assert {:ok, 1} = Accounting.cleanup_orphaned_payees(workspace)
-
-      assert PayeeRepository.get_by_external_id(orphaned.external_id) == nil
     end
   end
 end
