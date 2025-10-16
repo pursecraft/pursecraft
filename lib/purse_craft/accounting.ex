@@ -10,6 +10,7 @@ defmodule PurseCraft.Accounting do
   alias PurseCraft.Accounting.Commands.Accounts.ListAccounts
   alias PurseCraft.Accounting.Commands.Accounts.RepositionAccount
   alias PurseCraft.Accounting.Commands.Accounts.UpdateAccount
+  alias PurseCraft.Accounting.Commands.Payees.CleanupOrphanedPayees
   alias PurseCraft.Accounting.Commands.Payees.CreatePayee
   alias PurseCraft.Accounting.Commands.Payees.FindOrCreatePayee
   alias PurseCraft.Accounting.Commands.Transactions.CreateTransaction
@@ -147,6 +148,24 @@ defmodule PurseCraft.Accounting do
   """
   # coveralls-ignore-next-line
   defdelegate find_or_create_payee(scope, workspace, payee_name), to: FindOrCreatePayee, as: :call
+
+  @doc """
+  Cleans up orphaned payees in a workspace.
+
+  System maintenance - removes payees with no transaction references.
+  Accepts an optional list of payee IDs to filter cleanup.
+
+  ## Examples
+
+      iex> cleanup_orphaned(workspace, [])
+      {:ok, 3}
+
+      iex> cleanup_orphaned(workspace, [1, 2, 3])
+      {:ok, 2}
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate cleanup_orphaned(workspace, payee_ids), to: CleanupOrphanedPayees, as: :call
 
   @doc """
   Creates a transaction with automatic double-entry handling.
