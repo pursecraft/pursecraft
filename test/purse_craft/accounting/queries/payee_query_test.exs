@@ -370,4 +370,167 @@ defmodule PurseCraft.Accounting.Queries.PayeeQueryTest do
       assert {name_hash, {0, :name_hash}} in param_values
     end
   end
+
+  describe "orphaned/0" do
+    test "creates a query for orphaned payees" do
+      query = PayeeQuery.orphaned()
+
+      assert query.from.source == {"payees", Payee}
+      assert length(query.wheres) == 1
+    end
+  end
+
+  describe "orphaned/1" do
+    test "adds orphaned filter to existing query" do
+      base_query = from(p in Payee, where: p.workspace_id == 1)
+
+      query = PayeeQuery.orphaned(base_query)
+
+      assert length(query.wheres) == 2
+    end
+
+    test "works with Payee schema directly" do
+      query = PayeeQuery.orphaned(Payee)
+
+      assert query.from.source == {"payees", Payee}
+      assert length(query.wheres) == 1
+    end
+
+    test "preserves other query attributes" do
+      base_query =
+        from(p in Payee,
+          where: p.workspace_id == 1,
+          order_by: p.name,
+          limit: 5
+        )
+
+      query = PayeeQuery.orphaned(base_query)
+
+      assert query.limit.expr == 5
+      assert length(query.order_bys) == 1
+      assert length(query.wheres) == 2
+    end
+  end
+
+  describe "by_ids/1" do
+    test "creates a query filtered by IDs" do
+      ids = [1, 2, 3]
+      query = PayeeQuery.by_ids(ids)
+
+      assert query.from.source == {"payees", Payee}
+      assert length(query.wheres) == 1
+
+      [where_clause] = query.wheres
+      assert where_clause.params == [{ids, {:in, {0, :id}}}]
+    end
+
+    test "handles empty list" do
+      query = PayeeQuery.by_ids([])
+
+      assert query.from.source == {"payees", Payee}
+      assert length(query.wheres) == 1
+    end
+
+    test "handles single ID" do
+      ids = [123]
+      query = PayeeQuery.by_ids(ids)
+
+      assert query.from.source == {"payees", Payee}
+      assert length(query.wheres) == 1
+    end
+  end
+
+  describe "by_ids/2" do
+    test "adds ID filter to existing query" do
+      ids = [1, 2, 3]
+      base_query = from(p in Payee, where: p.workspace_id == 1)
+
+      query = PayeeQuery.by_ids(base_query, ids)
+
+      assert length(query.wheres) == 2
+
+      param_values = Enum.flat_map(query.wheres, & &1.params)
+      assert {ids, {:in, {0, :id}}} in param_values
+    end
+
+    test "works with Payee schema directly" do
+      ids = [456, 789]
+      query = PayeeQuery.by_ids(Payee, ids)
+
+      assert query.from.source == {"payees", Payee}
+      assert length(query.wheres) == 1
+      assert hd(query.wheres).params == [{ids, {:in, {0, :id}}}]
+    end
+
+    test "preserves other query attributes" do
+      base_query =
+        from(p in Payee,
+          where: p.workspace_id == 1,
+          order_by: p.inserted_at,
+          limit: 10
+        )
+
+      ids = [1, 2, 3]
+      query = PayeeQuery.by_ids(base_query, ids)
+
+      assert query.limit.expr == 10
+      assert length(query.order_bys) == 1
+      assert length(query.wheres) == 2
+    end
+
+    test "handles empty ID list" do
+      base_query = from(p in Payee, where: p.workspace_id == 1)
+      query = PayeeQuery.by_ids(base_query, [])
+
+      assert length(query.wheres) == 2
+    end
+  end
+
+  describe "query composition with new functions" do
+    test "combines orphaned and by_ids filters" do
+      workspace_id = 123
+      ids = [1, 2, 3]
+
+      query =
+        workspace_id
+        |> PayeeQuery.by_workspace_id()
+        |> PayeeQuery.orphaned()
+        |> PayeeQuery.by_ids(ids)
+
+      assert query.from.source == {"payees", Payee}
+      assert length(query.wheres) == 3
+    end
+
+    test "combines orphaned with ordering and limits" do
+      workspace_id = 456
+
+      query =
+        workspace_id
+        |> PayeeQuery.by_workspace_id()
+        |> PayeeQuery.orphaned()
+        |> PayeeQuery.order_by_name()
+        |> PayeeQuery.limit(2)
+
+      assert query.from.source == {"payees", Payee}
+      assert length(query.wheres) == 2
+      assert length(query.order_bys) == 1
+      assert query.limit.expr == {:^, [], [0]}
+      assert query.limit.params == [{2, :integer}]
+    end
+
+    test "combines by_ids with other filters" do
+      workspace_id = 789
+      ids = [10, 20, 30]
+
+      query =
+        workspace_id
+        |> PayeeQuery.by_workspace_id()
+        |> PayeeQuery.by_ids(ids)
+        |> PayeeQuery.order_by_recent()
+
+      assert query.from.source == {"payees", Payee}
+      assert length(query.wheres) == 2
+      assert length(query.order_bys) == 1
+    end
+  end
 end
