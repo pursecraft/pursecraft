@@ -138,4 +138,57 @@ defmodule PurseCraft.Accounting.Queries.PayeeQuery do
   def limit(queryable, count) do
     from(p in queryable, limit: ^count)
   end
+
+  @doc """
+  Returns a query for payees that have no transaction references.
+
+  A payee is considered orphaned when it is not referenced by any transaction
+  or transaction line.
+
+  ## Examples
+
+      iex> orphaned()
+      #Ecto.Query<...>
+
+      iex> Payee |> by_workspace_id(1) |> orphaned()
+      #Ecto.Query<...>
+
+  """
+  @spec orphaned() :: Ecto.Query.t()
+  def orphaned do
+    orphaned(Payee)
+  end
+
+  @spec orphaned(Ecto.Queryable.t()) :: Ecto.Query.t()
+  def orphaned(queryable) do
+    from p in queryable,
+      where:
+        fragment(
+          "NOT EXISTS (SELECT 1 FROM transactions WHERE payee_id = ?) AND NOT EXISTS (SELECT 1 FROM transaction_lines WHERE payee_id = ?)",
+          p.id,
+          p.id
+        )
+  end
+
+  @doc """
+  Returns a query for payees matching a list of IDs.
+
+  ## Examples
+
+      iex> by_ids([1, 2, 3])
+      #Ecto.Query<...>
+
+      iex> Payee |> by_workspace_id(1) |> by_ids([1, 2, 3])
+      #Ecto.Query<...>
+
+  """
+  @spec by_ids(list(integer())) :: Ecto.Query.t()
+  def by_ids(ids) do
+    by_ids(Payee, ids)
+  end
+
+  @spec by_ids(Ecto.Queryable.t(), list(integer())) :: Ecto.Query.t()
+  def by_ids(queryable, ids) when is_list(ids) do
+    from(p in queryable, where: p.id in ^ids)
+  end
 end
