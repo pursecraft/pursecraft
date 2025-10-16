@@ -141,4 +141,38 @@ defmodule PurseCraft.Accounting.Repositories.PayeeRepository do
     |> Repo.all()
     |> Utilities.maybe_preload(opts)
   end
+
+  @doc """
+  Deletes all orphaned payees in a workspace.
+
+  An orphaned payee is one that is not referenced by any transaction or transaction line.
+  Returns the count of deleted payees and the list of deleted payee records.
+
+  ## Examples
+
+      iex> delete_orphaned(workspace)
+      {:ok, {2, [%Payee{}, %Payee{}]}}
+
+      iex> delete_orphaned(workspace)
+      {:ok, {0, []}}
+
+  """
+  @spec delete_orphaned(Workspace.t()) :: {:ok, {non_neg_integer(), [Payee.t()]}}
+  def delete_orphaned(%Workspace{id: workspace_id}) do
+    orphaned_payees =
+      workspace_id
+      |> PayeeQuery.by_workspace_id()
+      |> PayeeQuery.orphaned()
+      |> Repo.all()
+
+    payee_ids = Enum.map(orphaned_payees, & &1.id)
+
+    {count, _deleted} =
+      workspace_id
+      |> PayeeQuery.by_workspace_id()
+      |> PayeeQuery.by_ids(payee_ids)
+      |> Repo.delete_all()
+
+    {:ok, {count, orphaned_payees}}
+  end
 end

@@ -378,4 +378,184 @@ defmodule PurseCraft.Accounting.Repositories.PayeeRepositoryTest do
       assert result == []
     end
   end
+
+  describe "delete_orphaned/1" do
+    test "deletes payees with no transaction references", %{workspace: workspace} do
+      orphaned_payee = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+
+      assert {:ok, {1, deleted_payees}} = PayeeRepository.delete_orphaned(workspace)
+      assert length(deleted_payees) == 1
+      assert hd(deleted_payees).id == orphaned_payee.id
+
+      assert PayeeRepository.get_by_external_id(orphaned_payee.external_id) == nil
+    end
+
+    test "does not delete payees referenced by transactions", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace)
+      referenced_payee = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+      orphaned_payee = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+
+      AccountingFactory.insert(:transaction,
+        workspace_id: workspace.id,
+        account_id: account.id,
+        payee_id: referenced_payee.id
+      )
+
+      assert {:ok, {1, deleted_payees}} = PayeeRepository.delete_orphaned(workspace)
+      assert length(deleted_payees) == 1
+      assert hd(deleted_payees).id == orphaned_payee.id
+
+      assert PayeeRepository.get_by_external_id(referenced_payee.external_id) != nil
+      assert PayeeRepository.get_by_external_id(orphaned_payee.external_id) == nil
+    end
+
+    test "does not delete payees referenced by transaction_lines", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace)
+      line_referenced_payee = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+      orphaned_payee = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+
+      transaction =
+        AccountingFactory.insert(:transaction,
+          workspace_id: workspace.id,
+          account_id: account.id
+        )
+
+      AccountingFactory.insert(:transaction_line,
+        transaction_id: transaction.id,
+        payee_id: line_referenced_payee.id
+      )
+
+      assert {:ok, {1, deleted_payees}} = PayeeRepository.delete_orphaned(workspace)
+      assert length(deleted_payees) == 1
+      assert hd(deleted_payees).id == orphaned_payee.id
+
+      assert PayeeRepository.get_by_external_id(line_referenced_payee.external_id) != nil
+      assert PayeeRepository.get_by_external_id(orphaned_payee.external_id) == nil
+    end
+
+    test "does not delete payees referenced by both transaction and transaction_line", %{
+      workspace: workspace
+    } do
+      account = AccountingFactory.insert(:account, workspace: workspace)
+      dual_referenced_payee = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+      orphaned_payee = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+
+      transaction =
+        AccountingFactory.insert(:transaction,
+          workspace_id: workspace.id,
+          account_id: account.id,
+          payee_id: dual_referenced_payee.id
+        )
+
+      AccountingFactory.insert(:transaction_line,
+        transaction_id: transaction.id,
+        payee_id: dual_referenced_payee.id
+      )
+
+      assert {:ok, {1, deleted_payees}} = PayeeRepository.delete_orphaned(workspace)
+      assert length(deleted_payees) == 1
+      assert hd(deleted_payees).id == orphaned_payee.id
+
+      assert PayeeRepository.get_by_external_id(dual_referenced_payee.external_id) != nil
+    end
+
+    test "returns zero count when no orphaned payees exist", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace)
+      referenced_payee = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+
+      AccountingFactory.insert(:transaction,
+        workspace_id: workspace.id,
+        account_id: account.id,
+        payee_id: referenced_payee.id
+      )
+
+      assert {:ok, {0, []}} = PayeeRepository.delete_orphaned(workspace)
+      assert PayeeRepository.get_by_external_id(referenced_payee.external_id) != nil
+    end
+
+    test "returns zero count when workspace has no payees", %{workspace: workspace} do
+      assert {:ok, {0, []}} = PayeeRepository.delete_orphaned(workspace)
+    end
+
+    test "deletes multiple orphaned payees at once", %{workspace: workspace} do
+      orphaned1 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+      orphaned2 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+      orphaned3 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+
+      assert {:ok, {3, deleted_payees}} = PayeeRepository.delete_orphaned(workspace)
+      assert length(deleted_payees) == 3
+
+      deleted_ids =
+        deleted_payees
+        |> Enum.map(& &1.id)
+        |> Enum.sort()
+
+      expected_ids = Enum.sort([orphaned1.id, orphaned2.id, orphaned3.id])
+      assert deleted_ids == expected_ids
+    end
+
+    test "only deletes orphaned payees from specified workspace" do
+      workspace1 = CoreFactory.insert(:workspace)
+      workspace2 = CoreFactory.insert(:workspace)
+
+      orphaned_ws1 = AccountingFactory.insert(:payee, workspace_id: workspace1.id)
+      orphaned_ws2 = AccountingFactory.insert(:payee, workspace_id: workspace2.id)
+
+      assert {:ok, {1, deleted_payees}} = PayeeRepository.delete_orphaned(workspace1)
+      assert length(deleted_payees) == 1
+      assert hd(deleted_payees).id == orphaned_ws1.id
+
+      assert PayeeRepository.get_by_external_id(orphaned_ws2.external_id) != nil
+    end
+
+    test "returns deleted payee records with all fields populated", %{workspace: workspace} do
+      orphaned_payee = AccountingFactory.insert(:payee, workspace_id: workspace.id, name: "Test Store")
+
+      assert {:ok, {1, [deleted_payee]}} = PayeeRepository.delete_orphaned(workspace)
+      assert deleted_payee.id == orphaned_payee.id
+      assert deleted_payee.name == "Test Store"
+      assert deleted_payee.external_id == orphaned_payee.external_id
+      assert deleted_payee.workspace_id == workspace.id
+    end
+
+    test "handles mix of orphaned and referenced payees", %{workspace: workspace} do
+      account = AccountingFactory.insert(:account, workspace: workspace)
+
+      orphaned1 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+      referenced1 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+      orphaned2 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+      referenced2 = AccountingFactory.insert(:payee, workspace_id: workspace.id)
+
+      AccountingFactory.insert(:transaction,
+        workspace_id: workspace.id,
+        account_id: account.id,
+        payee_id: referenced1.id
+      )
+
+      transaction =
+        AccountingFactory.insert(:transaction,
+          workspace_id: workspace.id,
+          account_id: account.id
+        )
+
+      AccountingFactory.insert(:transaction_line,
+        transaction_id: transaction.id,
+        payee_id: referenced2.id
+      )
+
+      assert {:ok, {2, deleted_payees}} = PayeeRepository.delete_orphaned(workspace)
+      assert length(deleted_payees) == 2
+
+      deleted_ids =
+        deleted_payees
+        |> Enum.map(& &1.id)
+        |> Enum.sort()
+
+      expected_ids = Enum.sort([orphaned1.id, orphaned2.id])
+      assert deleted_ids == expected_ids
+
+      assert PayeeRepository.get_by_external_id(referenced1.external_id) != nil
+      assert PayeeRepository.get_by_external_id(referenced2.external_id) != nil
+    end
+  end
 end
