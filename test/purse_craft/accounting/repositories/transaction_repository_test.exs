@@ -1,6 +1,8 @@
 defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
   use PurseCraft.DataCase, async: true
 
+  import Ecto.Query, only: [from: 2]
+
   alias Ecto.Association.NotLoaded
   alias Ecto.Changeset
   alias PurseCraft.Accounting.Repositories.TransactionRepository
@@ -406,8 +408,8 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
           lines: [%{amount: 1000, envelope_id: nil}]
         })
 
-      original_line_count =
-        Repo.one(from(l in TransactionLine, where: l.transaction_id == ^transaction.id, select: count(l.id)))
+      line_count_query = from(l in TransactionLine, where: l.transaction_id == ^transaction.id, select: count(l.id))
+      original_line_count = Repo.one(line_count_query)
 
       attrs = %{memo: "Updated"}
       lines_attrs = [%{amount: nil, envelope_id: nil}]
@@ -417,7 +419,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
       reloaded = Repo.get(PurseCraft.Accounting.Schemas.Transaction, transaction.id)
       assert reloaded.memo == "Original"
 
-      line_count = Repo.one(from(l in TransactionLine, where: l.transaction_id == ^transaction.id, select: count(l.id)))
+      line_count = Repo.one(line_count_query)
 
       assert line_count == original_line_count
     end
