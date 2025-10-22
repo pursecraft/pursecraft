@@ -162,6 +162,39 @@ Controllers automatically have the `current_scope` available if they use the `:b
 - `Ecto.Changeset.validate_number/2` **DOES NOT SUPPORT the `:allow_nil` option**. By default, Ecto validations only run if a change for the given field exists and the change value is not nil, so such as option is never needed
 - You **must** use `Ecto.Changeset.get_field(changeset, :field)` to access changeset fields
 - Fields which are set programatically, such as `user_id`, must not be listed in `cast` calls or similar for security purposes. Instead they must be explicitly set when creating the struct
+
+### Ecto Query Architecture (CRITICAL)
+
+**Separation of Concerns:**
+- **Query Modules** (`lib/purse_craft/*/queries/*_query.ex`):
+  - Use `import Ecto.Query` to build composable queries
+  - Return `Ecto.Query.t()`, NEVER call `Repo` functions
+  - Dual-arity pattern: `by_transaction_id/1` and `by_transaction_id/2`
+  - Example: `TransactionLineQuery.by_transaction_id(123)` returns a query
+
+- **Repository Modules** (`lib/purse_craft/*/repositories/*_repository.ex`):
+  - Use Query modules to build queries
+  - Execute with `Repo.all/1`, `Repo.one/1`, `Repo.delete_all/1`, etc.
+  - Should NEVER `import Ecto.Query` (use Query modules instead)
+  - Handle options, preloading, and data persistence
+  - Example:
+    ```elixir
+    defp delete_all_lines(transaction_id) do
+      transaction_id
+      |> TransactionLineQuery.by_transaction_id()
+      |> Repo.delete_all()
+      |> case do
+        {deleted_count, _nil} -> {:ok, deleted_count}
+      end
+    end
+    ```
+
+- **Command Modules** (`lib/purse_craft/*/commands/**/*.ex`):
+  - Use Repository modules ONLY
+  - NEVER call Query modules or Repo directly
+  - Focus on business logic, authorization, and PubSub
+
+**Exception:** SearchEntityRepository uses `import Ecto.Query` for polymorphic entity loading (special case)
 <!-- phoenix:ecto-end -->
 <!-- phoenix:html-start -->
 ## Phoenix HTML guidelines
