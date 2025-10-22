@@ -3,6 +3,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
   Repository for `Transaction`.
   """
 
+  alias PurseCraft.Accounting.Queries.TransactionLineQuery
   alias PurseCraft.Accounting.Queries.TransactionQuery
   alias PurseCraft.Accounting.Schemas.Transaction
   alias PurseCraft.Accounting.Schemas.TransactionLine
@@ -36,6 +37,17 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
 
   @type list_option :: {:preload, Types.preload()} | {:limit, integer()}
   @type list_options :: [list_option()]
+
+  @type update_attrs :: %{
+          optional(:date) => Date.t(),
+          optional(:amount) => integer(),
+          optional(:memo) => String.t(),
+          optional(:cleared) => boolean(),
+          optional(:payee_id) => integer() | nil
+        }
+
+  @type update_with_lines_option :: {:preload, Types.preload()}
+  @type update_with_lines_options :: [update_with_lines_option()]
 
   @doc """
   Creates a transaction with associated transaction lines atomically.
@@ -158,6 +170,96 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
     |> Utilities.maybe_preload(opts)
   end
 
+  @doc """
+  Updates a transaction.
+
+  Only updates the fields provided in attrs. The account_id and workspace_id
+  fields are immutable and cannot be changed after creation.
+
+  ## Examples
+
+      iex> update(transaction, %{memo: "Updated memo"})
+      {:ok, %Transaction{memo: "Updated memo"}}
+
+      iex> update(transaction, %{cleared: true})
+      {:ok, %Transaction{cleared: true}}
+
+      iex> update(transaction, %{date: nil})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec update(Transaction.t(), update_attrs()) :: {:ok, Transaction.t()} | {:error, Ecto.Changeset.t()}
+  def update(transaction, attrs) do
+    attrs = Map.drop(attrs, [:account_id, :workspace_id])
+
+    transaction
+    |> Transaction.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates a transaction and its lines atomically.
+
+  This function deletes all existing transaction lines and creates new ones
+  based on the provided lines_attrs. The update is performed within a database
+  transaction, ensuring atomicity - either all changes succeed or all are rolled back.
+
+  Every transaction must have at least one line. Passing an empty lines array will result in an error.
+
+  ## Options
+
+  * `:preload` - List of associations to preload. Defaults to `[:transaction_lines]`.
+
+  ## Examples
+
+      # Update transaction and replace with single line
+      iex> update_with_lines(transaction, %{amount: 5000}, [
+      ...>   %{amount: 5000, envelope_id: 3}
+      ...> ])
+      {:ok, %Transaction{amount: 5000, transaction_lines: [%TransactionLine{}]}}
+
+      # Update to split transaction
+      iex> update_with_lines(transaction, %{amount: 7500}, [
+      ...>   %{amount: 5000, envelope_id: 3, memo: "Groceries"},
+      ...>   %{amount: 2500, envelope_id: 4, memo: "Gas"}
+      ...> ])
+      {:ok, %Transaction{transaction_lines: [%TransactionLine{}, %TransactionLine{}]}}
+
+      # Error: empty lines
+      iex> update_with_lines(transaction, %{}, [])
+      {:error, %Ecto.Changeset{}}
+
+      # With custom preload
+      iex> update_with_lines(transaction, %{}, lines, preload: [:account, :transaction_lines])
+      {:ok, %Transaction{account: %Account{}, transaction_lines: [...]}}
+
+  """
+  @spec update_with_lines(Transaction.t(), update_attrs(), [transaction_line_attrs()], update_with_lines_options()) ::
+          {:ok, Transaction.t()} | {:error, Ecto.Changeset.t()}
+  def update_with_lines(transaction, attrs, lines_attrs, opts \\ []) do
+    case lines_attrs do
+      [] ->
+        changeset =
+          transaction
+          |> Ecto.Changeset.change()
+          |> Ecto.Changeset.add_error(:lines, "must have at least one transaction line")
+
+        {:error, changeset}
+
+      _lines_present ->
+        Repo.transaction(fn ->
+          with {:ok, _deleted_count} <- delete_all_lines(transaction.id),
+               {:ok, updated_transaction} <- update(transaction, attrs),
+               {:ok, _created_lines} <- create_transaction_lines(updated_transaction.id, lines_attrs) do
+            preload_associations = Keyword.get(opts, :preload, [:transaction_lines])
+            Repo.preload(updated_transaction, preload_associations, force: true)
+          else
+            {:error, changeset} -> Repo.rollback(changeset)
+          end
+        end)
+    end
+  end
+
   defp create_transaction(attrs) do
     transaction_attrs = Map.delete(attrs, :lines)
 
@@ -180,6 +282,15 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
     case Enum.find(results, &match?({:error, _}, &1)) do
       nil -> {:ok, Enum.map(results, fn {:ok, line} -> line end)}
       {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  defp delete_all_lines(transaction_id) do
+    transaction_id
+    |> TransactionLineQuery.by_transaction_id()
+    |> Repo.delete_all()
+    |> case do
+      {deleted_count, _nil} -> {:ok, deleted_count}
     end
   end
 
