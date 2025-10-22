@@ -1,9 +1,12 @@
 defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
   use PurseCraft.DataCase, async: true
 
+  import Ecto.Query, only: [from: 2]
+
   alias Ecto.Association.NotLoaded
   alias Ecto.Changeset
   alias PurseCraft.Accounting.Repositories.TransactionRepository
+  alias PurseCraft.Accounting.Schemas.TransactionLine
   alias PurseCraft.AccountingFactory
   alias PurseCraft.CoreFactory
 
@@ -107,6 +110,354 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
       assert result.id == transaction.id
       assert %NotLoaded{} = result.account
       assert %NotLoaded{} = result.workspace
+    end
+  end
+
+  describe "update/2" do
+    test "updates transaction with valid attrs", %{workspace: workspace, account: account} do
+      transaction =
+        AccountingFactory.insert(:transaction,
+          workspace: workspace,
+          account: account,
+          date: ~D[2025-01-01],
+          amount: 1000,
+          memo: "Original memo"
+        )
+
+      attrs = %{date: ~D[2025-01-02], amount: 2000, memo: "Updated memo"}
+
+      assert {:ok, updated} = TransactionRepository.update(transaction, attrs)
+      assert updated.id == transaction.id
+      assert updated.date == ~D[2025-01-02]
+      assert updated.amount == 2000
+      assert updated.memo == "Updated memo"
+    end
+
+    test "returns error with invalid date", %{workspace: workspace, account: account} do
+      transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account)
+
+      assert {:error, %Changeset{}} = TransactionRepository.update(transaction, %{date: nil})
+    end
+
+    test "returns error with invalid amount", %{workspace: workspace, account: account} do
+      transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account)
+
+      assert {:error, %Changeset{}} = TransactionRepository.update(transaction, %{amount: nil})
+    end
+
+    test "updates memo field", %{workspace: workspace, account: account} do
+      transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account, memo: "Original")
+
+      assert {:ok, updated} = TransactionRepository.update(transaction, %{memo: "Updated memo"})
+      assert updated.memo == "Updated memo"
+      assert updated.date == transaction.date
+      assert updated.amount == transaction.amount
+    end
+
+    test "updates cleared field", %{workspace: workspace, account: account} do
+      transaction =
+        AccountingFactory.insert(:transaction, workspace: workspace, account: account, cleared: false)
+
+      assert {:ok, updated} = TransactionRepository.update(transaction, %{cleared: true})
+      assert updated.cleared == true
+    end
+
+    test "updates payee_id", %{workspace: workspace, account: account} do
+      payee = AccountingFactory.insert(:payee, workspace: workspace)
+      transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account, payee_id: nil)
+
+      assert {:ok, updated} = TransactionRepository.update(transaction, %{payee_id: payee.id})
+      assert updated.payee_id == payee.id
+    end
+
+    test "sets payee_id to nil", %{workspace: workspace, account: account} do
+      payee = AccountingFactory.insert(:payee, workspace: workspace)
+
+      transaction =
+        AccountingFactory.insert(:transaction, workspace: workspace, account: account, payee_id: payee.id)
+
+      assert {:ok, updated} = TransactionRepository.update(transaction, %{payee_id: nil})
+      assert updated.payee_id == nil
+    end
+
+    test "does not update account_id", %{workspace: workspace, account: account} do
+      other_account = AccountingFactory.insert(:account, workspace: workspace)
+
+      transaction =
+        AccountingFactory.insert(:transaction, workspace: workspace, account: account, amount: 1000)
+
+      assert {:ok, updated} = TransactionRepository.update(transaction, %{account_id: other_account.id})
+      assert updated.account_id == account.id
+    end
+
+    test "does not update workspace_id", %{workspace: workspace, account: account} do
+      other_workspace = CoreFactory.insert(:workspace)
+
+      transaction =
+        AccountingFactory.insert(:transaction, workspace: workspace, account: account, amount: 1000)
+
+      assert {:ok, updated} = TransactionRepository.update(transaction, %{workspace_id: other_workspace.id})
+      assert updated.workspace_id == workspace.id
+    end
+  end
+
+  describe "update_with_lines/4" do
+    test "updates transaction and replaces all lines atomically", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: ~D[2025-01-01],
+          amount: 1000,
+          lines: [%{amount: 1000, envelope_id: nil}]
+        })
+
+      old_line_id = hd(transaction.transaction_lines).id
+
+      attrs = %{date: ~D[2025-01-02], amount: 2000}
+      lines_attrs = [%{amount: 2000, envelope_id: nil}]
+
+      assert {:ok, updated} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
+      assert updated.date == ~D[2025-01-02]
+      assert updated.amount == 2000
+      assert length(updated.transaction_lines) == 1
+      assert hd(updated.transaction_lines).id != old_line_id
+    end
+
+    test "updates from single to split transaction", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 5000,
+          lines: [%{amount: 5000, envelope_id: nil}]
+        })
+
+      attrs = %{amount: 5000}
+      lines_attrs = [%{amount: 3000, envelope_id: nil}, %{amount: 2000, envelope_id: nil}]
+
+      assert {:ok, updated} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
+      assert length(updated.transaction_lines) == 2
+      assert Enum.at(updated.transaction_lines, 0).amount == 3000
+      assert Enum.at(updated.transaction_lines, 1).amount == 2000
+    end
+
+    test "updates from split to single transaction", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 5000,
+          lines: [%{amount: 3000, envelope_id: nil}, %{amount: 2000, envelope_id: nil}]
+        })
+
+      attrs = %{amount: 5000}
+      lines_attrs = [%{amount: 5000, envelope_id: nil}]
+
+      assert {:ok, updated} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
+      assert length(updated.transaction_lines) == 1
+      assert hd(updated.transaction_lines).amount == 5000
+    end
+
+    test "updates line amounts", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          lines: [%{amount: 1000, envelope_id: nil}]
+        })
+
+      attrs = %{amount: 2500}
+      lines_attrs = [%{amount: 2500, envelope_id: nil}]
+
+      assert {:ok, updated} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
+      assert hd(updated.transaction_lines).amount == 2500
+    end
+
+    test "updates line memos", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          lines: [%{amount: 1000, envelope_id: nil, memo: "Original"}]
+        })
+
+      attrs = %{}
+      lines_attrs = [%{amount: 1000, envelope_id: nil, memo: "Updated"}]
+
+      assert {:ok, updated} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
+      assert hd(updated.transaction_lines).memo == "Updated"
+    end
+
+    test "updates with Ready to Assign lines", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          lines: [%{amount: 1000, envelope_id: nil}]
+        })
+
+      attrs = %{}
+      lines_attrs = [%{amount: 1000, envelope_id: nil}]
+
+      assert {:ok, updated} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
+      assert hd(updated.transaction_lines).envelope_id == nil
+    end
+
+    test "preloads transaction_lines by default", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          lines: [%{amount: 1000, envelope_id: nil}]
+        })
+
+      attrs = %{}
+      lines_attrs = [%{amount: 1000, envelope_id: nil}]
+
+      assert {:ok, updated} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
+      assert %NotLoaded{} != updated.transaction_lines
+      assert length(updated.transaction_lines) == 1
+    end
+
+    test "supports custom preload options", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          lines: [%{amount: 1000, envelope_id: nil}]
+        })
+
+      attrs = %{}
+      lines_attrs = [%{amount: 1000, envelope_id: nil}]
+
+      assert {:ok, updated} =
+               TransactionRepository.update_with_lines(transaction, attrs, lines_attrs,
+                 preload: [:account, :transaction_lines]
+               )
+
+      assert %NotLoaded{} != updated.account
+      assert %NotLoaded{} != updated.transaction_lines
+    end
+
+    test "returns error when lines array is empty", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          lines: [%{amount: 1000, envelope_id: nil}]
+        })
+
+      assert {:error, %Changeset{}} = TransactionRepository.update_with_lines(transaction, %{}, [])
+    end
+
+    test "returns error when transaction attrs invalid", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          lines: [%{amount: 1000, envelope_id: nil}]
+        })
+
+      attrs = %{date: nil}
+      lines_attrs = [%{amount: 1000, envelope_id: nil}]
+
+      assert {:error, %Changeset{}} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
+    end
+
+    test "returns error when line attrs invalid", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          lines: [%{amount: 1000, envelope_id: nil}]
+        })
+
+      attrs = %{}
+      lines_attrs = [%{amount: nil, envelope_id: nil}]
+
+      assert {:error, %Changeset{}} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
+    end
+
+    test "rolls back all changes on error", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          memo: "Original",
+          lines: [%{amount: 1000, envelope_id: nil}]
+        })
+
+      line_count_query = from(l in TransactionLine, where: l.transaction_id == ^transaction.id, select: count(l.id))
+      original_line_count = Repo.one(line_count_query)
+
+      attrs = %{memo: "Updated"}
+      lines_attrs = [%{amount: nil, envelope_id: nil}]
+
+      assert {:error, %Changeset{}} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
+
+      reloaded = Repo.get(PurseCraft.Accounting.Schemas.Transaction, transaction.id)
+      assert reloaded.memo == "Original"
+
+      line_count = Repo.one(line_count_query)
+
+      assert line_count == original_line_count
+    end
+
+    test "verifies old lines deleted after success", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          lines: [%{amount: 1000, envelope_id: nil}]
+        })
+
+      old_line_id = hd(transaction.transaction_lines).id
+
+      attrs = %{}
+      lines_attrs = [%{amount: 1000, envelope_id: nil}]
+
+      assert {:ok, _updated} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
+
+      assert Repo.get(TransactionLine, old_line_id) == nil
+    end
+
+    test "handles foreign key constraint violations", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          lines: [%{amount: 1000, envelope_id: nil}]
+        })
+
+      attrs = %{}
+      lines_attrs = [%{amount: 1000, envelope_id: 999_999}]
+
+      assert {:error, %Changeset{}} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
     end
   end
 
