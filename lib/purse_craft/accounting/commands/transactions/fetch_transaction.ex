@@ -75,16 +75,16 @@ defmodule PurseCraft.Accounting.Commands.Transactions.FetchTransaction do
 
   def call(%Scope{} = scope, %Workspace{} = workspace, id, opts) when is_integer(id) do
     with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}) do
-      workspace
-      |> TransactionRepository.get_by_id(id, opts)
+      id
+      |> TransactionRepository.get_by_id(Keyword.put(opts, :workspace, workspace))
       |> Utilities.to_result()
     end
   end
 
   def call(%Scope{} = scope, %Workspace{} = workspace, external_id, opts) when is_binary(external_id) do
     with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}) do
-      workspace
-      |> TransactionRepository.get_by_external_id(external_id, opts)
+      external_id
+      |> TransactionRepository.get_by_external_id(Keyword.put(opts, :workspace, workspace))
       |> Utilities.to_result()
     end
   end
