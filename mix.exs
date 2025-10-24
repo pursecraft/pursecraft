@@ -22,7 +22,8 @@ defmodule PurseCraft.MixProject do
       ],
       dialyzer: [
         plt_add_apps: [
-          :ex_unit
+          :ex_unit,
+          :credo
         ],
         plt_file: {:no_warn, "priv/plts/project.plt"},
         list_unused_filter: true
