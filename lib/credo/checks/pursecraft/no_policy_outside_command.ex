@@ -15,8 +15,8 @@ defmodule Credo.Check.PurseCraft.NoPolicyOutsideCommand do
 
       ## Bad Example
 
-          defmodule MyApp.SomeRepository do
-            alias MyApp.Policy
+          defmodule PurseCraft.Accounting.Repositories.AccountRepository do
+            alias PurseCraft.Accounting.Policy
 
             def list(scope) do
               Policy.authorize(scope, :account, :read)
@@ -26,13 +26,13 @@ defmodule Credo.Check.PurseCraft.NoPolicyOutsideCommand do
 
       ## Good Example
 
-          defmodule MyApp.SomeCommand do
-            alias MyApp.Policy
-            alias MyApp.SomeRepository
+          defmodule PurseCraft.Accounting.Commands.Accounts.ListAccounts do
+            alias PurseCraft.Accounting.Policy
+            alias PurseCraft.Accounting.Repositories.AccountRepository
 
             def call(scope) do
               with :ok <- Policy.authorize(scope, :account, :read) do
-                SomeRepository.list()
+                AccountRepository.list()
               end
             end
           end

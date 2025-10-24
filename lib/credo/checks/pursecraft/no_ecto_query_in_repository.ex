@@ -14,23 +14,23 @@ defmodule Credo.Check.PurseCraft.NoEctoQueryInRepository do
 
       ## Bad Example
 
-          defmodule MyApp.SomeRepository do
+          defmodule PurseCraft.Accounting.Repositories.AccountRepository do
             import Ecto.Query
 
             def list_by_workspace(workspace_id) do
-              from(r in Resource, where: r.workspace_id == ^workspace_id)
+              from(a in Account, where: a.workspace_id == ^workspace_id)
               |> Repo.all()
             end
           end
 
       ## Good Example
 
-          defmodule MyApp.SomeRepository do
-            alias MyApp.SomeQuery
+          defmodule PurseCraft.Accounting.Repositories.AccountRepository do
+            alias PurseCraft.Accounting.Queries.AccountQuery
 
             def list_by_workspace(workspace_id) do
               workspace_id
-              |> SomeQuery.by_workspace_id()
+              |> AccountQuery.by_workspace_id()
               |> Repo.all()
             end
           end

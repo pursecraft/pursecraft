@@ -16,27 +16,27 @@ defmodule Credo.Check.PurseCraft.NoRepoCrudInCommand do
 
       ## Bad Example
 
-          defmodule MyApp.SomeCommand do
+          defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccount do
             def call(scope, attrs) do
-              %Resource{}
-              |> Resource.changeset(attrs)
+              %Account{}
+              |> Account.changeset(attrs)
               |> Repo.insert()
             end
           end
 
       ## Good Example
 
-          defmodule MyApp.SomeCommand do
-            alias MyApp.SomeRepository
+          defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccount do
+            alias PurseCraft.Accounting.Repositories.AccountRepository
 
             def call(scope, attrs) do
-              SomeRepository.create(attrs)
+              AccountRepository.create(attrs)
             end
           end
 
       ## Allowed Transaction Management
 
-          defmodule MyApp.SomeCommand do
+          defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransaction do
             def call(scope, attrs) do
               Repo.transaction(fn ->
                 # business logic using repositories

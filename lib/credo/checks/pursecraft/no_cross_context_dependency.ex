@@ -23,8 +23,31 @@ defmodule Credo.Check.PurseCraft.NoCrossContextDependency do
 
       ## Bad Example
 
-          defmodule PurseCraft.Accounting.Commands.SomeCommand do
+          defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccount do
             alias PurseCraft.Budgeting.Repositories.EnvelopeRepository
+          end
+
+      ## Good Example
+
+          defmodule PurseCraft.Accounting.Commands.Accounts.CreateAccount do
+            alias PurseCraft.Accounting.Repositories.AccountRepository
+            alias PurseCraft.Core.Schemas.Workspace
+            alias PurseCraft.PubSub
+
+            def call(scope, attrs) do
+              # Use PubSub to communicate with other contexts
+              PubSub.broadcast_account_updated(account)
+            end
+          end
+
+      ## Schema Exception
+
+          defmodule PurseCraft.Accounting.Schemas.TransactionLine do
+            alias PurseCraft.Budgeting.Schemas.Envelope
+
+            schema "transaction_lines" do
+              belongs_to :envelope, Envelope
+            end
           end
 
       ## Good Example
