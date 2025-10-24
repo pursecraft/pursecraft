@@ -51,11 +51,12 @@
       # them here, so they can be loaded by Credo before running the analysis.
       #
       requires: [
-        "lib/credo/checks/pursecraft/no_ecto_query_in_repository.ex",
-        "lib/credo/checks/pursecraft/no_ecto_query_in_command.ex",
-        "lib/credo/checks/pursecraft/no_repo_crud_in_command.ex",
-        "lib/credo/checks/pursecraft/no_cross_context_dependency.ex",
-        "lib/credo/checks/pursecraft/no_policy_outside_command.ex"
+        ".credo/checks/pursecraft/no_ecto_query_in_repository.ex",
+        ".credo/checks/pursecraft/no_ecto_query_in_command.ex",
+        ".credo/checks/pursecraft/no_repo_crud_in_command.ex",
+        ".credo/checks/pursecraft/no_cross_context_dependency.ex",
+        ".credo/checks/pursecraft/no_policy_outside_command.ex",
+        ".credo/checks/pursecraft/no_direct_repository_get_in_command.ex"
       ],
       #
       # If you want to enforce a style guide and need a more traditional linting
@@ -161,6 +162,7 @@
           {Credo.Check.PurseCraft.NoRepoCrudInCommand, []},
           {Credo.Check.PurseCraft.NoCrossContextDependency, []},
           {Credo.Check.PurseCraft.NoPolicyOutsideCommand, []},
+          {Credo.Check.PurseCraft.NoDirectRepositoryGetInCommand, []},
 
           #
           ## Refactoring Opportunities

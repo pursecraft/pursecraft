@@ -206,6 +206,7 @@ We enforce the Query/Repository/Command architecture with custom Credo checks:
 3. **No Repo CRUD in Commands** - Commands can only use `Repo.transaction` and `Repo.rollback`
 4. **No Cross-Context Dependencies** - Accounting ↔ Budgeting must stay independent
 5. **No Policy Outside Commands** - Policy modules can only be used in Command modules
+6. **No Direct Repository Get in Commands** - Commands must use Fetch* commands for entity retrieval
 
 **What Credo will catch:**
 - ❌ Repository importing `Ecto.Query` (use Query modules instead)
@@ -213,6 +214,7 @@ We enforce the Query/Repository/Command architecture with custom Credo checks:
 - ❌ Command using `Repo.insert/update/delete/all/one/get` (use Repository modules)
 - ❌ Accounting depending on Budgeting or vice versa (use PubSub for communication)
 - ❌ Policy modules used outside Commands (authorization belongs in Commands only)
+- ❌ Commands calling `*Repository.get_by_id/N` or `*Repository.get_by_external_id/N` (use Fetch* commands)
 
 **What's allowed:**
 - ✅ Commands using `Repo.transaction` and `Repo.rollback` for transaction management
@@ -221,6 +223,40 @@ We enforce the Query/Repository/Command architecture with custom Credo checks:
 - ✅ Schemas referencing other context schemas (for database associations)
 - ✅ Commands referencing schemas from other contexts (for domain modeling)
 - ✅ SearchEntityRepository importing `Ecto.Query` (polymorphic loading exception)
+- ✅ Fetch* and Get* commands calling Repository get methods (they're the abstraction layer)
+- ✅ Commands using `*Repository.get_by_name/N` (name lookups, not ID lookups)
+
+**Unified Fetch Command Pattern:**
+
+Fetch commands handle all three ways of referencing entities:
+
+```elixir
+defmodule PurseCraft.Budgeting.Commands.Categories.FetchCategory do
+  @spec call(Scope.t(), Workspace.t(), Category.t() | integer() | Ecto.UUID.t(), options()) :: 
+    {:ok, Category.t()} | {:error, atom()}
+  
+  # Struct - return as-is (or reload with preloads)
+  def call(scope, workspace, %Category{} = category, opts) do
+    with :ok <- Policy.authorize(:category_read, scope, %{workspace: workspace}) do
+      {:ok, category}
+    end
+  end
+  
+  # Integer - query by internal ID
+  def call(scope, workspace, id, opts) when is_integer(id) do
+    with :ok <- Policy.authorize(:category_read, scope, %{workspace: workspace}) do
+      CategoryRepository.get_by_id(id, opts) |> to_result()
+    end
+  end
+  
+  # UUID - query by external_id
+  def call(scope, workspace, external_id, opts) when is_binary(external_id) do
+    with :ok <- Policy.authorize(:category_read, scope, %{workspace: workspace}) do
+      CategoryRepository.get_by_external_id(external_id, opts) |> to_result()
+    end
+  end
+end
+```
 
 **Run checks:**
 ```bash
