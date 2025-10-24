@@ -39,7 +39,10 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransaction do
           | {:error, :unauthorized}
           | {:error, Ecto.Changeset.t()}
   def call(%Scope{} = scope, %Workspace{} = workspace, transaction_external_id) do
-    with {:ok, transaction} <- fetch_transaction(workspace, transaction_external_id),
+    with {:ok, transaction} <-
+           TransactionRepository.fetch_by_external_id(workspace.id, transaction_external_id,
+             preload: [:transaction_lines]
+           ),
          :ok <- Policy.authorize(:transaction_delete, scope, %{workspace: workspace}),
          payee_ids = collect_payee_ids(transaction),
          {:ok, deleted_transaction} <- TransactionRepository.delete(transaction),
@@ -47,20 +50,6 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransaction do
          :ok <- schedule_search_token_deletion(deleted_transaction) do
       PubSub.broadcast_workspace(workspace, {:transaction_deleted, deleted_transaction})
       {:ok, deleted_transaction}
-    end
-  end
-
-  defp fetch_transaction(workspace, external_id) do
-    case TransactionRepository.get_by_external_id(external_id, preload: [:transaction_lines]) do
-      nil ->
-        {:error, :not_found}
-
-      transaction ->
-        if transaction.workspace_id == workspace.id do
-          {:ok, transaction}
-        else
-          {:error, :not_found}
-        end
     end
   end
 
