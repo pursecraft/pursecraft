@@ -66,8 +66,8 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccount do
   def call(%Scope{} = scope, %Workspace{} = workspace, %Account{} = account, opts) do
     with :ok <- Policy.authorize(:account_read, scope, %{workspace: workspace}) do
       if Keyword.get(opts, :preload) do
-        account.external_id
-        |> AccountRepository.get_by_external_id(opts)
+        workspace
+        |> AccountRepository.get_by_external_id(account.external_id, opts)
         |> Utilities.to_result()
       else
         {:ok, account}
@@ -77,16 +77,16 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccount do
 
   def call(%Scope{} = scope, %Workspace{} = workspace, id, opts) when is_integer(id) do
     with :ok <- Policy.authorize(:account_read, scope, %{workspace: workspace}) do
-      id
-      |> AccountRepository.get_by_id(opts)
+      workspace
+      |> AccountRepository.get_by_id(id, opts)
       |> Utilities.to_result()
     end
   end
 
   def call(%Scope{} = scope, %Workspace{} = workspace, external_id, opts) when is_binary(external_id) do
     with :ok <- Policy.authorize(:account_read, scope, %{workspace: workspace}) do
-      external_id
-      |> AccountRepository.get_by_external_id(opts)
+      workspace
+      |> AccountRepository.get_by_external_id(external_id, opts)
       |> Utilities.to_result()
     end
   end

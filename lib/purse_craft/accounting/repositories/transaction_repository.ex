@@ -7,6 +7,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
   alias PurseCraft.Accounting.Queries.TransactionQuery
   alias PurseCraft.Accounting.Schemas.Transaction
   alias PurseCraft.Accounting.Schemas.TransactionLine
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Repo
   alias PurseCraft.Types
   alias PurseCraft.Utilities
@@ -114,7 +115,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
   end
 
   @doc """
-  Gets a transaction by ID.
+  Gets a transaction by ID within a workspace.
 
   ## Options
 
@@ -122,26 +123,30 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
 
   ## Examples
 
-      iex> get_by_id(123)
+      iex> get_by_id(workspace, 123)
       %Transaction{}
 
-      iex> get_by_id(123, preload: [:account])
+      iex> get_by_id(workspace, 123, preload: [:account])
       %Transaction{account: %Account{}}
 
-      iex> get_by_id(999)
+      iex> get_by_id(workspace, 999)
+      nil
+
+      iex> get_by_id(other_workspace, 123)
       nil
 
   """
-  @spec get_by_id(integer(), get_options()) :: Transaction.t() | nil
-  def get_by_id(id, opts \\ []) do
+  @spec get_by_id(Workspace.t(), integer(), get_options()) :: Transaction.t() | nil
+  def get_by_id(%Workspace{id: workspace_id}, id, opts \\ []) do
     id
     |> TransactionQuery.by_id()
+    |> TransactionQuery.by_workspace_id(workspace_id)
     |> Repo.one()
     |> Utilities.maybe_preload(opts)
   end
 
   @doc """
-  Gets a transaction by external ID.
+  Gets a transaction by external ID within a workspace.
 
   ## Options
 
@@ -149,20 +154,24 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
 
   ## Examples
 
-      iex> get_by_external_id("transaction-uuid")
+      iex> get_by_external_id(workspace, "transaction-uuid")
       %Transaction{}
 
-      iex> get_by_external_id("transaction-uuid", preload: [:account])
+      iex> get_by_external_id(workspace, "transaction-uuid", preload: [:account])
       %Transaction{account: %Account{}}
 
-      iex> get_by_external_id("invalid-uuid")
+      iex> get_by_external_id(workspace, "invalid-uuid")
+      nil
+
+      iex> get_by_external_id(other_workspace, "transaction-uuid")
       nil
 
   """
-  @spec get_by_external_id(String.t(), get_options()) :: Transaction.t() | nil
-  def get_by_external_id(external_id, opts \\ []) do
+  @spec get_by_external_id(Workspace.t(), String.t(), get_options()) :: Transaction.t() | nil
+  def get_by_external_id(%Workspace{id: workspace_id}, external_id, opts \\ []) do
     external_id
     |> TransactionQuery.by_external_id()
+    |> TransactionQuery.by_workspace_id(workspace_id)
     |> Repo.one()
     |> Utilities.maybe_preload(opts)
   end

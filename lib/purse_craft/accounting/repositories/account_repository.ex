@@ -5,6 +5,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
 
   alias PurseCraft.Accounting.Queries.AccountQuery
   alias PurseCraft.Accounting.Schemas.Account
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Repo
   alias PurseCraft.Types
   alias PurseCraft.Utilities
@@ -127,7 +128,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
   end
 
   @doc """
-  Gets an account by ID.
+  Gets an account by ID within a workspace.
 
   ## Options
 
@@ -136,30 +137,34 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
 
   ## Examples
 
-      iex> get_by_id(123)
+      iex> get_by_id(workspace, 123)
       %Account{}
 
-      iex> get_by_id(123, preload: [:workspace])
+      iex> get_by_id(workspace, 123, preload: [:workspace])
       %Account{workspace: %Workspace{}}
 
-      iex> get_by_id(123, active_only: false)
+      iex> get_by_id(workspace, 123, active_only: false)
       %Account{}
 
-      iex> get_by_id(999)
+      iex> get_by_id(workspace, 999)
+      nil
+
+      iex> get_by_id(other_workspace, 123)
       nil
 
   """
-  @spec get_by_id(integer(), get_options()) :: Account.t() | nil
-  def get_by_id(id, opts \\ []) do
+  @spec get_by_id(Workspace.t(), integer(), get_options()) :: Account.t() | nil
+  def get_by_id(%Workspace{id: workspace_id}, id, opts \\ []) do
     id
     |> AccountQuery.by_id()
+    |> AccountQuery.by_workspace_id(workspace_id)
     |> maybe_active_only(opts)
     |> Repo.one()
     |> Utilities.maybe_preload(opts)
   end
 
   @doc """
-  Gets an account by external ID.
+  Gets an account by external ID within a workspace.
 
   ## Options
 
@@ -168,23 +173,27 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
 
   ## Examples
 
-      iex> get_by_external_id("account-uuid")
+      iex> get_by_external_id(workspace, "account-uuid")
       %Account{}
 
-      iex> get_by_external_id("account-uuid", preload: [:workspace])
+      iex> get_by_external_id(workspace, "account-uuid", preload: [:workspace])
       %Account{workspace: %Workspace{}}
 
-      iex> get_by_external_id("account-uuid", active_only: false)
+      iex> get_by_external_id(workspace, "account-uuid", active_only: false)
       %Account{}
 
-      iex> get_by_external_id("invalid-uuid")
+      iex> get_by_external_id(workspace, "invalid-uuid")
+      nil
+
+      iex> get_by_external_id(other_workspace, "account-uuid")
       nil
 
   """
-  @spec get_by_external_id(String.t(), get_options()) :: Account.t() | nil
-  def get_by_external_id(external_id, opts \\ []) do
+  @spec get_by_external_id(Workspace.t(), String.t(), get_options()) :: Account.t() | nil
+  def get_by_external_id(%Workspace{id: workspace_id}, external_id, opts \\ []) do
     external_id
     |> AccountQuery.by_external_id()
+    |> AccountQuery.by_workspace_id(workspace_id)
     |> maybe_active_only(opts)
     |> Repo.one()
     |> Utilities.maybe_preload(opts)

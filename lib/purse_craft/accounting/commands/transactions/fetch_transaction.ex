@@ -74,36 +74,18 @@ defmodule PurseCraft.Accounting.Commands.Transactions.FetchTransaction do
   end
 
   def call(%Scope{} = scope, %Workspace{} = workspace, id, opts) when is_integer(id) do
-    with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}),
-         {:ok, transaction} <- fetch_and_convert(id, opts, :by_id) do
-      if transaction.workspace_id == workspace.id do
-        {:ok, transaction}
-      else
-        {:error, :not_found}
-      end
+    with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}) do
+      workspace
+      |> TransactionRepository.get_by_id(id, opts)
+      |> Utilities.to_result()
     end
   end
 
   def call(%Scope{} = scope, %Workspace{} = workspace, external_id, opts) when is_binary(external_id) do
-    with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}),
-         {:ok, transaction} <- fetch_and_convert(external_id, opts, :by_external_id) do
-      if transaction.workspace_id == workspace.id do
-        {:ok, transaction}
-      else
-        {:error, :not_found}
-      end
+    with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}) do
+      workspace
+      |> TransactionRepository.get_by_external_id(external_id, opts)
+      |> Utilities.to_result()
     end
-  end
-
-  defp fetch_and_convert(id, opts, :by_id) do
-    id
-    |> TransactionRepository.get_by_id(opts)
-    |> Utilities.to_result()
-  end
-
-  defp fetch_and_convert(external_id, opts, :by_external_id) do
-    external_id
-    |> TransactionRepository.get_by_external_id(opts)
-    |> Utilities.to_result()
   end
 end
