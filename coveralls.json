@@ -1,5 +1,6 @@
 {
   "skip_files": [
+    "lib/credo",
     "lib/purse_craft.ex",
     "lib/purse_craft/application.ex",
     "lib/purse_craft/release.ex",
