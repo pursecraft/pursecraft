@@ -52,6 +52,28 @@ defmodule PurseCraft.Accounting.Queries.TransactionQuery do
   end
 
   @doc """
+  Returns a query for finding a transaction by ID.
+
+  ## Examples
+
+      iex> by_id(123)
+      #Ecto.Query<...>
+
+      iex> Transaction |> by_id(123)
+      #Ecto.Query<...>
+
+  """
+  @spec by_id(integer()) :: Ecto.Query.t()
+  def by_id(id) do
+    by_id(Transaction, id)
+  end
+
+  @spec by_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
+  def by_id(queryable, id) do
+    from(t in queryable, where: t.id == ^id)
+  end
+
+  @doc """
   Returns a query for finding a transaction by external ID.
 
   ## Examples

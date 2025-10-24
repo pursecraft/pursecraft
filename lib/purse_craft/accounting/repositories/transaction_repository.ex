@@ -114,6 +114,33 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
   end
 
   @doc """
+  Gets a transaction by ID.
+
+  ## Options
+
+  * `:preload` - List of associations to preload. Defaults to `[]`.
+
+  ## Examples
+
+      iex> get_by_id(123)
+      %Transaction{}
+
+      iex> get_by_id(123, preload: [:account])
+      %Transaction{account: %Account{}}
+
+      iex> get_by_id(999)
+      nil
+
+  """
+  @spec get_by_id(integer(), get_options()) :: Transaction.t() | nil
+  def get_by_id(id, opts \\ []) do
+    id
+    |> TransactionQuery.by_id()
+    |> Repo.one()
+    |> Utilities.maybe_preload(opts)
+  end
+
+  @doc """
   Gets a transaction by external ID.
 
   ## Options

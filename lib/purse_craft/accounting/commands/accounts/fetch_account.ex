@@ -15,7 +15,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccount do
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Utilities
 
-  @type id_or_struct :: Account.t() | Ecto.UUID.t()
+  @type id_or_struct :: Account.t() | integer() | Ecto.UUID.t()
   @type option :: {:preload, list()} | {:active_only, boolean()}
   @type options :: [option()]
 
@@ -28,6 +28,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccount do
   - `workspace` - Workspace context for authorization
   - `id_or_struct` - Can be:
     - `%Account{}` - Returns the struct as-is (useful for pipelines)
+    - `integer()` - Fetches by internal database ID
     - `binary()` - Fetches by external_id (UUID string)
   - `opts` - Optional keyword list:
     - `:preload` - Associations to preload
@@ -37,6 +38,10 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccount do
 
       # Fetch by external_id (UUID string)
       iex> FetchAccount.call(scope, workspace, "550e8400-e29b-41d4-a716-446655440000")
+      {:ok, %Account{}}
+
+      # Fetch by integer ID
+      iex> FetchAccount.call(scope, workspace, 123)
       {:ok, %Account{}}
 
       # Pass through existing struct
@@ -54,7 +59,7 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccount do
 
   """
   @spec call(Scope.t(), Workspace.t(), id_or_struct(), options()) ::
-          {:ok, Account.t()} | {:error, :not_found | :unauthorized | :integer_id_not_supported}
+          {:ok, Account.t()} | {:error, :not_found | :unauthorized}
 
   def call(scope, workspace, id_or_struct, opts \\ [])
 
@@ -70,11 +75,11 @@ defmodule PurseCraft.Accounting.Commands.Accounts.FetchAccount do
     end
   end
 
-  def call(%Scope{} = scope, %Workspace{} = workspace, id, _opts) when is_integer(id) do
-    # Integer IDs are not supported - accounts should be referenced by external_id
-    # This clause exists for completeness of the pattern but returns an error
+  def call(%Scope{} = scope, %Workspace{} = workspace, id, opts) when is_integer(id) do
     with :ok <- Policy.authorize(:account_read, scope, %{workspace: workspace}) do
-      {:error, :integer_id_not_supported}
+      id
+      |> AccountRepository.get_by_id(opts)
+      |> Utilities.to_result()
     end
   end
 

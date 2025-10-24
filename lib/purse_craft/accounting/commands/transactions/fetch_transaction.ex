@@ -14,7 +14,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.FetchTransaction do
   alias PurseCraft.Identity.Schemas.Scope
   alias PurseCraft.Utilities
 
-  @type id_or_struct :: Transaction.t() | Ecto.UUID.t()
+  @type id_or_struct :: Transaction.t() | integer() | Ecto.UUID.t()
   @type option :: {:preload, list()}
   @type options :: [option()]
 
@@ -27,6 +27,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.FetchTransaction do
   - `workspace` - Workspace context for authorization
   - `id_or_struct` - Can be:
     - `%Transaction{}` - Returns the struct as-is (useful for pipelines)
+    - `integer()` - Fetches by internal database ID
     - `binary()` - Fetches by external_id (UUID string)
   - `opts` - Optional keyword list:
     - `:preload` - Associations to preload (e.g., [:transaction_lines])
@@ -35,6 +36,10 @@ defmodule PurseCraft.Accounting.Commands.Transactions.FetchTransaction do
 
       # Fetch by external_id (UUID string)
       iex> FetchTransaction.call(scope, workspace, "550e8400-e29b-41d4-a716-446655440000")
+      {:ok, %Transaction{}}
+
+      # Fetch by integer ID
+      iex> FetchTransaction.call(scope, workspace, 123)
       {:ok, %Transaction{}}
 
       # Pass through existing struct
@@ -68,19 +73,37 @@ defmodule PurseCraft.Accounting.Commands.Transactions.FetchTransaction do
     end
   end
 
-  def call(%Scope{} = scope, %Workspace{} = workspace, external_id, opts) when is_binary(external_id) do
-    with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}) do
-      case TransactionRepository.get_by_external_id(external_id, opts) do
-        nil ->
-          {:error, :not_found}
-
-        transaction ->
-          if transaction.workspace_id == workspace.id do
-            {:ok, transaction}
-          else
-            {:error, :not_found}
-          end
+  def call(%Scope{} = scope, %Workspace{} = workspace, id, opts) when is_integer(id) do
+    with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}),
+         {:ok, transaction} <- fetch_and_convert(id, opts, :by_id) do
+      if transaction.workspace_id == workspace.id do
+        {:ok, transaction}
+      else
+        {:error, :not_found}
       end
     end
+  end
+
+  def call(%Scope{} = scope, %Workspace{} = workspace, external_id, opts) when is_binary(external_id) do
+    with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}),
+         {:ok, transaction} <- fetch_and_convert(external_id, opts, :by_external_id) do
+      if transaction.workspace_id == workspace.id do
+        {:ok, transaction}
+      else
+        {:error, :not_found}
+      end
+    end
+  end
+
+  defp fetch_and_convert(id, opts, :by_id) do
+    id
+    |> TransactionRepository.get_by_id(opts)
+    |> Utilities.to_result()
+  end
+
+  defp fetch_and_convert(external_id, opts, :by_external_id) do
+    external_id
+    |> TransactionRepository.get_by_external_id(opts)
+    |> Utilities.to_result()
   end
 end
