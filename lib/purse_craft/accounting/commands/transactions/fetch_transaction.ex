@@ -64,6 +64,8 @@ defmodule PurseCraft.Accounting.Commands.Transactions.FetchTransaction do
   def call(%Scope{} = scope, %Workspace{} = workspace, %Transaction{} = transaction, opts) do
     with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}) do
       if Keyword.get(opts, :preload) do
+        opts = Keyword.put(opts, :workspace, workspace)
+
         transaction.external_id
         |> TransactionRepository.get_by_external_id(opts)
         |> Utilities.to_result()
@@ -75,16 +77,20 @@ defmodule PurseCraft.Accounting.Commands.Transactions.FetchTransaction do
 
   def call(%Scope{} = scope, %Workspace{} = workspace, id, opts) when is_integer(id) do
     with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}) do
+      opts = Keyword.put(opts, :workspace, workspace)
+
       id
-      |> TransactionRepository.get_by_id(Keyword.put(opts, :workspace, workspace))
+      |> TransactionRepository.get_by_id(opts)
       |> Utilities.to_result()
     end
   end
 
   def call(%Scope{} = scope, %Workspace{} = workspace, external_id, opts) when is_binary(external_id) do
     with :ok <- Policy.authorize(:transaction_read, scope, %{workspace: workspace}) do
+      opts = Keyword.put(opts, :workspace, workspace)
+
       external_id
-      |> TransactionRepository.get_by_external_id(Keyword.put(opts, :workspace, workspace))
+      |> TransactionRepository.get_by_external_id(opts)
       |> Utilities.to_result()
     end
   end
