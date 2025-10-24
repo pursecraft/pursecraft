@@ -205,12 +205,14 @@ We enforce the Query/Repository/Command architecture with custom Credo checks:
 2. **No `Ecto.Query` in Commands** - Commands must use Repository modules  
 3. **No Repo CRUD in Commands** - Commands can only use `Repo.transaction` and `Repo.rollback`
 4. **No Cross-Context Dependencies** - Accounting ↔ Budgeting must stay independent
+5. **No Policy Outside Commands** - Policy modules can only be used in Command modules
 
 **What Credo will catch:**
 - ❌ Repository importing `Ecto.Query` (use Query modules instead)
 - ❌ Command importing `Ecto.Query` or Query modules (use Repository modules)
 - ❌ Command using `Repo.insert/update/delete/all/one/get` (use Repository modules)
 - ❌ Accounting depending on Budgeting or vice versa (use PubSub for communication)
+- ❌ Policy modules used outside Commands (authorization belongs in Commands only)
 
 **What's allowed:**
 - ✅ Commands using `Repo.transaction` and `Repo.rollback` for transaction management

@@ -54,7 +54,8 @@
         "lib/credo/checks/pursecraft/no_ecto_query_in_repository.ex",
         "lib/credo/checks/pursecraft/no_ecto_query_in_command.ex",
         "lib/credo/checks/pursecraft/no_repo_crud_in_command.ex",
-        "lib/credo/checks/pursecraft/no_cross_context_dependency.ex"
+        "lib/credo/checks/pursecraft/no_cross_context_dependency.ex",
+        "lib/credo/checks/pursecraft/no_policy_outside_command.ex"
       ],
       #
       # If you want to enforce a style guide and need a more traditional linting
@@ -159,6 +160,7 @@
           {Credo.Check.PurseCraft.NoEctoQueryInCommand, []},
           {Credo.Check.PurseCraft.NoRepoCrudInCommand, []},
           {Credo.Check.PurseCraft.NoCrossContextDependency, []},
+          {Credo.Check.PurseCraft.NoPolicyOutsideCommand, []},
 
           #
           ## Refactoring Opportunities
