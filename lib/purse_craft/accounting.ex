@@ -14,6 +14,7 @@ defmodule PurseCraft.Accounting do
   alias PurseCraft.Accounting.Commands.Payees.CreatePayee
   alias PurseCraft.Accounting.Commands.Payees.FindOrCreatePayee
   alias PurseCraft.Accounting.Commands.Transactions.CreateTransaction
+  alias PurseCraft.Accounting.Commands.Transactions.UpdateTransaction
 
   @doc """
   Creates an account and associates it with the given `Workspace`.
@@ -192,4 +193,32 @@ defmodule PurseCraft.Accounting do
   """
   # coveralls-ignore-next-line
   defdelegate create_transaction(scope, workspace, attrs), to: CreateTransaction, as: :call
+
+  @doc """
+  Updates a transaction for a workspace.
+
+  Only allows updating memo, cleared status, and transaction lines.
+  Amount, date, and account changes are blocked to maintain audit trail.
+
+  When updating lines, validates that sum(lines.amount) == transaction.amount.
+
+  ## Examples
+
+      iex> update_transaction(scope, workspace, "txn-uuid", %{memo: "Updated"})
+      {:ok, %Transaction{}}
+
+      iex> update_transaction(scope, workspace, "txn-uuid", %{cleared: true})
+      {:ok, %Transaction{}}
+
+      iex> update_transaction(scope, workspace, "txn-uuid", %{
+      ...>   lines: [%{amount: 5000, envelope_id: 3}]
+      ...> })
+      {:ok, %Transaction{}}
+
+      iex> update_transaction(scope, workspace, "invalid-uuid", %{memo: "Test"})
+      {:error, :not_found}
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate update_transaction(scope, workspace, external_id, attrs), to: UpdateTransaction, as: :call
 end
