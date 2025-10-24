@@ -350,4 +350,24 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
 
     Repo.preload(transaction, preload_associations)
   end
+
+  @doc """
+  Deletes a transaction.
+
+  Transaction lines are automatically cascade-deleted via database constraint.
+  Any linked transactions will have their linked_transaction_id set to nil.
+
+  ## Examples
+
+      iex> delete(transaction)
+      {:ok, %Transaction{}}
+
+      iex> delete(stale_transaction)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  @spec delete(Transaction.t()) :: {:ok, Transaction.t()} | {:error, Ecto.Changeset.t()}
+  def delete(%Transaction{} = transaction) do
+    Repo.delete(transaction, stale_error_field: :id)
+  end
 end

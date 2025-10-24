@@ -6,6 +6,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
   alias Ecto.Association.NotLoaded
   alias Ecto.Changeset
   alias PurseCraft.Accounting.Repositories.TransactionRepository
+  alias PurseCraft.Accounting.Schemas.Transaction
   alias PurseCraft.Accounting.Schemas.TransactionLine
   alias PurseCraft.AccountingFactory
   alias PurseCraft.CoreFactory
@@ -416,7 +417,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
 
       assert {:error, %Changeset{}} = TransactionRepository.update_with_lines(transaction, attrs, lines_attrs)
 
-      reloaded = Repo.get(PurseCraft.Accounting.Schemas.Transaction, transaction.id)
+      reloaded = Repo.get(Transaction, transaction.id)
       assert reloaded.memo == "Original"
 
       line_count = Repo.one(line_count_query)
@@ -549,6 +550,65 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
       assert [first, second] = result
       assert %NotLoaded{} != first.account
       assert %NotLoaded{} != second.account
+    end
+  end
+
+  describe "delete/1" do
+    test "deletes transaction successfully", %{workspace: workspace, account: account} do
+      transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account)
+
+      assert {:ok, deleted} = TransactionRepository.delete(transaction)
+      assert deleted.id == transaction.id
+      assert Repo.get(Transaction, transaction.id) == nil
+    end
+
+    test "cascade deletes transaction lines", %{workspace: workspace, account: account} do
+      {:ok, transaction} =
+        TransactionRepository.create(%{
+          workspace_id: workspace.id,
+          account_id: account.id,
+          date: Date.utc_today(),
+          amount: 1000,
+          lines: [
+            %{amount: 500, envelope_id: nil},
+            %{amount: 500, envelope_id: nil}
+          ]
+        })
+
+      line_ids = Enum.map(transaction.transaction_lines, & &1.id)
+
+      assert {:ok, _deleted} = TransactionRepository.delete(transaction)
+
+      Enum.each(line_ids, fn line_id ->
+        assert Repo.get(TransactionLine, line_id) == nil
+      end)
+    end
+
+    test "nilifies linked_transaction_id on linked transactions", %{workspace: workspace, account: account} do
+      transaction1 = AccountingFactory.insert(:transaction, workspace: workspace, account: account)
+
+      transaction2 =
+        AccountingFactory.insert(:transaction,
+          workspace: workspace,
+          account: account,
+          linked_transaction_id: transaction1.id
+        )
+
+      assert transaction2.linked_transaction_id == transaction1.id
+
+      assert {:ok, _deleted} = TransactionRepository.delete(transaction1)
+
+      reloaded = Repo.get(Transaction, transaction2.id)
+      assert reloaded.linked_transaction_id == nil
+    end
+
+    test "returns error when trying to delete already deleted transaction", %{workspace: workspace, account: account} do
+      transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account)
+
+      assert {:ok, _deleted} = TransactionRepository.delete(transaction)
+
+      assert {:error, changeset} = TransactionRepository.delete(transaction)
+      assert changeset.errors[:id] == {"is stale", [stale: true]}
     end
   end
 end
