@@ -195,6 +195,36 @@ Controllers automatically have the `current_scope` available if they use the `:b
   - Focus on business logic, authorization, and PubSub
 
 **Exception:** SearchEntityRepository uses `import Ecto.Query` for polymorphic entity loading (special case)
+
+### Architectural Guardrails (Custom Credo Checks)
+
+We enforce the Query/Repository/Command architecture with custom Credo checks:
+
+**Enforced Rules:**
+1. **No `Ecto.Query` in Repositories** - Repositories must use Query modules
+2. **No `Ecto.Query` in Commands** - Commands must use Repository modules  
+3. **No Repo CRUD in Commands** - Commands can only use `Repo.transaction` and `Repo.rollback`
+4. **No Cross-Context Dependencies** - Accounting ↔ Budgeting must stay independent
+
+**What Credo will catch:**
+- ❌ Repository importing `Ecto.Query` (use Query modules instead)
+- ❌ Command importing `Ecto.Query` or Query modules (use Repository modules)
+- ❌ Command using `Repo.insert/update/delete/all/one/get` (use Repository modules)
+- ❌ Accounting depending on Budgeting or vice versa (use PubSub for communication)
+
+**What's allowed:**
+- ✅ Commands using `Repo.transaction` and `Repo.rollback` for transaction management
+- ✅ Any context depending on Core, Identity, PubSub, Utilities
+- ✅ Search context commands can use Query modules and Repo directly (aggregation layer exception)
+- ✅ Schemas referencing other context schemas (for database associations)
+- ✅ Commands referencing schemas from other contexts (for domain modeling)
+- ✅ SearchEntityRepository importing `Ecto.Query` (polymorphic loading exception)
+
+**Run checks:**
+```bash
+mix credo --strict  # Check for violations
+mix precommit       # Runs credo + format check + tests
+```
 <!-- phoenix:ecto-end -->
 <!-- phoenix:html-start -->
 ## Phoenix HTML guidelines

@@ -50,7 +50,12 @@
       # If you create your own checks, you must specify the source files for
       # them here, so they can be loaded by Credo before running the analysis.
       #
-      requires: [],
+      requires: [
+        "lib/credo/checks/pursecraft/no_ecto_query_in_repository.ex",
+        "lib/credo/checks/pursecraft/no_ecto_query_in_command.ex",
+        "lib/credo/checks/pursecraft/no_repo_crud_in_command.ex",
+        "lib/credo/checks/pursecraft/no_cross_context_dependency.ex"
+      ],
       #
       # If you want to enforce a style guide and need a more traditional linting
       # experience, you can change `strict` to `true` below:
@@ -146,6 +151,14 @@
           {Credo.Check.Readability.VariableNames, []},
           {Credo.Check.Readability.WithCustomTaggedTuple, []},
           {Credo.Check.Readability.WithSingleClause, []},
+
+          #
+          ## PurseCraft Custom Architectural Checks
+          #
+          {Credo.Check.PurseCraft.NoEctoQueryInRepository, []},
+          {Credo.Check.PurseCraft.NoEctoQueryInCommand, []},
+          {Credo.Check.PurseCraft.NoRepoCrudInCommand, []},
+          {Credo.Check.PurseCraft.NoCrossContextDependency, []},
 
           #
           ## Refactoring Opportunities
