@@ -6,6 +6,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransaction do
   Schedules async cleanup for potentially orphaned payees and search tokens.
   """
 
+  alias PurseCraft.Accounting.Commands.Transactions.FetchTransaction
   alias PurseCraft.Accounting.Policy
   alias PurseCraft.Accounting.Repositories.TransactionRepository
   alias PurseCraft.Accounting.Schemas.Transaction
@@ -40,9 +41,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransaction do
           | {:error, Ecto.Changeset.t()}
   def call(%Scope{} = scope, %Workspace{} = workspace, transaction_external_id) do
     with {:ok, transaction} <-
-           TransactionRepository.fetch_by_external_id(workspace.id, transaction_external_id,
-             preload: [:transaction_lines]
-           ),
+           FetchTransaction.call(scope, workspace, transaction_external_id, preload: [:transaction_lines]),
          :ok <- Policy.authorize(:transaction_delete, scope, %{workspace: workspace}),
          payee_ids = collect_payee_ids(transaction),
          {:ok, deleted_transaction} <- TransactionRepository.delete(transaction),

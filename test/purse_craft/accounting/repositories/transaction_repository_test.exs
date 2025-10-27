@@ -67,69 +67,29 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
     end
   end
 
-  describe "fetch_by_external_id/3" do
-    test "returns ok tuple with transaction when found in workspace", %{workspace: workspace, account: account} do
+  describe "get_by_external_id/2" do
+    test "returns transaction when found", %{workspace: workspace, account: account} do
       transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account, amount: 1000)
 
-      assert {:ok, result} = TransactionRepository.fetch_by_external_id(workspace.id, transaction.external_id)
+      result = TransactionRepository.get_by_external_id(transaction.external_id)
 
       assert result.id == transaction.id
       assert result.external_id == transaction.external_id
       assert result.amount == 1000
     end
 
-    test "returns error tuple when transaction not found", %{workspace: workspace} do
-      assert {:error, :not_found} =
-               TransactionRepository.fetch_by_external_id(workspace.id, Ecto.UUID.generate())
-    end
-
-    test "returns error tuple when transaction belongs to different workspace", %{workspace: workspace} do
-      other_workspace = CoreFactory.insert(:workspace)
-      other_account = AccountingFactory.insert(:account, workspace: other_workspace)
-      transaction = AccountingFactory.insert(:transaction, workspace: other_workspace, account: other_account)
-
-      assert {:error, :not_found} =
-               TransactionRepository.fetch_by_external_id(workspace.id, transaction.external_id)
-    end
-
-    test "returns transaction with preloaded associations when requested", %{
-      workspace: workspace,
-      account: account
-    } do
-      transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account)
-
-      assert {:ok, result} =
-               TransactionRepository.fetch_by_external_id(workspace.id, transaction.external_id, preload: [:account])
-
-      assert result.id == transaction.id
-      assert %NotLoaded{} != result.account
-      assert result.account.id == account.id
-    end
-  end
-
-  describe "get_by_external_id/3" do
-    test "returns transaction when found in workspace", %{workspace: workspace, account: account} do
-      transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account, amount: 1000)
-
-      result = TransactionRepository.get_by_external_id(workspace.id, transaction.external_id)
-
-      assert result.id == transaction.id
-      assert result.external_id == transaction.external_id
-      assert result.amount == 1000
-    end
-
-    test "returns nil when transaction not found", %{workspace: workspace} do
-      result = TransactionRepository.get_by_external_id(workspace.id, Ecto.UUID.generate())
+    test "returns nil when transaction not found" do
+      result = TransactionRepository.get_by_external_id(Ecto.UUID.generate())
 
       assert result == nil
     end
 
-    test "returns nil when transaction belongs to different workspace", %{workspace: workspace} do
+    test "returns nil when transaction belongs to different workspace with workspace option", %{workspace: workspace} do
       other_workspace = CoreFactory.insert(:workspace)
       other_account = AccountingFactory.insert(:account, workspace: other_workspace)
       transaction = AccountingFactory.insert(:transaction, workspace: other_workspace, account: other_account)
 
-      result = TransactionRepository.get_by_external_id(workspace.id, transaction.external_id)
+      result = TransactionRepository.get_by_external_id(transaction.external_id, workspace: workspace)
 
       assert result == nil
     end
@@ -140,7 +100,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
     } do
       transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account)
 
-      result = TransactionRepository.get_by_external_id(workspace.id, transaction.external_id, preload: [:account])
+      result = TransactionRepository.get_by_external_id(transaction.external_id, preload: [:account])
 
       assert result.id == transaction.id
       assert %NotLoaded{} != result.account
@@ -150,7 +110,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepositoryTest do
     test "returns transaction without preload by default", %{workspace: workspace, account: account} do
       transaction = AccountingFactory.insert(:transaction, workspace: workspace, account: account)
 
-      result = TransactionRepository.get_by_external_id(workspace.id, transaction.external_id)
+      result = TransactionRepository.get_by_external_id(transaction.external_id)
 
       assert result.id == transaction.id
       assert %NotLoaded{} = result.account
