@@ -163,6 +163,58 @@ defmodule PurseCraft.Accounting.Queries.TransactionQueryTest do
     end
   end
 
+  describe "by_linked_transaction_id/1" do
+    test "creates a query filtered by linked_transaction_id" do
+      linked_transaction_id = 123
+      query = TransactionQuery.by_linked_transaction_id(linked_transaction_id)
+
+      assert query.from.source == {"transactions", Transaction}
+
+      assert length(query.wheres) == 1
+
+      [where_clause] = query.wheres
+      assert where_clause.params == [{linked_transaction_id, {0, :linked_transaction_id}}]
+    end
+  end
+
+  describe "by_linked_transaction_id/2" do
+    test "adds linked_transaction_id filter to existing query" do
+      linked_transaction_id = 456
+      base_query = from(t in Transaction, where: t.workspace_id == 1)
+
+      query = TransactionQuery.by_linked_transaction_id(base_query, linked_transaction_id)
+
+      assert length(query.wheres) == 2
+
+      param_values = Enum.flat_map(query.wheres, & &1.params)
+      assert {linked_transaction_id, {0, :linked_transaction_id}} in param_values
+    end
+
+    test "works with Transaction schema directly" do
+      linked_transaction_id = 789
+      query = TransactionQuery.by_linked_transaction_id(Transaction, linked_transaction_id)
+
+      assert query.from.source == {"transactions", Transaction}
+      assert length(query.wheres) == 1
+      assert hd(query.wheres).params == [{linked_transaction_id, {0, :linked_transaction_id}}]
+    end
+
+    test "preserves other query attributes" do
+      base_query =
+        from(t in Transaction,
+          where: t.workspace_id == 1,
+          order_by: t.date,
+          limit: 5
+        )
+
+      query = TransactionQuery.by_linked_transaction_id(base_query, 123)
+
+      assert query.limit.expr == 5
+      assert length(query.order_bys) == 1
+      assert length(query.wheres) == 2
+    end
+  end
+
   describe "by_date_range/2" do
     test "creates a query filtered by date range" do
       start_date = ~D[2025-01-01]
@@ -222,6 +274,47 @@ defmodule PurseCraft.Accounting.Queries.TransactionQueryTest do
       query = TransactionQuery.by_date_range(base_query, start_date, end_date)
 
       assert query.limit.expr == 10
+      assert length(query.order_bys) == 1
+      assert length(query.wheres) == 2
+    end
+  end
+
+  describe "transfers_only/0" do
+    test "creates a query filtering for non-null linked_transaction_id" do
+      query = TransactionQuery.transfers_only()
+
+      assert query.from.source == {"transactions", Transaction}
+      assert length(query.wheres) == 1
+    end
+  end
+
+  describe "transfers_only/1" do
+    test "adds transfer filter to existing query" do
+      base_query = from(t in Transaction, where: t.workspace_id == 1)
+
+      query = TransactionQuery.transfers_only(base_query)
+
+      assert length(query.wheres) == 2
+    end
+
+    test "works with Transaction schema directly" do
+      query = TransactionQuery.transfers_only(Transaction)
+
+      assert query.from.source == {"transactions", Transaction}
+      assert length(query.wheres) == 1
+    end
+
+    test "preserves other query attributes" do
+      base_query =
+        from(t in Transaction,
+          where: t.workspace_id == 1,
+          order_by: t.date,
+          limit: 5
+        )
+
+      query = TransactionQuery.transfers_only(base_query)
+
+      assert query.limit.expr == 5
       assert length(query.order_bys) == 1
       assert length(query.wheres) == 2
     end
@@ -402,6 +495,52 @@ defmodule PurseCraft.Accounting.Queries.TransactionQueryTest do
       assert query.from.source == {"other_table", nil}
       assert length(query.wheres) == 2
       assert length(query.order_bys) == 1
+
+      param_values = Enum.flat_map(query.wheres, & &1.params)
+      assert {workspace_id, {0, :workspace_id}} in param_values
+      assert {account_id, {0, :account_id}} in param_values
+    end
+
+    test "transfer query functions chain together" do
+      workspace_id = 123
+      linked_transaction_id = 456
+
+      query =
+        workspace_id
+        |> TransactionQuery.by_workspace_id()
+        |> TransactionQuery.transfers_only()
+        |> TransactionQuery.by_linked_transaction_id(linked_transaction_id)
+        |> TransactionQuery.order_by_date()
+        |> TransactionQuery.limit(10)
+
+      assert query.from.source == {"transactions", Transaction}
+      assert length(query.wheres) == 3
+      assert length(query.order_bys) == 1
+      assert query.limit.expr == {:^, [], [0]}
+      assert query.limit.params == [{10, :integer}]
+
+      param_values = Enum.flat_map(query.wheres, & &1.params)
+      assert {workspace_id, {0, :workspace_id}} in param_values
+      assert {linked_transaction_id, {0, :linked_transaction_id}} in param_values
+    end
+
+    test "transfer queries work with existing functions" do
+      workspace_id = 123
+      account_id = 456
+
+      query =
+        workspace_id
+        |> TransactionQuery.by_workspace_id()
+        |> TransactionQuery.by_account_id(account_id)
+        |> TransactionQuery.transfers_only()
+        |> TransactionQuery.order_by_date()
+        |> TransactionQuery.limit(5)
+
+      assert query.from.source == {"transactions", Transaction}
+      assert length(query.wheres) == 3
+      assert length(query.order_bys) == 1
+      assert query.limit.expr == {:^, [], [0]}
+      assert query.limit.params == [{5, :integer}]
 
       param_values = Enum.flat_map(query.wheres, & &1.params)
       assert {workspace_id, {0, :workspace_id}} in param_values

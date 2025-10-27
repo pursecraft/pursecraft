@@ -96,6 +96,30 @@ defmodule PurseCraft.Accounting.Queries.TransactionQuery do
   end
 
   @doc """
+  Returns a query for finding a transaction by linked transaction ID.
+
+  Used to find the other half of a transfer pair.
+
+  ## Examples
+
+      iex> by_linked_transaction_id(123)
+      #Ecto.Query<...>
+
+      iex> Transaction |> by_linked_transaction_id(123)
+      #Ecto.Query<...>
+
+  """
+  @spec by_linked_transaction_id(integer()) :: Ecto.Query.t()
+  def by_linked_transaction_id(linked_transaction_id) do
+    by_linked_transaction_id(Transaction, linked_transaction_id)
+  end
+
+  @spec by_linked_transaction_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
+  def by_linked_transaction_id(queryable, linked_transaction_id) do
+    from(t in queryable, where: t.linked_transaction_id == ^linked_transaction_id)
+  end
+
+  @doc """
   Returns a query for finding transactions within a date range (inclusive).
 
   ## Examples
@@ -115,6 +139,30 @@ defmodule PurseCraft.Accounting.Queries.TransactionQuery do
   @spec by_date_range(Ecto.Queryable.t(), Date.t(), Date.t()) :: Ecto.Query.t()
   def by_date_range(queryable, start_date, end_date) do
     from(t in queryable, where: t.date >= ^start_date and t.date <= ^end_date)
+  end
+
+  @doc """
+  Returns a query filtering to only transfer transactions.
+
+  Transfers are identified by having a non-null linked_transaction_id.
+
+  ## Examples
+
+      iex> transfers_only()
+      #Ecto.Query<...>
+
+      iex> Transaction |> by_workspace_id(1) |> transfers_only()
+      #Ecto.Query<...>
+
+  """
+  @spec transfers_only() :: Ecto.Query.t()
+  def transfers_only do
+    transfers_only(Transaction)
+  end
+
+  @spec transfers_only(Ecto.Queryable.t()) :: Ecto.Query.t()
+  def transfers_only(queryable) do
+    from(t in queryable, where: not is_nil(t.linked_transaction_id))
   end
 
   @doc """
