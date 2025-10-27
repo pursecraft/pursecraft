@@ -5,6 +5,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
 
   alias PurseCraft.Accounting.Queries.AccountQuery
   alias PurseCraft.Accounting.Schemas.Account
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Repo
   alias PurseCraft.Types
   alias PurseCraft.Utilities
@@ -17,7 +18,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
           required(:position) => String.t()
         }
 
-  @type get_option :: {:preload, Types.preload()} | {:active_only, boolean()}
+  @type get_option :: {:preload, Types.preload()} | {:active_only, boolean()} | {:workspace, Workspace.t()}
   @type get_options :: [get_option()]
 
   @type list_option :: {:preload, Types.preload()} | {:active_only, boolean()}
@@ -127,12 +128,50 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
   end
 
   @doc """
+  Gets an account by ID.
+
+  ## Options
+
+  * `:preload` - List of associations to preload. Defaults to `[]`.
+  * `:active_only` - Whether to only return active accounts (not closed). Defaults to `true`.
+  * `:workspace` - Workspace to scope the query to. If provided, only returns accounts in that workspace.
+
+  ## Examples
+
+      iex> get_by_id(123)
+      %Account{}
+
+      iex> get_by_id(123, preload: [:workspace])
+      %Account{workspace: %Workspace{}}
+
+      iex> get_by_id(123, workspace: workspace)
+      %Account{}
+
+      iex> get_by_id(123, workspace: other_workspace)
+      nil
+
+      iex> get_by_id(999)
+      nil
+
+  """
+  @spec get_by_id(integer(), get_options()) :: Account.t() | nil
+  def get_by_id(id, opts \\ []) do
+    id
+    |> AccountQuery.by_id()
+    |> maybe_filter_by_workspace(opts)
+    |> maybe_active_only(opts)
+    |> Repo.one()
+    |> Utilities.maybe_preload(opts)
+  end
+
+  @doc """
   Gets an account by external ID.
 
   ## Options
 
   * `:preload` - List of associations to preload. Defaults to `[]`.
   * `:active_only` - Whether to only return active accounts (not closed). Defaults to `true`.
+  * `:workspace` - Workspace to scope the query to. If provided, only returns accounts in that workspace.
 
   ## Examples
 
@@ -142,8 +181,11 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
       iex> get_by_external_id("account-uuid", preload: [:workspace])
       %Account{workspace: %Workspace{}}
 
-      iex> get_by_external_id("account-uuid", active_only: false)
+      iex> get_by_external_id("account-uuid", workspace: workspace)
       %Account{}
+
+      iex> get_by_external_id("account-uuid", workspace: other_workspace)
+      nil
 
       iex> get_by_external_id("invalid-uuid")
       nil
@@ -153,6 +195,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
   def get_by_external_id(external_id, opts \\ []) do
     external_id
     |> AccountQuery.by_external_id()
+    |> maybe_filter_by_workspace(opts)
     |> maybe_active_only(opts)
     |> Repo.one()
     |> Utilities.maybe_preload(opts)
@@ -232,6 +275,13 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepository do
     |> AccountQuery.by_external_ids()
     |> Repo.all()
     |> Utilities.maybe_preload(opts)
+  end
+
+  defp maybe_filter_by_workspace(query, opts) do
+    case Keyword.get(opts, :workspace) do
+      %Workspace{id: workspace_id} -> AccountQuery.by_workspace_id(query, workspace_id)
+      nil -> query
+    end
   end
 
   defp maybe_active_only(query, opts) do

@@ -10,6 +10,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransaction do
   Tracks old payees and schedules async cleanup for orphaned payees.
   """
 
+  alias PurseCraft.Accounting.Commands.Transactions.FetchTransaction
   alias PurseCraft.Accounting.Policy
   alias PurseCraft.Accounting.Repositories.TransactionRepository
   alias PurseCraft.Accounting.Schemas.Transaction
@@ -75,7 +76,8 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransaction do
   def call(%Scope{} = scope, %Workspace{} = workspace, transaction_external_id, attrs) do
     attrs = Utilities.atomize_keys(attrs)
 
-    with {:ok, transaction} <- fetch_transaction(workspace, transaction_external_id),
+    with {:ok, transaction} <-
+           FetchTransaction.call(scope, workspace, transaction_external_id, preload: [:transaction_lines]),
          :ok <- Policy.authorize(:transaction_update, scope, %{workspace: workspace}),
          :ok <- validate_no_immutable_fields(attrs),
          :ok <- validate_empty_lines(attrs),
@@ -86,20 +88,6 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransaction do
          :ok <- schedule_search_token_generation(updated_transaction, workspace, attrs) do
       PubSub.broadcast_workspace(workspace, {:transaction_updated, updated_transaction})
       {:ok, updated_transaction}
-    end
-  end
-
-  defp fetch_transaction(workspace, external_id) do
-    case TransactionRepository.get_by_external_id(external_id, preload: [:transaction_lines]) do
-      nil ->
-        {:error, :not_found}
-
-      transaction ->
-        if transaction.workspace_id == workspace.id do
-          {:ok, transaction}
-        else
-          {:error, :not_found}
-        end
     end
   end
 

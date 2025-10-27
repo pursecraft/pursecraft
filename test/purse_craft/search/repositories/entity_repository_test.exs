@@ -17,8 +17,8 @@ defmodule PurseCraft.Search.Repositories.EntityRepositoryTest do
     end
 
     test "loads account entities with match counts", %{workspace: workspace} do
-      account1 = AccountingFactory.insert(:account, workspace: workspace)
-      account2 = AccountingFactory.insert(:account, workspace: workspace)
+      account1 = AccountingFactory.insert(:account, workspace: workspace, position: "a")
+      account2 = AccountingFactory.insert(:account, workspace: workspace, position: "b")
 
       search_results = [
         %{entity_type: "account", entity_id: account1.id, match_count: 3},
@@ -43,8 +43,8 @@ defmodule PurseCraft.Search.Repositories.EntityRepositoryTest do
     end
 
     test "loads category entities with match counts", %{workspace: workspace} do
-      category1 = BudgetingFactory.insert(:category, workspace: workspace)
-      category2 = BudgetingFactory.insert(:category, workspace: workspace)
+      category1 = BudgetingFactory.insert(:category, workspace: workspace, position: "a")
+      category2 = BudgetingFactory.insert(:category, workspace: workspace, position: "b")
 
       search_results = [
         %{entity_type: "category", entity_id: category1.id, match_count: 2},
@@ -68,9 +68,9 @@ defmodule PurseCraft.Search.Repositories.EntityRepositoryTest do
     end
 
     test "loads envelope entities with match counts", %{workspace: workspace} do
-      category = BudgetingFactory.insert(:category, workspace: workspace)
-      envelope1 = BudgetingFactory.insert(:envelope, category: category)
-      envelope2 = BudgetingFactory.insert(:envelope, category: category)
+      category = BudgetingFactory.insert(:category, workspace: workspace, position: "e")
+      envelope1 = BudgetingFactory.insert(:envelope, category: category, position: "a")
+      envelope2 = BudgetingFactory.insert(:envelope, category: category, position: "b")
 
       search_results = [
         %{entity_type: "envelope", entity_id: envelope1.id, match_count: 5},
@@ -119,9 +119,9 @@ defmodule PurseCraft.Search.Repositories.EntityRepositoryTest do
     end
 
     test "loads mixed entity types with match counts", %{workspace: workspace} do
-      account = AccountingFactory.insert(:account, workspace: workspace)
-      category = BudgetingFactory.insert(:category, workspace: workspace)
-      envelope = BudgetingFactory.insert(:envelope, category: category)
+      account = AccountingFactory.insert(:account, workspace: workspace, position: "c")
+      category = BudgetingFactory.insert(:category, workspace: workspace, position: "c")
+      envelope = BudgetingFactory.insert(:envelope, category: category, position: "c")
 
       search_results = [
         %{entity_type: "account", entity_id: account.id, match_count: 2},
@@ -169,7 +169,7 @@ defmodule PurseCraft.Search.Repositories.EntityRepositoryTest do
     end
 
     test "handles mixed known and unknown entity types", %{workspace: workspace} do
-      account = AccountingFactory.insert(:account, workspace: workspace)
+      account = AccountingFactory.insert(:account, workspace: workspace, position: "d")
 
       search_results = [
         %{entity_type: "account", entity_id: account.id, match_count: 3},
@@ -195,7 +195,7 @@ defmodule PurseCraft.Search.Repositories.EntityRepositoryTest do
     end
 
     test "handles entities that don't exist in database", %{workspace: workspace} do
-      account = AccountingFactory.insert(:account, workspace: workspace)
+      account = AccountingFactory.insert(:account, workspace: workspace, position: "e")
 
       search_results = [
         %{entity_type: "account", entity_id: account.id, match_count: 2},

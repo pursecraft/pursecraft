@@ -7,6 +7,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
   alias PurseCraft.Accounting.Queries.TransactionQuery
   alias PurseCraft.Accounting.Schemas.Transaction
   alias PurseCraft.Accounting.Schemas.TransactionLine
+  alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Repo
   alias PurseCraft.Types
   alias PurseCraft.Utilities
@@ -32,7 +33,7 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
   @type create_option :: {:preload, Types.preload()}
   @type create_options :: [create_option()]
 
-  @type get_option :: {:preload, Types.preload()}
+  @type get_option :: {:preload, Types.preload()} | {:workspace, Workspace.t()}
   @type get_options :: [get_option()]
 
   @type list_option :: {:preload, Types.preload()} | {:limit, integer()}
@@ -114,11 +115,47 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
   end
 
   @doc """
+  Gets a transaction by ID.
+
+  ## Options
+
+  * `:preload` - List of associations to preload. Defaults to `[]`.
+  * `:workspace` - Workspace to scope the query to. If provided, only returns transactions in that workspace.
+
+  ## Examples
+
+      iex> get_by_id(123)
+      %Transaction{}
+
+      iex> get_by_id(123, preload: [:account])
+      %Transaction{account: %Account{}}
+
+      iex> get_by_id(123, workspace: workspace)
+      %Transaction{}
+
+      iex> get_by_id(123, workspace: other_workspace)
+      nil
+
+      iex> get_by_id(999)
+      nil
+
+  """
+  @spec get_by_id(integer(), get_options()) :: Transaction.t() | nil
+  def get_by_id(id, opts \\ []) do
+    id
+    |> TransactionQuery.by_id()
+    |> maybe_filter_by_workspace(opts)
+    |> Repo.one()
+    |> Utilities.maybe_preload(opts)
+  end
+
+  @doc """
   Gets a transaction by external ID.
 
   ## Options
 
   * `:preload` - List of associations to preload. Defaults to `[]`.
+  * `:workspace` - Workspace to scope the query to. If provided, only returns transactions in that workspace.
 
   ## Examples
 
@@ -128,6 +165,12 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
       iex> get_by_external_id("transaction-uuid", preload: [:account])
       %Transaction{account: %Account{}}
 
+      iex> get_by_external_id("transaction-uuid", workspace: workspace)
+      %Transaction{}
+
+      iex> get_by_external_id("transaction-uuid", workspace: other_workspace)
+      nil
+
       iex> get_by_external_id("invalid-uuid")
       nil
 
@@ -136,8 +179,16 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
   def get_by_external_id(external_id, opts \\ []) do
     external_id
     |> TransactionQuery.by_external_id()
+    |> maybe_filter_by_workspace(opts)
     |> Repo.one()
     |> Utilities.maybe_preload(opts)
+  end
+
+  defp maybe_filter_by_workspace(query, opts) do
+    case Keyword.get(opts, :workspace) do
+      %Workspace{id: workspace_id} -> TransactionQuery.by_workspace_id(query, workspace_id)
+      nil -> query
+    end
   end
 
   @doc """

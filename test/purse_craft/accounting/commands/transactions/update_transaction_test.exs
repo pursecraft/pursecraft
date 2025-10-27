@@ -290,14 +290,14 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransactionTest do
                UpdateTransaction.call(scope, workspace, Ecto.UUID.generate(), attrs)
     end
 
-    test "returns not_found for transaction in different workspace", %{
+    test "returns unauthorized for transaction in different workspace", %{
       scope: scope,
       transaction: transaction
     } do
       other_workspace = CoreFactory.insert(:workspace)
       attrs = %{memo: "Update"}
 
-      assert {:error, :not_found} =
+      assert {:error, :unauthorized} =
                UpdateTransaction.call(scope, other_workspace, transaction.external_id, attrs)
     end
 

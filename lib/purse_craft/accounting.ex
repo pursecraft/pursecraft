@@ -6,6 +6,7 @@ defmodule PurseCraft.Accounting do
   alias PurseCraft.Accounting.Commands.Accounts.CloseAccount
   alias PurseCraft.Accounting.Commands.Accounts.CreateAccount
   alias PurseCraft.Accounting.Commands.Accounts.DeleteAccount
+  alias PurseCraft.Accounting.Commands.Accounts.FetchAccount
   alias PurseCraft.Accounting.Commands.Accounts.FetchAccountByExternalId
   alias PurseCraft.Accounting.Commands.Accounts.ListAccounts
   alias PurseCraft.Accounting.Commands.Accounts.RepositionAccount
@@ -43,6 +44,11 @@ defmodule PurseCraft.Accounting do
       {:error, :not_found}
 
   """
+  # coveralls-ignore-next-line
+  defdelegate fetch_account(scope, workspace, id_or_struct, opts \\ []),
+    to: FetchAccount,
+    as: :call
+
   # coveralls-ignore-next-line
   defdelegate fetch_account_by_external_id(scope, workspace, external_id, opts \\ []),
     to: FetchAccountByExternalId,

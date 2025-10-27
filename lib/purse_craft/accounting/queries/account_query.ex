@@ -96,6 +96,28 @@ defmodule PurseCraft.Accounting.Queries.AccountQuery do
   end
 
   @doc """
+  Returns a query for finding an account by ID.
+
+  ## Examples
+
+      iex> by_id(123)
+      #Ecto.Query<...>
+
+      iex> Account |> by_id(123)
+      #Ecto.Query<...>
+
+  """
+  @spec by_id(integer()) :: Ecto.Query.t()
+  def by_id(id) do
+    by_id(Account, id)
+  end
+
+  @spec by_id(Ecto.Queryable.t(), integer()) :: Ecto.Query.t()
+  def by_id(queryable, id) do
+    from(a in queryable, where: a.id == ^id)
+  end
+
+  @doc """
   Returns a query for finding accounts by external ID.
 
   ## Examples
