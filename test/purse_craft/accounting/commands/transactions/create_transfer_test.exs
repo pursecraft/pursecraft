@@ -1,7 +1,10 @@
 defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
   use PurseCraft.DataCase, async: false
 
+  import Mimic
+
   alias PurseCraft.Accounting.Commands.Transactions.CreateTransfer
+  alias PurseCraft.Accounting.Repositories.TransactionRepository
   alias PurseCraft.Accounting.Schemas.Transaction
   alias PurseCraft.AccountingFactory
   alias PurseCraft.CoreFactory
@@ -300,6 +303,37 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
 
       # FetchAccount filters by workspace, so account won't be found
       assert {:error, :not_found} = CreateTransfer.call(scope, workspace, attrs)
+    end
+
+    test "returns error when transaction creation fails within transaction block", %{
+      workspace: workspace,
+      scope: scope,
+      from_account: from_account,
+      to_account: to_account
+    } do
+      attrs = %{
+        from_account: from_account,
+        to_account: to_account,
+        amount: 10_000
+      }
+
+      # Stub TransactionRepository.update to fail when linking transactions
+      # This will trigger the error handler in the with clause
+      stub(TransactionRepository, :update, fn _transaction, _attrs ->
+        changeset =
+          %Transaction{}
+          |> Transaction.changeset(%{})
+          |> Ecto.Changeset.add_error(:linked_transaction_id, "simulated linking failure")
+
+        {:error, changeset}
+      end)
+
+      assert {:error, changeset} = CreateTransfer.call(scope, workspace, attrs)
+
+      assert Enum.any?(changeset.errors, fn
+               {:linked_transaction_id, {"simulated linking failure", _opts}} -> true
+               _error -> false
+             end)
     end
 
     test "both transactions cleared when cleared: true", %{
