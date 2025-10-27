@@ -44,7 +44,8 @@ defmodule PurseCraft.Accounting.Repositories.TransactionRepository do
           optional(:amount) => integer(),
           optional(:memo) => String.t(),
           optional(:cleared) => boolean(),
-          optional(:payee_id) => integer() | nil
+          optional(:payee_id) => integer() | nil,
+          optional(:linked_transaction_id) => integer() | nil
         }
 
   @type update_with_lines_option :: {:preload, Types.preload()}
