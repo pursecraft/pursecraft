@@ -100,13 +100,13 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransactionTest do
 
       assert {:ok, _deleted} = DeleteTransaction.call(scope, workspace, transaction.external_id)
 
-      jobs =
-        Repo.all(
-          from(j in Oban.Job,
-            where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
-            where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
-          )
+      query =
+        from(j in Oban.Job,
+          where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
+          where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
         )
+
+      jobs = Repo.all(query)
 
       assert length(jobs) == 1
     end
@@ -127,13 +127,13 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransactionTest do
 
       assert {:ok, _deleted} = DeleteTransaction.call(scope, workspace, transaction.external_id)
 
-      jobs =
-        Repo.all(
-          from(j in Oban.Job,
-            where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
-            where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
-          )
+      query =
+        from(j in Oban.Job,
+          where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
+          where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
         )
+
+      jobs = Repo.all(query)
 
       assert length(jobs) == 2
     end
@@ -158,13 +158,13 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransactionTest do
 
       assert {:ok, _deleted} = DeleteTransaction.call(scope, workspace, transaction.external_id)
 
-      jobs =
-        Repo.all(
-          from(j in Oban.Job,
-            where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
-            where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
-          )
+      query =
+        from(j in Oban.Job,
+          where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
+          where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
         )
+
+      jobs = Repo.all(query)
 
       assert length(jobs) == 1
     end
@@ -186,13 +186,13 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransactionTest do
 
       assert {:ok, _deleted} = DeleteTransaction.call(scope, workspace, transaction.external_id)
 
-      jobs =
-        Repo.all(
-          from(j in Oban.Job,
-            where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
-            where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
-          )
+      query =
+        from(j in Oban.Job,
+          where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
+          where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
         )
+
+      jobs = Repo.all(query)
 
       assert Enum.empty?(jobs)
     end
@@ -206,14 +206,14 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransactionTest do
 
       assert {:ok, deleted} = DeleteTransaction.call(scope, workspace, transaction.external_id)
 
-      jobs =
-        Repo.all(
-          from(j in Oban.Job,
-            where: j.worker == "PurseCraft.Search.Workers.DeleteTokensWorker",
-            where: fragment("?->>'entity_type' = ?", j.args, "transaction"),
-            where: fragment("?->>'entity_id' = ?", j.args, ^to_string(deleted.id))
-          )
+      query =
+        from(j in Oban.Job,
+          where: j.worker == "PurseCraft.Search.Workers.DeleteTokensWorker",
+          where: fragment("?->>'entity_type' = ?", j.args, "transaction"),
+          where: fragment("?->>'entity_id' = ?", j.args, ^to_string(deleted.id))
         )
+
+      jobs = Repo.all(query)
 
       assert length(jobs) == 1
     end
