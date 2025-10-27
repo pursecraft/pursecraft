@@ -1,15 +1,16 @@
 defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransactionTest do
   use PurseCraft.DataCase, async: true
-
-  import Ecto.Query
+  use Oban.Testing, repo: PurseCraft.Repo
 
   alias PurseCraft.Accounting.Commands.Transactions.DeleteTransaction
   alias PurseCraft.Accounting.Schemas.Transaction
   alias PurseCraft.Accounting.Schemas.TransactionLine
+  alias PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker
   alias PurseCraft.AccountingFactory
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
+  alias PurseCraft.Search.Workers.DeleteTokensWorker
 
   setup do
     workspace = CoreFactory.insert(:workspace)
@@ -100,15 +101,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransactionTest do
 
       assert {:ok, _deleted} = DeleteTransaction.call(scope, workspace, transaction.external_id)
 
-      query =
-        from(j in Oban.Job,
-          where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
-          where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
-        )
-
-      jobs = Repo.all(query)
-
-      assert length(jobs) == 1
+      assert_enqueued(worker: CleanupOrphanedPayeesWorker, args: %{workspace_id: workspace.id})
     end
 
     test "schedules payee cleanup for line-level payees", %{
@@ -127,15 +120,8 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransactionTest do
 
       assert {:ok, _deleted} = DeleteTransaction.call(scope, workspace, transaction.external_id)
 
-      query =
-        from(j in Oban.Job,
-          where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
-          where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
-        )
-
-      jobs = Repo.all(query)
-
-      assert length(jobs) == 2
+      assert_enqueued(worker: CleanupOrphanedPayeesWorker, args: %{workspace_id: workspace.id})
+      assert [_job1, _job2] = all_enqueued(worker: CleanupOrphanedPayeesWorker)
     end
 
     test "deduplicates payee IDs when scheduling cleanup", %{
@@ -158,15 +144,8 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransactionTest do
 
       assert {:ok, _deleted} = DeleteTransaction.call(scope, workspace, transaction.external_id)
 
-      query =
-        from(j in Oban.Job,
-          where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
-          where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
-        )
-
-      jobs = Repo.all(query)
-
-      assert length(jobs) == 1
+      assert_enqueued(worker: CleanupOrphanedPayeesWorker, args: %{workspace_id: workspace.id})
+      assert [_job] = all_enqueued(worker: CleanupOrphanedPayeesWorker)
     end
 
     test "does not schedule payee cleanup when transaction has no payee", %{
@@ -186,15 +165,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransactionTest do
 
       assert {:ok, _deleted} = DeleteTransaction.call(scope, workspace, transaction.external_id)
 
-      query =
-        from(j in Oban.Job,
-          where: j.worker == "PurseCraft.Accounting.Workers.CleanupOrphanedPayeesWorker",
-          where: fragment("?->>'workspace_id' = ?", j.args, ^to_string(workspace.id))
-        )
-
-      jobs = Repo.all(query)
-
-      assert Enum.empty?(jobs)
+      refute_enqueued(worker: CleanupOrphanedPayeesWorker)
     end
 
     test "schedules search token deletion", %{
@@ -206,16 +177,10 @@ defmodule PurseCraft.Accounting.Commands.Transactions.DeleteTransactionTest do
 
       assert {:ok, deleted} = DeleteTransaction.call(scope, workspace, transaction.external_id)
 
-      query =
-        from(j in Oban.Job,
-          where: j.worker == "PurseCraft.Search.Workers.DeleteTokensWorker",
-          where: fragment("?->>'entity_type' = ?", j.args, "transaction"),
-          where: fragment("?->>'entity_id' = ?", j.args, ^to_string(deleted.id))
-        )
-
-      jobs = Repo.all(query)
-
-      assert length(jobs) == 1
+      assert_enqueued(
+        worker: DeleteTokensWorker,
+        args: %{entity_type: "transaction", entity_id: deleted.id}
+      )
     end
 
     test "nilifies linked_transaction_id on linked transactions", %{
