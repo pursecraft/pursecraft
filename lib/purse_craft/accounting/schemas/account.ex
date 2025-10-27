@@ -11,6 +11,7 @@ defmodule PurseCraft.Accounting.Schemas.Account do
   import Ecto.Changeset
 
   alias Ecto.Association.NotLoaded
+  alias PurseCraft.Accounting.Constants
   alias PurseCraft.Core.Schemas.Workspace
   alias PurseCraft.Utilities
   alias PurseCraft.Utilities.EncryptedBinary
@@ -55,22 +56,8 @@ defmodule PurseCraft.Accounting.Schemas.Account do
           required(:closed_at) => DateTime.t()
         }
 
-  # Account type constants
-  @account_types [
-    "checking",
-    "savings",
-    "cash",
-    "credit_card",
-    "line_of_credit",
-    "mortgage",
-    "auto_loan",
-    "student_loan",
-    "personal_loan",
-    "medical_debt",
-    "other_debt",
-    "asset",
-    "liability"
-  ]
+  # Account type constants - sourced from Accounting.Constants
+  @account_types Constants.all_account_types()
 
   # coveralls-ignore-start
   schema "accounts" do

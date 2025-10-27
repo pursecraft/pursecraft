@@ -34,6 +34,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransfer do
 
   alias PurseCraft.Accounting.Commands.Accounts.FetchAccount
   alias PurseCraft.Accounting.Commands.Transactions.FetchTransaction
+  alias PurseCraft.Accounting.Domain.AccountingRules
   alias PurseCraft.Accounting.Policy
   alias PurseCraft.Accounting.Repositories.TransactionRepository
   alias PurseCraft.Accounting.Schemas.Account
@@ -122,9 +123,11 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransfer do
   end
 
   defp create_from_transaction(attrs, from_account) do
+    amount = AccountingRules.transfer_amount(from_account, attrs.amount, :source)
+
     transaction_data = %{
       date: attrs.date,
-      amount: -attrs.amount,
+      amount: amount,
       account_id: from_account.id,
       workspace_id: attrs.workspace_id,
       memo: attrs[:memo],
@@ -132,7 +135,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransfer do
       payee_id: nil,
       lines: [
         %{
-          amount: -attrs.amount,
+          amount: amount,
           envelope_id: nil,
           payee_id: nil
         }
@@ -143,9 +146,11 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransfer do
   end
 
   defp create_to_transaction(attrs, to_account) do
+    amount = AccountingRules.transfer_amount(to_account, attrs.amount, :destination)
+
     transaction_data = %{
       date: attrs.date,
-      amount: attrs.amount,
+      amount: amount,
       account_id: to_account.id,
       workspace_id: attrs.workspace_id,
       memo: attrs[:memo],
@@ -153,7 +158,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransfer do
       payee_id: nil,
       lines: [
         %{
-          amount: attrs.amount,
+          amount: amount,
           envelope_id: nil,
           payee_id: nil
         }

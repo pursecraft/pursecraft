@@ -16,8 +16,9 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
     CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
     scope = IdentityFactory.build(:scope, user: user)
 
-    from_account = AccountingFactory.insert(:account, workspace: workspace, position: "a")
-    to_account = AccountingFactory.insert(:account, workspace: workspace, position: "b")
+    # Default to asset accounts (checking) for basic tests
+    from_account = AccountingFactory.insert(:account, workspace: workspace, position: "a", account_type: "checking")
+    to_account = AccountingFactory.insert(:account, workspace: workspace, position: "b", account_type: "savings")
 
     {:ok, workspace: workspace, scope: scope, from_account: from_account, to_account: to_account}
   end
@@ -518,6 +519,156 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
       # If the second transaction fails, the first should be rolled back
       # In practice, this is hard to test without mocking, but the Repo.transaction
       # ensures atomicity
+    end
+  end
+
+  describe "account type handling" do
+    test "asset to asset: both transactions have correct signs", %{
+      workspace: workspace,
+      scope: scope
+    } do
+      checking = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
+      savings = AccountingFactory.insert(:account, workspace: workspace, account_type: "savings")
+
+      attrs = %{
+        from_account: checking,
+        to_account: savings,
+        amount: 10_000,
+        memo: "Transfer to savings"
+      }
+
+      assert {:ok, {from_transaction, to_transaction}} = CreateTransfer.call(scope, workspace, attrs)
+      # Asset source: negative (money leaving)
+      assert from_transaction.amount == -10_000
+      assert from_transaction.account_id == checking.id
+      # Asset destination: positive (money arriving)
+      assert to_transaction.amount == 10_000
+      assert to_transaction.account_id == savings.id
+    end
+
+    test "asset to liability: paying off debt", %{
+      workspace: workspace,
+      scope: scope
+    } do
+      checking = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
+      credit_card = AccountingFactory.insert(:account, workspace: workspace, account_type: "credit_card")
+
+      attrs = %{
+        from_account: checking,
+        to_account: credit_card,
+        amount: 15_000,
+        memo: "Credit card payment"
+      }
+
+      assert {:ok, {from_transaction, to_transaction}} = CreateTransfer.call(scope, workspace, attrs)
+      # Asset source: negative (money leaving)
+      assert from_transaction.amount == -15_000
+      assert from_transaction.account_id == checking.id
+      # Liability destination: negative (debt decreasing)
+      assert to_transaction.amount == -15_000
+      assert to_transaction.account_id == credit_card.id
+    end
+
+    test "liability to asset: cash advance", %{
+      workspace: workspace,
+      scope: scope
+    } do
+      credit_card = AccountingFactory.insert(:account, workspace: workspace, account_type: "credit_card")
+      checking = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
+
+      attrs = %{
+        from_account: credit_card,
+        to_account: checking,
+        amount: 20_000,
+        memo: "Cash advance"
+      }
+
+      assert {:ok, {from_transaction, to_transaction}} = CreateTransfer.call(scope, workspace, attrs)
+      # Liability source: positive (debt increasing)
+      assert from_transaction.amount == 20_000
+      assert from_transaction.account_id == credit_card.id
+      # Asset destination: positive (money arriving)
+      assert to_transaction.amount == 20_000
+      assert to_transaction.account_id == checking.id
+    end
+
+    test "liability to liability: balance transfer", %{
+      workspace: workspace,
+      scope: scope
+    } do
+      credit_card_a = AccountingFactory.insert(:account, workspace: workspace, account_type: "credit_card")
+      credit_card_b = AccountingFactory.insert(:account, workspace: workspace, account_type: "line_of_credit")
+
+      attrs = %{
+        from_account: credit_card_a,
+        to_account: credit_card_b,
+        amount: 50_000,
+        memo: "Balance transfer"
+      }
+
+      assert {:ok, {from_transaction, to_transaction}} = CreateTransfer.call(scope, workspace, attrs)
+      # Liability source: positive (debt moving away, but still owed)
+      assert from_transaction.amount == 50_000
+      assert from_transaction.account_id == credit_card_a.id
+      # Liability destination: negative (debt increasing on target)
+      assert to_transaction.amount == -50_000
+      assert to_transaction.account_id == credit_card_b.id
+    end
+
+    test "works with all asset account types", %{
+      workspace: workspace,
+      scope: scope
+    } do
+      asset_types = ["checking", "savings", "cash", "asset"]
+
+      for account_type <- asset_types do
+        from_account = AccountingFactory.insert(:account, workspace: workspace, account_type: account_type)
+        to_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
+
+        attrs = %{
+          from_account: from_account,
+          to_account: to_account,
+          amount: 1_000
+        }
+
+        assert {:ok, {from_transaction, to_transaction}} = CreateTransfer.call(scope, workspace, attrs)
+        assert from_transaction.amount == -1_000, "Failed for account_type: #{account_type}"
+        assert to_transaction.amount == 1_000
+      end
+    end
+
+    test "works with all liability account types", %{
+      workspace: workspace,
+      scope: scope
+    } do
+      liability_types = [
+        "credit_card",
+        "line_of_credit",
+        "mortgage",
+        "auto_loan",
+        "student_loan",
+        "personal_loan",
+        "medical_debt",
+        "other_debt",
+        "liability"
+      ]
+
+      checking = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
+
+      for account_type <- liability_types do
+        liability_account = AccountingFactory.insert(:account, workspace: workspace, account_type: account_type)
+
+        # Asset to Liability: paying off debt
+        attrs = %{
+          from_account: checking,
+          to_account: liability_account,
+          amount: 1_000
+        }
+
+        assert {:ok, {from_transaction, to_transaction}} = CreateTransfer.call(scope, workspace, attrs)
+        assert from_transaction.amount == -1_000
+        assert to_transaction.amount == -1_000, "Failed for account_type: #{account_type}"
+      end
     end
   end
 
