@@ -425,49 +425,6 @@ defmodule PurseCraft.Accounting.Queries.TransactionQueryTest do
     end
   end
 
-  describe "preload_linked_transaction/0" do
-    test "creates a query with linked_transaction preload" do
-      query = TransactionQuery.preload_linked_transaction()
-
-      assert query.from.source == {"transactions", Transaction}
-      assert :linked_transaction in query.preloads
-    end
-  end
-
-  describe "preload_linked_transaction/1" do
-    test "adds preload to existing query" do
-      base_query = from(t in Transaction, where: t.workspace_id == 1)
-
-      query = TransactionQuery.preload_linked_transaction(base_query)
-
-      assert :linked_transaction in query.preloads
-      assert length(query.wheres) == 1
-    end
-
-    test "works with Transaction schema directly" do
-      query = TransactionQuery.preload_linked_transaction(Transaction)
-
-      assert query.from.source == {"transactions", Transaction}
-      assert :linked_transaction in query.preloads
-    end
-
-    test "preserves other query attributes" do
-      base_query =
-        from(t in Transaction,
-          where: t.workspace_id == 1,
-          order_by: t.date,
-          limit: 5
-        )
-
-      query = TransactionQuery.preload_linked_transaction(base_query)
-
-      assert :linked_transaction in query.preloads
-      assert query.limit.expr == 5
-      assert length(query.order_bys) == 1
-      assert length(query.wheres) == 1
-    end
-  end
-
   describe "query composition" do
     test "functions can be chained together" do
       workspace_id = 123
@@ -553,13 +510,11 @@ defmodule PurseCraft.Accounting.Queries.TransactionQueryTest do
         |> TransactionQuery.by_workspace_id()
         |> TransactionQuery.transfers_only()
         |> TransactionQuery.by_linked_transaction_id(linked_transaction_id)
-        |> TransactionQuery.preload_linked_transaction()
         |> TransactionQuery.order_by_date()
         |> TransactionQuery.limit(10)
 
       assert query.from.source == {"transactions", Transaction}
       assert length(query.wheres) == 3
-      assert :linked_transaction in query.preloads
       assert length(query.order_bys) == 1
       assert query.limit.expr == {:^, [], [0]}
       assert query.limit.params == [{10, :integer}]

@@ -208,28 +208,4 @@ defmodule PurseCraft.Accounting.Queries.TransactionQuery do
   def limit(queryable, count) do
     from(t in queryable, limit: ^count)
   end
-
-  @doc """
-  Preloads the linked transaction association.
-
-  Used for eager-loading the other half of a transfer pair.
-
-  ## Examples
-
-      iex> preload_linked_transaction()
-      #Ecto.Query<...>
-
-      iex> Transaction |> by_id(123) |> preload_linked_transaction()
-      #Ecto.Query<...>
-
-  """
-  @spec preload_linked_transaction() :: Ecto.Query.t()
-  def preload_linked_transaction do
-    preload_linked_transaction(Transaction)
-  end
-
-  @spec preload_linked_transaction(Ecto.Queryable.t()) :: Ecto.Query.t()
-  def preload_linked_transaction(queryable) do
-    from(t in queryable, preload: [:linked_transaction])
-  end
 end
