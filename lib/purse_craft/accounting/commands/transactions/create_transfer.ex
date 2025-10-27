@@ -33,6 +33,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransfer do
   """
 
   alias PurseCraft.Accounting.Commands.Accounts.FetchAccount
+  alias PurseCraft.Accounting.Commands.Transactions.FetchTransaction
   alias PurseCraft.Accounting.Policy
   alias PurseCraft.Accounting.Repositories.TransactionRepository
   alias PurseCraft.Accounting.Schemas.Account
@@ -83,9 +84,10 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransfer do
   def call(%Scope{} = scope, %Workspace{} = workspace, attrs) do
     with :ok <- Policy.authorize(:transaction_create, scope, %{workspace: workspace}),
          attrs = normalize_attrs(attrs, workspace),
-         {:ok, from_account} <- fetch_account(scope, workspace, attrs.from_account),
-         {:ok, to_account} <- fetch_account(scope, workspace, attrs.to_account),
-         {:ok, {from_transaction, to_transaction}} <- create_transfer_transactions(attrs, from_account, to_account),
+         {:ok, from_account} <- FetchAccount.call(scope, workspace, attrs.from_account),
+         {:ok, to_account} <- FetchAccount.call(scope, workspace, attrs.to_account),
+         {:ok, {from_transaction, to_transaction}} <-
+           create_transfer_transactions(scope, workspace, attrs, from_account, to_account),
          :ok <- schedule_search_tokens(from_transaction, to_transaction, workspace, attrs),
          :ok <- broadcast_transactions(from_transaction, to_transaction, workspace) do
       {:ok, {from_transaction, to_transaction}}
@@ -100,26 +102,18 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransfer do
     |> Map.put(:workspace_id, workspace.id)
   end
 
-  defp fetch_account(scope, workspace, account_ref) do
-    FetchAccount.call(scope, workspace, account_ref)
-  end
-
-  defp create_transfer_transactions(attrs, from_account, to_account) do
+  defp create_transfer_transactions(scope, workspace, attrs, from_account, to_account) do
     Repo.transaction(fn ->
       with {:ok, from_transaction} <- create_from_transaction(attrs, from_account),
            {:ok, to_transaction} <- create_to_transaction(attrs, to_account),
            {:ok, _updated_from} <- link_transaction(from_transaction, to_transaction.id),
-           {:ok, _updated_to} <- link_transaction(to_transaction, from_transaction.id) do
-        # Reload both transactions to get the linked_transaction_id and transaction_lines
-        # We call Repository.get_by_id directly here (within Repo.transaction) to reload
-        # the just-created transactions with their updated linked_transaction_id values.
-        # This is an exception to the Fetch* pattern since we're reloading within the same
-        # transaction context and don't need authorization checks.
-        # credo:disable-for-this-line
-        from_transaction = TransactionRepository.get_by_id(from_transaction.id, preload: [:transaction_lines])
-        # credo:disable-for-this-line
-        to_transaction = TransactionRepository.get_by_id(to_transaction.id, preload: [:transaction_lines])
-
+           {:ok, _updated_to} <- link_transaction(to_transaction, from_transaction.id),
+           # Reload both transactions to get the linked_transaction_id and transaction_lines
+           # Authorization is cached from the initial call, so this is efficient
+           {:ok, from_transaction} <-
+             FetchTransaction.call(scope, workspace, from_transaction.id, preload: [:transaction_lines]),
+           {:ok, to_transaction} <-
+             FetchTransaction.call(scope, workspace, to_transaction.id, preload: [:transaction_lines]) do
         {from_transaction, to_transaction}
       else
         {:error, reason} -> Repo.rollback(reason)
