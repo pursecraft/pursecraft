@@ -15,6 +15,7 @@ defmodule PurseCraft.Accounting do
   alias PurseCraft.Accounting.Commands.Payees.CreatePayee
   alias PurseCraft.Accounting.Commands.Payees.FindOrCreatePayee
   alias PurseCraft.Accounting.Commands.Transactions.CreateTransaction
+  alias PurseCraft.Accounting.Commands.Transactions.DeleteTransaction
   alias PurseCraft.Accounting.Commands.Transactions.UpdateTransaction
 
   @doc """
@@ -227,4 +228,25 @@ defmodule PurseCraft.Accounting do
   """
   # coveralls-ignore-next-line
   defdelegate update_transaction(scope, workspace, external_id, attrs), to: UpdateTransaction, as: :call
+
+  @doc """
+  Deletes a transaction from the workspace.
+
+  Transaction lines are automatically cascade-deleted.
+  Schedules cleanup for orphaned payees and search tokens.
+
+  ## Examples
+
+      iex> delete_transaction(scope, workspace, "txn-uuid")
+      {:ok, %Transaction{}}
+
+      iex> delete_transaction(scope, workspace, "invalid")
+      {:error, :not_found}
+
+      iex> delete_transaction(unauthorized_scope, workspace, "txn-uuid")
+      {:error, :unauthorized}
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate delete_transaction(scope, workspace, external_id), to: DeleteTransaction, as: :call
 end
