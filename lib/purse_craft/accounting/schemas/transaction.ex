@@ -68,11 +68,12 @@ defmodule PurseCraft.Accounting.Schemas.Transaction do
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(transaction, attrs) do
     transaction
-    |> cast(attrs, [:date, :amount, :memo, :cleared, :account_id, :payee_id, :workspace_id])
+    |> cast(attrs, [:date, :amount, :memo, :cleared, :account_id, :payee_id, :workspace_id, :linked_transaction_id])
     |> Utilities.put_hashed_field(:memo)
     |> validate_required([:date, :amount, :account_id, :workspace_id])
     |> foreign_key_constraint(:account_id)
     |> foreign_key_constraint(:payee_id)
     |> foreign_key_constraint(:workspace_id)
+    |> foreign_key_constraint(:linked_transaction_id)
   end
 end

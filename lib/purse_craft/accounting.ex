@@ -15,6 +15,7 @@ defmodule PurseCraft.Accounting do
   alias PurseCraft.Accounting.Commands.Payees.CreatePayee
   alias PurseCraft.Accounting.Commands.Payees.FindOrCreatePayee
   alias PurseCraft.Accounting.Commands.Transactions.CreateTransaction
+  alias PurseCraft.Accounting.Commands.Transactions.CreateTransfer
   alias PurseCraft.Accounting.Commands.Transactions.DeleteTransaction
   alias PurseCraft.Accounting.Commands.Transactions.UpdateTransaction
 
@@ -249,4 +250,36 @@ defmodule PurseCraft.Accounting do
   """
   # coveralls-ignore-next-line
   defdelegate delete_transaction(scope, workspace, external_id), to: DeleteTransaction, as: :call
+
+  @doc """
+  Creates a transfer between two accounts.
+
+  A transfer creates two linked transactions:
+  - Outflow from source account (negative amount)
+  - Inflow to destination account (positive amount)
+
+  Both transactions are linked bidirectionally and have no budget impact (envelope_id: nil).
+  The operation is atomic - either both succeed or both rollback.
+
+  ## Examples
+
+      iex> create_transfer(scope, workspace, %{
+      ...>   from_account: %Account{},
+      ...>   to_account: %Account{},
+      ...>   amount: 50000,
+      ...>   memo: "Monthly savings"
+      ...> })
+      {:ok, {%Transaction{amount: -50000}, %Transaction{amount: 50000}}}
+
+      iex> create_transfer(scope, workspace, %{
+      ...>   from_account: "account-uuid-1",
+      ...>   to_account: "account-uuid-2",
+      ...>   amount: 25000,
+      ...>   cleared: true
+      ...> })
+      {:ok, {%Transaction{cleared: true}, %Transaction{cleared: true}}}
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate create_transfer(scope, workspace, attrs), to: CreateTransfer, as: :call
 end
