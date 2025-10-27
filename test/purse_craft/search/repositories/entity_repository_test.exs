@@ -43,8 +43,8 @@ defmodule PurseCraft.Search.Repositories.EntityRepositoryTest do
     end
 
     test "loads category entities with match counts", %{workspace: workspace} do
-      category1 = BudgetingFactory.insert(:category, workspace: workspace)
-      category2 = BudgetingFactory.insert(:category, workspace: workspace)
+      category1 = BudgetingFactory.insert(:category, workspace: workspace, position: "a")
+      category2 = BudgetingFactory.insert(:category, workspace: workspace, position: "b")
 
       search_results = [
         %{entity_type: "category", entity_id: category1.id, match_count: 2},
@@ -120,7 +120,7 @@ defmodule PurseCraft.Search.Repositories.EntityRepositoryTest do
 
     test "loads mixed entity types with match counts", %{workspace: workspace} do
       account = AccountingFactory.insert(:account, workspace: workspace)
-      category = BudgetingFactory.insert(:category, workspace: workspace)
+      category = BudgetingFactory.insert(:category, workspace: workspace, position: "c")
       envelope = BudgetingFactory.insert(:envelope, category: category)
 
       search_results = [

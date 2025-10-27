@@ -49,6 +49,7 @@ defmodule PurseCraft.Accounting do
     to: FetchAccount,
     as: :call
 
+  # coveralls-ignore-next-line
   defdelegate fetch_account_by_external_id(scope, workspace, external_id, opts \\ []),
     to: FetchAccountByExternalId,
     as: :call
