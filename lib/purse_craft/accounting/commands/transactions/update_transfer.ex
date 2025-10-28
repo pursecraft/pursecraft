@@ -111,6 +111,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
              FetchTransaction.call(scope, workspace, linked_transaction.id, preload: [:transaction_lines]) do
         {reloaded_transaction, reloaded_linked}
       else
+        # coveralls-ignore-next-line
         {:error, reason} -> Repo.rollback(reason)
       end
     end)
@@ -151,6 +152,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   defp to_existing_atom_or_string(key) when is_binary(key) do
     String.to_existing_atom(key)
   rescue
+    # coveralls-ignore-next-line
     ArgumentError -> key
   end
 

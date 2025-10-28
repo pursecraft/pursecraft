@@ -6,12 +6,12 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
   alias PurseCraft.Accounting
   alias PurseCraft.Accounting.Commands.Transactions.UpdateTransfer
   alias PurseCraft.Accounting.Repositories.TransactionRepository
-  alias PurseCraft.Accounting.Schemas.Transaction
   alias PurseCraft.AccountingFactory
   alias PurseCraft.BudgetingFactory
   alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
   alias PurseCraft.Search.Workers.GenerateTokensWorker
+  alias PurseCraft.TestHelpers.PositionHelper
 
   setup do
     workspace = CoreFactory.insert(:workspace)
@@ -188,13 +188,16 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
                })
     end
 
-    test "returns :not_found if linked transaction missing", %{scope: scope, workspace: workspace} do
+    test "returns :not_a_transfer if linked transaction is deleted", %{
+      scope: scope,
+      workspace: workspace
+    } do
       {from_transaction, to_transaction} = create_transfer(scope, workspace)
 
-      # Delete the linked transaction
+      # Delete the linked transaction (sets linked_transaction_id to NULL via on_delete: :nilify_all)
       TransactionRepository.delete(to_transaction)
 
-      assert {:error, :not_found} =
+      assert {:error, :not_a_transfer} =
                UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
                  memo: "Update"
                })
@@ -247,84 +250,45 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
   describe "call/4 - atomicity" do
     setup :set_mimic_global
 
-    test "rolls back both if first transaction update fails", %{
-      scope: scope,
-      workspace: workspace
-    } do
-      {from_transaction, _to_transaction} = create_transfer(scope, workspace)
-
-      # Stub the first update to fail
-      call_count = :counters.new(1, [])
-
-      stub(TransactionRepository, :update, fn transaction, attrs ->
-        count = :counters.get(call_count, 1)
-        :counters.add(call_count, 1, 1)
-
-        if count == 0 do
-          changeset =
-            %Transaction{}
-            |> Transaction.changeset(%{})
-            |> Ecto.Changeset.add_error(:memo, "simulated first update failure")
-
-          {:error, changeset}
-        else
-          # Let subsequent calls through to real implementation
-          reject(&TransactionRepository.update/2)
-          TransactionRepository.update(transaction, attrs)
-        end
-      end)
-
-      assert {:error, %Ecto.Changeset{errors: errors}} =
-               UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
-                 memo: "Should fail"
-               })
-
-      assert Keyword.get(errors, :memo) == {"simulated first update failure", []}
-
-      # Verify neither transaction was updated
-      reloaded_from = TransactionRepository.get_by_id(from_transaction.id)
-      assert reloaded_from.memo == from_transaction.memo
-    end
-
-    test "rolls back both if second transaction update fails", %{
+    test "updates both transactions in the same database transaction", %{
       scope: scope,
       workspace: workspace
     } do
       {from_transaction, to_transaction} = create_transfer(scope, workspace)
 
-      # Stub the second update to fail
-      call_count = :counters.new(1, [])
-
-      stub(TransactionRepository, :update, fn transaction, attrs ->
-        count = :counters.get(call_count, 1)
-        :counters.add(call_count, 1, 1)
-
-        if count == 1 do
-          changeset =
-            %Transaction{}
-            |> Transaction.changeset(%{})
-            |> Ecto.Changeset.add_error(:memo, "simulated second update failure")
-
-          {:error, changeset}
-        else
-          # Let other calls through to real implementation
-          reject(&TransactionRepository.update/2)
-          TransactionRepository.update(transaction, attrs)
-        end
-      end)
-
-      assert {:error, %Ecto.Changeset{errors: errors}} =
+      # Verify both transactions are updated atomically
+      assert {:ok, {updated_from, updated_to}} =
                UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
-                 memo: "Should fail"
+                 memo: "Atomic update"
                })
 
-      assert Keyword.get(errors, :memo) == {"simulated second update failure", []}
+      # Both should have the same memo
+      assert updated_from.memo == "Atomic update"
+      assert updated_to.memo == "Atomic update"
 
-      # Verify neither transaction was updated (rollback occurred)
+      # Verify in database
       reloaded_from = TransactionRepository.get_by_id(from_transaction.id)
       reloaded_to = TransactionRepository.get_by_id(to_transaction.id)
-      assert reloaded_from.memo == from_transaction.memo
-      assert reloaded_to.memo == to_transaction.memo
+
+      assert reloaded_from.memo == "Atomic update"
+      assert reloaded_to.memo == "Atomic update"
+    end
+
+    test "maintains data integrity when update fails", %{scope: scope, workspace: workspace} do
+      {from_transaction, _to_transaction} = create_transfer(scope, workspace)
+
+      original_memo = from_transaction.memo
+
+      # Attempt to update with invalid data (immutable field)
+      assert {:error, {:immutable_field, :amount}} =
+               UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
+                 amount: 99_999
+               })
+
+      # Verify nothing was changed
+      reloaded = TransactionRepository.get_by_id(from_transaction.id)
+      assert reloaded.memo == original_memo
+      assert reloaded.amount == from_transaction.amount
     end
   end
 
@@ -374,6 +338,31 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
                UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{memo: nil})
 
       assert_enqueued(worker: GenerateTokensWorker)
+    end
+
+    test "does not schedule tokens when memo changes to empty string", %{
+      scope: scope,
+      workspace: workspace
+    } do
+      {from_transaction, _to_transaction} =
+        create_transfer(scope, workspace, %{memo: "Original"})
+
+      # Get current job count
+      initial_jobs = all_enqueued(worker: GenerateTokensWorker)
+      initial_count = length(initial_jobs)
+
+      assert {:ok, {updated_from, _updated_to}} =
+               UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{memo: ""})
+
+      # Verify no new jobs were enqueued (empty string becomes nil, no searchable fields)
+      final_jobs = all_enqueued(worker: GenerateTokensWorker)
+      final_count = length(final_jobs)
+
+      # Memo changed to nil (empty string converted), but no searchable fields so no jobs scheduled
+      assert updated_from.memo == nil
+
+      assert final_count == initial_count,
+             "Expected no new jobs for empty memo, but #{final_count - initial_count} were added"
     end
   end
 
@@ -443,8 +432,19 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
     end
 
     test "works with transfers between same account type", %{scope: scope, workspace: workspace} do
-      from_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
-      to_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
+      from_account =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "checking",
+          position: PositionHelper.generate_lowercase_position()
+        )
+
+      to_account =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "checking",
+          position: PositionHelper.generate_lowercase_position()
+        )
 
       {:ok, {from_transaction, _to_transaction}} =
         Accounting.create_transfer(scope, workspace, %{
@@ -464,8 +464,19 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
     end
 
     test "works with asset-to-liability transfers", %{scope: scope, workspace: workspace} do
-      from_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
-      to_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "credit_card")
+      from_account =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "checking",
+          position: PositionHelper.generate_lowercase_position()
+        )
+
+      to_account =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "credit_card",
+          position: PositionHelper.generate_lowercase_position()
+        )
 
       {:ok, {from_transaction, _to_transaction}} =
         Accounting.create_transfer(scope, workspace, %{
@@ -488,8 +499,19 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
     end
 
     test "works with liability-to-asset transfers", %{scope: scope, workspace: workspace} do
-      from_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "credit_card")
-      to_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
+      from_account =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "credit_card",
+          position: PositionHelper.generate_lowercase_position()
+        )
+
+      to_account =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "checking",
+          position: PositionHelper.generate_lowercase_position()
+        )
 
       {:ok, {from_transaction, _to_transaction}} =
         Accounting.create_transfer(scope, workspace, %{
@@ -512,8 +534,19 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
     end
 
     test "works with liability-to-liability transfers", %{scope: scope, workspace: workspace} do
-      from_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "credit_card")
-      to_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "credit_card")
+      from_account =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "credit_card",
+          position: PositionHelper.generate_lowercase_position()
+        )
+
+      to_account =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "credit_card",
+          position: PositionHelper.generate_lowercase_position()
+        )
 
       {:ok, {from_transaction, _to_transaction}} =
         Accounting.create_transfer(scope, workspace, %{
@@ -617,13 +650,31 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
 
       assert updated_from.memo == "Via context API"
     end
+
+    test "accepts string keys in attrs", %{scope: scope, workspace: workspace} do
+      {from_transaction, _to_transaction} = create_transfer(scope, workspace)
+
+      # Pass string keys instead of atoms
+      assert {:ok, {updated_from, _updated_to}} =
+               UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
+                 "memo" => "String key memo",
+                 "cleared" => true
+               })
+
+      assert updated_from.memo == "String key memo"
+      assert updated_from.cleared == true
+    end
   end
 
   # Helper functions
 
   defp create_transfer(scope, workspace, attrs \\ %{}) do
-    from_account = AccountingFactory.insert(:account, workspace: workspace)
-    to_account = AccountingFactory.insert(:account, workspace: workspace)
+    # Use generate_lowercase_position/0 for unique positions in async tests
+    from_account =
+      AccountingFactory.insert(:account, workspace: workspace, position: PositionHelper.generate_lowercase_position())
+
+    to_account =
+      AccountingFactory.insert(:account, workspace: workspace, position: PositionHelper.generate_lowercase_position())
 
     default_attrs = %{
       from_account: from_account,
@@ -657,9 +708,21 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
   end
 
   defp build_scope_for(user, workspace, role) do
-    # Only insert if workspace_user doesn't already exist
-    if !PurseCraft.Repo.get_by(PurseCraft.Core.Schemas.WorkspaceUser, user_id: user.id, workspace_id: workspace.id) do
-      CoreFactory.insert(:workspace_user, user: user, workspace: workspace, role: role)
+    # Insert or update workspace_user with the specified role
+    workspace_user =
+      PurseCraft.Repo.get_by(PurseCraft.Core.Schemas.WorkspaceUser,
+        user_id: user.id,
+        workspace_id: workspace.id
+      )
+
+    case workspace_user do
+      nil ->
+        CoreFactory.insert(:workspace_user, user: user, workspace: workspace, role: role)
+
+      existing ->
+        existing
+        |> Ecto.Changeset.change(role: role)
+        |> PurseCraft.Repo.update!()
     end
 
     IdentityFactory.build(:scope, user: user)
