@@ -64,7 +64,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
          {:ok, linked_transaction} <-
            fetch_linked_transaction(scope, workspace, transaction),
          {:ok, {updated_transaction, updated_linked}} <-
-           update_both_transactions(transaction, linked_transaction, normalized_attrs),
+           update_both_transactions(scope, workspace, transaction, linked_transaction, normalized_attrs),
          :ok <- maybe_schedule_search_tokens(transaction, updated_transaction, updated_linked, workspace),
          :ok <- broadcast_updates(workspace, updated_transaction, updated_linked) do
       {:ok, {updated_transaction, updated_linked}}
@@ -100,26 +100,20 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
     FetchTransaction.call(scope, workspace, id, preload: [:transaction_lines])
   end
 
-  defp update_both_transactions(transaction, linked_transaction, attrs) do
+  defp update_both_transactions(scope, workspace, transaction, linked_transaction, attrs) do
     Repo.transaction(fn ->
       with {:ok, _updated_transaction} <- TransactionRepository.update(transaction, attrs),
            {:ok, _updated_linked} <- TransactionRepository.update(linked_transaction, attrs),
+           # Authorization is cached from the initial call, so this is efficient
            {:ok, reloaded_transaction} <-
-             reload_with_preloads(transaction.id),
+             FetchTransaction.call(scope, workspace, transaction.id, preload: [:transaction_lines]),
            {:ok, reloaded_linked} <-
-             reload_with_preloads(linked_transaction.id) do
+             FetchTransaction.call(scope, workspace, linked_transaction.id, preload: [:transaction_lines]) do
         {reloaded_transaction, reloaded_linked}
       else
         {:error, reason} -> Repo.rollback(reason)
       end
     end)
-  end
-
-  defp reload_with_preloads(id) do
-    case TransactionRepository.get_by_id(id, preload: [:transaction_lines]) do
-      nil -> {:error, :not_found}
-      transaction -> {:ok, transaction}
-    end
   end
 
   defp maybe_schedule_search_tokens(old_transaction, new_transaction, new_linked, workspace) do
