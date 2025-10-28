@@ -210,22 +210,30 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
   end
 
   describe "call/4 - immutable field protection" do
-    test "blocks amount changes", %{scope: scope, workspace: workspace} do
+    test "allows amount changes with correct signs", %{scope: scope, workspace: workspace} do
       {from_transaction, _to_transaction} = create_transfer(scope, workspace)
 
-      assert {:error, {:immutable_field, :amount}} =
+      assert {:ok, {updated_from, updated_to}} =
                UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
                  amount: 50_000
                })
+
+      # Amount should be applied with correct signs (negative for outflow, positive for inflow)
+      assert abs(updated_from.amount) == 50_000
+      assert abs(updated_to.amount) == 50_000
+      assert updated_from.amount + updated_to.amount == 0
     end
 
-    test "blocks date changes", %{scope: scope, workspace: workspace} do
+    test "allows date changes", %{scope: scope, workspace: workspace} do
       {from_transaction, _to_transaction} = create_transfer(scope, workspace)
 
-      assert {:error, {:immutable_field, :date}} =
+      assert {:ok, {updated_from, updated_to}} =
                UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
                  date: ~D[2025-01-01]
                })
+
+      assert updated_from.date == ~D[2025-01-01]
+      assert updated_to.date == ~D[2025-01-01]
     end
 
     test "blocks account_id changes", %{scope: scope, workspace: workspace} do
@@ -277,18 +285,15 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
     test "maintains data integrity when update fails", %{scope: scope, workspace: workspace} do
       {from_transaction, _to_transaction} = create_transfer(scope, workspace)
 
-      original_memo = from_transaction.memo
-
-      # Attempt to update with invalid data (immutable field)
-      assert {:error, {:immutable_field, :amount}} =
+      # Try to change an immutable field - should fail validation before transaction
+      assert {:error, {:immutable_field, :workspace_id}} =
                UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
-                 amount: 99_999
+                 workspace_id: 99_999
                })
 
-      # Verify nothing was changed
+      # Verify the transaction wasn't modified
       reloaded = TransactionRepository.get_by_id(from_transaction.id)
-      assert reloaded.memo == original_memo
-      assert reloaded.amount == from_transaction.amount
+      assert reloaded.workspace_id == from_transaction.workspace_id
     end
   end
 

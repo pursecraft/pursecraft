@@ -2,8 +2,9 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   @moduledoc """
   Updates both sides of a transfer synchronously.
 
-  Only allows updating memo and cleared status to maintain transfer integrity.
-  Amount, date, and account changes are blocked.
+  Allows updating memo, cleared status, amount, and date. Changes to amount
+  are applied to both sides of the transfer. Account changes are blocked to
+  maintain transfer integrity.
 
   Both sides of the transfer are updated atomically - either both succeed or
   both rollback. Search tokens are regenerated if memo changes, and PubSub
@@ -18,14 +19,17 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
       {:ok, {%Transaction{cleared: true}, %Transaction{cleared: true}}}
 
       iex> call(scope, workspace, "txn-uuid", %{amount: 50000})
-      {:error, {:immutable_field, :amount}}
+      {:ok, {%Transaction{amount: -50000}, %Transaction{amount: 50000}}}
+
+      iex> call(scope, workspace, "txn-uuid", %{account_id: 123})
+      {:error, {:immutable_field, :account_id}}
 
   ## Errors
 
   - `{:error, :not_found}` - Transaction doesn't exist or linked transaction missing
   - `{:error, :unauthorized}` - User lacks editor/owner permission
   - `{:error, :not_a_transfer}` - Transaction is not part of a transfer
-  - `{:error, {:immutable_field, field}}` - Attempted to change blocked field
+  - `{:error, {:immutable_field, field}}` - Attempted to change blocked field (account_id, workspace_id)
   """
 
   alias PurseCraft.Accounting.Commands.Transactions.FetchTransaction
@@ -39,11 +43,13 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   alias PurseCraft.Search.Workers.GenerateTokensWorker
   alias PurseCraft.Utilities
 
-  @immutable_fields [:amount, :date, :account_id, :workspace_id]
+  @immutable_fields [:account_id, :workspace_id]
 
   @type update_attrs :: %{
           optional(:memo) => String.t() | nil,
-          optional(:cleared) => boolean()
+          optional(:cleared) => boolean(),
+          optional(:amount) => pos_integer(),
+          optional(:date) => Date.t()
         }
 
   @spec call(
@@ -57,7 +63,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
 
   def call(scope, workspace, transaction_ref, attrs) do
     with :ok <- Policy.authorize(:transaction_update, scope, %{workspace: workspace}),
-         normalized_attrs = normalize_attrs(attrs),
+         normalized_attrs = Utilities.atomize_keys(attrs),
          :ok <- validate_no_immutable_fields(normalized_attrs),
          {:ok, transaction} <- FetchTransaction.call(scope, workspace, transaction_ref),
          :ok <- validate_is_transfer(transaction),
@@ -72,12 +78,6 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   end
 
   # Private functions
-
-  defp normalize_attrs(attrs) do
-    attrs
-    |> Map.new(fn {k, v} -> {to_existing_atom_or_string(k), v} end)
-    |> Map.new()
-  end
 
   defp validate_no_immutable_fields(attrs) do
     invalid =
@@ -102,8 +102,13 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
 
   defp update_both_transactions(scope, workspace, transaction, linked_transaction, attrs) do
     Repo.transaction(fn ->
-      with {:ok, _updated_transaction} <- TransactionRepository.update(transaction, attrs),
-           {:ok, _updated_linked} <- TransactionRepository.update(linked_transaction, attrs),
+      # Prepare attrs with correct signs for each transaction
+      transaction_attrs = prepare_attrs_for_transaction(attrs, transaction)
+      linked_attrs = prepare_attrs_for_transaction(attrs, linked_transaction)
+
+      # Update both transactions (with lines if amount changed)
+      with {:ok, _updated_transaction} <- update_transaction_and_lines(transaction, transaction_attrs),
+           {:ok, _updated_linked} <- update_transaction_and_lines(linked_transaction, linked_attrs),
            # Authorization is cached from the initial call, so this is efficient
            {:ok, reloaded_transaction} <-
              FetchTransaction.call(scope, workspace, transaction.id, preload: [:transaction_lines]),
@@ -115,6 +120,35 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
         {:error, reason} -> Repo.rollback(reason)
       end
     end)
+  end
+
+  defp prepare_attrs_for_transaction(attrs, transaction) do
+    case Map.get(attrs, :amount) do
+      nil ->
+        # No amount change
+        attrs
+
+      amount ->
+        # Apply correct sign based on current transaction's sign
+        signed_amount = if transaction.amount < 0, do: -abs(amount), else: abs(amount)
+        Map.put(attrs, :amount, signed_amount)
+    end
+  end
+
+  defp update_transaction_and_lines(transaction, attrs) do
+    case Map.get(attrs, :amount) do
+      nil ->
+        # No amount change, simple update
+        TransactionRepository.update(transaction, attrs)
+
+      amount ->
+        # Amount is changing - need to update both transaction and its line
+        # Amount already has correct sign from prepare_attrs_for_transaction
+        # Transfer transactions have exactly one line that matches the transaction amount
+        line_attrs = [%{amount: amount}]
+
+        TransactionRepository.update_with_lines(transaction, attrs, line_attrs)
+    end
   end
 
   defp maybe_schedule_search_tokens(old_transaction, new_transaction, new_linked, workspace) do
@@ -148,13 +182,4 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
     PubSub.broadcast_workspace(workspace, {:transaction_updated, linked_transaction})
     :ok
   end
-
-  defp to_existing_atom_or_string(key) when is_binary(key) do
-    String.to_existing_atom(key)
-  rescue
-    # coveralls-ignore-next-line
-    ArgumentError -> key
-  end
-
-  defp to_existing_atom_or_string(key), do: key
 end
