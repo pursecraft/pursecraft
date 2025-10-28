@@ -236,22 +236,32 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
       assert updated_to.date == ~D[2025-01-01]
     end
 
-    test "blocks account_id changes", %{scope: scope, workspace: workspace} do
+    test "silently ignores account_id changes", %{scope: scope, workspace: workspace} do
       {from_transaction, _to_transaction} = create_transfer(scope, workspace)
+      original_account_id = from_transaction.account_id
 
-      assert {:error, {:immutable_field, :account_id}} =
+      # Repository silently drops account_id from attrs
+      assert {:ok, {updated_from, _updated_to}} =
                UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
                  account_id: 999
                })
+
+      # account_id should remain unchanged
+      assert updated_from.account_id == original_account_id
     end
 
-    test "blocks workspace_id changes", %{scope: scope, workspace: workspace} do
+    test "silently ignores workspace_id changes", %{scope: scope, workspace: workspace} do
       {from_transaction, _to_transaction} = create_transfer(scope, workspace)
+      original_workspace_id = from_transaction.workspace_id
 
-      assert {:error, {:immutable_field, :workspace_id}} =
+      # Repository silently drops workspace_id from attrs
+      assert {:ok, {updated_from, _updated_to}} =
                UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
                  workspace_id: 999
                })
+
+      # workspace_id should remain unchanged
+      assert updated_from.workspace_id == original_workspace_id
     end
   end
 
@@ -285,15 +295,15 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
     test "maintains data integrity when update fails", %{scope: scope, workspace: workspace} do
       {from_transaction, _to_transaction} = create_transfer(scope, workspace)
 
-      # Try to change an immutable field - should fail validation before transaction
-      assert {:error, {:immutable_field, :workspace_id}} =
+      # Try to update with invalid data - use an invalid date
+      assert {:error, _changeset} =
                UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
-                 workspace_id: 99_999
+                 date: nil
                })
 
       # Verify the transaction wasn't modified
       reloaded = TransactionRepository.get_by_id(from_transaction.id)
-      assert reloaded.workspace_id == from_transaction.workspace_id
+      assert reloaded.date == from_transaction.date
     end
   end
 

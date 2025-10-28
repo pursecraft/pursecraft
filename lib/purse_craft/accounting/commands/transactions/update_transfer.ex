@@ -3,8 +3,9 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   Updates both sides of a transfer synchronously.
 
   Allows updating memo, cleared status, amount, and date. Changes to amount
-  are applied to both sides of the transfer. Account changes are blocked to
-  maintain transfer integrity.
+  are applied to both sides of the transfer with correct signs (negative for
+  outflow, positive for inflow). Account and workspace changes are silently
+  ignored by the repository to maintain transfer integrity.
 
   Both sides of the transfer are updated atomically - either both succeed or
   both rollback. Search tokens are regenerated if memo changes, and PubSub
@@ -21,15 +22,11 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
       iex> call(scope, workspace, "txn-uuid", %{amount: 50000})
       {:ok, {%Transaction{amount: -50000}, %Transaction{amount: 50000}}}
 
-      iex> call(scope, workspace, "txn-uuid", %{account_id: 123})
-      {:error, {:immutable_field, :account_id}}
-
   ## Errors
 
   - `{:error, :not_found}` - Transaction doesn't exist or linked transaction missing
   - `{:error, :unauthorized}` - User lacks editor/owner permission
   - `{:error, :not_a_transfer}` - Transaction is not part of a transfer
-  - `{:error, {:immutable_field, field}}` - Attempted to change blocked field (account_id, workspace_id)
   """
 
   alias PurseCraft.Accounting.Commands.Transactions.FetchTransaction
@@ -42,8 +39,6 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   alias PurseCraft.Repo
   alias PurseCraft.Search.Workers.GenerateTokensWorker
   alias PurseCraft.Utilities
-
-  @immutable_fields [:account_id, :workspace_id]
 
   @type update_attrs :: %{
           optional(:memo) => String.t() | nil,
@@ -59,12 +54,11 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
           update_attrs()
         ) ::
           {:ok, {Transaction.t(), Transaction.t()}}
-          | {:error, :not_found | :unauthorized | :not_a_transfer | {:immutable_field, atom()}}
+          | {:error, :not_found | :unauthorized | :not_a_transfer}
 
   def call(scope, workspace, transaction_ref, attrs) do
     with :ok <- Policy.authorize(:transaction_update, scope, %{workspace: workspace}),
          normalized_attrs = Utilities.atomize_keys(attrs),
-         :ok <- validate_no_immutable_fields(normalized_attrs),
          {:ok, transaction} <- FetchTransaction.call(scope, workspace, transaction_ref),
          :ok <- validate_is_transfer(transaction),
          {:ok, linked_transaction} <-
@@ -78,19 +72,6 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   end
 
   # Private functions
-
-  defp validate_no_immutable_fields(attrs) do
-    invalid =
-      attrs
-      |> Map.keys()
-      |> Enum.filter(&(&1 in @immutable_fields))
-
-    if invalid == [] do
-      :ok
-    else
-      {:error, {:immutable_field, Enum.at(invalid, 0)}}
-    end
-  end
 
   defp validate_is_transfer(%Transaction{linked_transaction_id: nil}), do: {:error, :not_a_transfer}
 
