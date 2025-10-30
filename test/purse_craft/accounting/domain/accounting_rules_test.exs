@@ -3,6 +3,7 @@ defmodule PurseCraft.Accounting.Domain.AccountingRulesTest do
 
   alias PurseCraft.Accounting.Domain.AccountingRules
   alias PurseCraft.Accounting.Schemas.Account
+  alias PurseCraft.Accounting.Schemas.Transaction
 
   describe "asset_account?/1" do
     test "returns true for checking account" do
@@ -262,6 +263,145 @@ defmodule PurseCraft.Accounting.Domain.AccountingRulesTest do
 
       assert AccountingRules.transfer_amount(credit_card, amount, :source) == 100_000
       assert AccountingRules.transfer_amount(line_of_credit, amount, :destination) == -100_000
+    end
+  end
+
+  describe "infer_transfer_direction/1" do
+    test "asset with negative amount is :source" do
+      checking = %Account{account_type: "checking"}
+      transaction = %Transaction{account: checking, amount: -10_000}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :source
+    end
+
+    test "asset with positive amount is :destination" do
+      savings = %Account{account_type: "savings"}
+      transaction = %Transaction{account: savings, amount: 5_000}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :destination
+    end
+
+    test "asset with zero amount is :destination" do
+      checking = %Account{account_type: "checking"}
+      transaction = %Transaction{account: checking, amount: 0}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :destination
+    end
+
+    test "liability with positive amount is :source" do
+      credit_card = %Account{account_type: "credit_card"}
+      transaction = %Transaction{account: credit_card, amount: 10_000}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :source
+    end
+
+    test "liability with negative amount is :destination" do
+      line_of_credit = %Account{account_type: "line_of_credit"}
+      transaction = %Transaction{account: line_of_credit, amount: -15_000}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :destination
+    end
+
+    test "liability with zero amount is :destination" do
+      credit_card = %Account{account_type: "credit_card"}
+      transaction = %Transaction{account: credit_card, amount: 0}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :destination
+    end
+
+    test "checking account source (negative amount)" do
+      checking = %Account{account_type: "checking"}
+      transaction = %Transaction{account: checking, amount: -50_000}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :source
+    end
+
+    test "checking account destination (positive amount)" do
+      checking = %Account{account_type: "checking"}
+      transaction = %Transaction{account: checking, amount: 50_000}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :destination
+    end
+
+    test "cash account source (negative amount)" do
+      cash = %Account{account_type: "cash"}
+      transaction = %Transaction{account: cash, amount: -1_000}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :source
+    end
+
+    test "mortgage source (positive amount)" do
+      mortgage = %Account{account_type: "mortgage"}
+      transaction = %Transaction{account: mortgage, amount: 100_000}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :source
+    end
+
+    test "mortgage destination (negative amount)" do
+      mortgage = %Account{account_type: "mortgage"}
+      transaction = %Transaction{account: mortgage, amount: -100_000}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :destination
+    end
+
+    test "auto loan source (positive amount)" do
+      auto_loan = %Account{account_type: "auto_loan"}
+      transaction = %Transaction{account: auto_loan, amount: 5_000}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :source
+    end
+
+    test "student loan destination (negative amount)" do
+      student_loan = %Account{account_type: "student_loan"}
+      transaction = %Transaction{account: student_loan, amount: -10_000}
+
+      assert AccountingRules.infer_transfer_direction(transaction) == :destination
+    end
+  end
+
+  describe "infer_transfer_direction/1 scenario tests" do
+    test "asset to asset: checking (source) to savings (destination)" do
+      checking = %Account{account_type: "checking"}
+      savings = %Account{account_type: "savings"}
+
+      from_transaction = %Transaction{account: checking, amount: -10_000}
+      to_transaction = %Transaction{account: savings, amount: 10_000}
+
+      assert AccountingRules.infer_transfer_direction(from_transaction) == :source
+      assert AccountingRules.infer_transfer_direction(to_transaction) == :destination
+    end
+
+    test "asset to liability: checking (source) to credit card (destination)" do
+      checking = %Account{account_type: "checking"}
+      credit_card = %Account{account_type: "credit_card"}
+
+      from_transaction = %Transaction{account: checking, amount: -15_000}
+      to_transaction = %Transaction{account: credit_card, amount: -15_000}
+
+      assert AccountingRules.infer_transfer_direction(from_transaction) == :source
+      assert AccountingRules.infer_transfer_direction(to_transaction) == :destination
+    end
+
+    test "liability to asset: credit card (source) to checking (destination)" do
+      credit_card = %Account{account_type: "credit_card"}
+      checking = %Account{account_type: "checking"}
+
+      from_transaction = %Transaction{account: credit_card, amount: 20_000}
+      to_transaction = %Transaction{account: checking, amount: 20_000}
+
+      assert AccountingRules.infer_transfer_direction(from_transaction) == :source
+      assert AccountingRules.infer_transfer_direction(to_transaction) == :destination
+    end
+
+    test "liability to liability: credit card (source) to line of credit (destination)" do
+      credit_card = %Account{account_type: "credit_card"}
+      line_of_credit = %Account{account_type: "line_of_credit"}
+
+      from_transaction = %Transaction{account: credit_card, amount: 50_000}
+      to_transaction = %Transaction{account: line_of_credit, amount: -50_000}
+
+      assert AccountingRules.infer_transfer_direction(from_transaction) == :source
+      assert AccountingRules.infer_transfer_direction(to_transaction) == :destination
     end
   end
 end

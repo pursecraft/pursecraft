@@ -53,6 +53,8 @@ defmodule PurseCraft.Core.Commands.Workspaces.CreateWorkspaceTest do
       attrs = %{name: "Unauthorized Workspace"}
 
       assert {:error, :unauthorized} = CreateWorkspace.call(scope, attrs)
+
+      verify!()
     end
 
     test "Invokes BroadcastUserWorkspace when workspace is created successfully", %{scope: scope} do

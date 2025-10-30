@@ -13,7 +13,6 @@ defmodule PurseCraftWeb.WorkspaceLive.IndexTest do
 
   describe "List Workspaces" do
     test "returns all scoped workspaces", %{conn: conn, user: user} do
-      # Stub PubSub calls to prevent connection leaks
       stub(PubSub, :subscribe_user_workspaces, fn _scope -> :ok end)
 
       workspace = CoreFactory.insert(:workspace, name: "Workspace 1")
@@ -25,12 +24,13 @@ defmodule PurseCraftWeb.WorkspaceLive.IndexTest do
       assert html =~ "Listing Workspaces"
       assert html =~ "Workspace 1"
       refute html =~ "Workspace 2"
+
+      verify!()
     end
   end
 
   describe "Create Workspace" do
     test "with valid data creates new workspace", %{conn: conn} do
-      # Stub PubSub calls to prevent connection leaks
       stub(PubSub, :subscribe_user_workspaces, fn _scope -> :ok end)
 
       attrs = %{
@@ -56,6 +56,8 @@ defmodule PurseCraftWeb.WorkspaceLive.IndexTest do
       html = render(index_live)
       assert html =~ "Workspace created successfully"
       assert html =~ "Some Workspace"
+
+      verify!()
     end
 
     test "with blank name returns error", %{conn: conn} do
@@ -142,17 +144,18 @@ defmodule PurseCraftWeb.WorkspaceLive.IndexTest do
 
   describe "Delete Workspace" do
     test "deleting non-existent workspace returns flash error", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/workspaces")
-
       stub(Core, :fetch_workspace_by_external_id, fn _scope, _id, _opts ->
         {:error, :not_found}
       end)
 
+      {:ok, view, _html} = live(conn, ~p"/workspaces")
+
       result = render_hook(view, "delete", %{"external_id" => Ecto.UUID.generate()})
 
       assert has_element?(view, "#flash-error")
-
       assert result =~ "flash-error"
+
+      verify!()
     end
 
     test "with unauthorized scope returns flash error", %{conn: conn, user: user} do
@@ -171,16 +174,18 @@ defmodule PurseCraftWeb.WorkspaceLive.IndexTest do
       workspace = CoreFactory.insert(:workspace)
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
 
-      {:ok, view, _html} = live(conn, ~p"/workspaces")
-
       stub(Core, :delete_workspace, fn _scope, _workspace ->
         {:error, :some_error}
       end)
+
+      {:ok, view, _html} = live(conn, ~p"/workspaces")
 
       render_hook(view, "delete", %{"external_id" => workspace.external_id})
 
       assert has_element?(view, "#flash-error")
       assert render(view) =~ "Failed to delete workspace"
+
+      verify!()
     end
 
     test "with owner role and associated workspace deletes workspace in listing", %{conn: conn, user: user} do

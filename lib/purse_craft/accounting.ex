@@ -18,6 +18,7 @@ defmodule PurseCraft.Accounting do
   alias PurseCraft.Accounting.Commands.Transactions.CreateTransfer
   alias PurseCraft.Accounting.Commands.Transactions.DeleteTransaction
   alias PurseCraft.Accounting.Commands.Transactions.UpdateTransaction
+  alias PurseCraft.Accounting.Commands.Transactions.UpdateTransfer
 
   @doc """
   Creates an account and associates it with the given `Workspace`.
@@ -282,4 +283,41 @@ defmodule PurseCraft.Accounting do
   """
   # coveralls-ignore-next-line
   defdelegate create_transfer(scope, workspace, attrs), to: CreateTransfer, as: :call
+
+  @doc """
+  Updates a transfer between two accounts.
+
+  Allows updating memo, cleared status, amount, and date. Changes to amount are
+  applied to both sides with correct signs based on account types. Account and
+  workspace changes are silently ignored to maintain transfer integrity.
+
+  Both sides of the transfer are updated synchronously - either both succeed
+  or both rollback. Search tokens are regenerated if memo changes, and
+  PubSub events are broadcast for both transactions.
+
+  ## Examples
+
+      iex> update_transfer(scope, workspace, "txn-uuid", %{memo: "Updated memo"})
+      {:ok, {%Transaction{memo: "Updated memo"}, %Transaction{memo: "Updated memo"}}}
+
+      iex> update_transfer(scope, workspace, "txn-uuid", %{cleared: true})
+      {:ok, {%Transaction{cleared: true}, %Transaction{cleared: true}}}
+
+      iex> update_transfer(scope, workspace, "txn-uuid", %{amount: 50000})
+      {:ok, {%Transaction{amount: -50000}, %Transaction{amount: 50000}}}
+
+      iex> update_transfer(scope, workspace, "txn-uuid", %{date: ~D[2025-01-15]})
+      {:ok, {%Transaction{date: ~D[2025-01-15]}, %Transaction{date: ~D[2025-01-15]}}}
+
+  ## Errors
+
+  - `{:error, :not_found}` - Transaction doesn't exist or linked transaction missing
+  - `{:error, :unauthorized}` - User lacks editor/owner permission
+  - `{:error, :not_a_transfer}` - Transaction is not part of a transfer
+
+  """
+  # coveralls-ignore-next-line
+  defdelegate update_transfer(scope, workspace, transaction_external_id, attrs),
+    to: UpdateTransfer,
+    as: :call
 end

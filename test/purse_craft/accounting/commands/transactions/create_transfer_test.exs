@@ -9,6 +9,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
   alias PurseCraft.AccountingFactory
   alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
+  alias PurseCraft.TestHelpers.PositionHelper
 
   setup do
     workspace = CoreFactory.insert(:workspace)
@@ -276,7 +277,12 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
       to_account: to_account
     } do
       other_workspace = CoreFactory.insert(:workspace)
-      other_account = AccountingFactory.insert(:account, workspace: other_workspace)
+
+      other_account =
+        AccountingFactory.insert(:account,
+          workspace: other_workspace,
+          position: PositionHelper.generate_lowercase_position()
+        )
 
       attrs = %{
         from_account: other_account.id,
@@ -294,7 +300,12 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
       from_account: from_account
     } do
       other_workspace = CoreFactory.insert(:workspace)
-      other_account = AccountingFactory.insert(:account, workspace: other_workspace)
+
+      other_account =
+        AccountingFactory.insert(:account,
+          workspace: other_workspace,
+          position: PositionHelper.generate_lowercase_position()
+        )
 
       attrs = %{
         from_account: from_account,
@@ -527,8 +538,19 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
       workspace: workspace,
       scope: scope
     } do
-      checking = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
-      savings = AccountingFactory.insert(:account, workspace: workspace, account_type: "savings")
+      checking =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "checking",
+          position: PositionHelper.generate_lowercase_position()
+        )
+
+      savings =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "savings",
+          position: PositionHelper.generate_lowercase_position()
+        )
 
       attrs = %{
         from_account: checking,
@@ -550,8 +572,19 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
       workspace: workspace,
       scope: scope
     } do
-      checking = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
-      credit_card = AccountingFactory.insert(:account, workspace: workspace, account_type: "credit_card")
+      checking =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "checking",
+          position: PositionHelper.generate_lowercase_position()
+        )
+
+      credit_card =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "credit_card",
+          position: PositionHelper.generate_lowercase_position()
+        )
 
       attrs = %{
         from_account: checking,
@@ -573,8 +606,19 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
       workspace: workspace,
       scope: scope
     } do
-      credit_card = AccountingFactory.insert(:account, workspace: workspace, account_type: "credit_card")
-      checking = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
+      credit_card =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "credit_card",
+          position: PositionHelper.generate_lowercase_position()
+        )
+
+      checking =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "checking",
+          position: PositionHelper.generate_lowercase_position()
+        )
 
       attrs = %{
         from_account: credit_card,
@@ -596,8 +640,17 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
       workspace: workspace,
       scope: scope
     } do
-      credit_card_a = AccountingFactory.insert(:account, workspace: workspace, account_type: "credit_card")
-      credit_card_b = AccountingFactory.insert(:account, workspace: workspace, account_type: "line_of_credit")
+      credit_card_a =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "credit_card"
+        )
+
+      credit_card_b =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "line_of_credit"
+        )
 
       attrs = %{
         from_account: credit_card_a,
@@ -622,8 +675,17 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
       asset_types = ["checking", "savings", "cash", "asset"]
 
       for account_type <- asset_types do
-        from_account = AccountingFactory.insert(:account, workspace: workspace, account_type: account_type)
-        to_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
+        from_account =
+          AccountingFactory.insert(:account,
+            workspace: workspace,
+            account_type: account_type
+          )
+
+        to_account =
+          AccountingFactory.insert(:account,
+            workspace: workspace,
+            account_type: "checking"
+          )
 
         attrs = %{
           from_account: from_account,
@@ -653,12 +715,19 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
         "liability"
       ]
 
-      checking = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
+      checking =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "checking"
+        )
 
       for account_type <- liability_types do
-        liability_account = AccountingFactory.insert(:account, workspace: workspace, account_type: account_type)
+        liability_account =
+          AccountingFactory.insert(:account,
+            workspace: workspace,
+            account_type: account_type
+          )
 
-        # Asset to Liability: paying off debt
         attrs = %{
           from_account: checking,
           to_account: liability_account,

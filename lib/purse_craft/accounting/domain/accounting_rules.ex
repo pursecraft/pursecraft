@@ -25,6 +25,7 @@ defmodule PurseCraft.Accounting.Domain.AccountingRules do
 
   alias PurseCraft.Accounting.Constants
   alias PurseCraft.Accounting.Schemas.Account
+  alias PurseCraft.Accounting.Schemas.Transaction
 
   @asset_account_types Constants.asset_account_types()
   @liability_account_types Constants.liability_account_types()
@@ -126,6 +127,56 @@ defmodule PurseCraft.Accounting.Domain.AccountingRules do
       amount
     else
       -amount
+    end
+  end
+
+  @doc """
+  Infers the transfer direction (`:source` or `:destination`) from an existing transaction.
+
+  This is used when updating transfers to determine which direction the money is flowing,
+  based on the transaction's current amount sign and account type.
+
+  ## Logic
+
+  The transfer direction is inferred from the combination of account type and amount sign:
+
+  - **Asset account with negative amount** → `:source` (money leaving the account)
+  - **Asset account with positive amount** → `:destination` (money arriving at the account)
+  - **Liability account with positive amount** → `:source` (debt decreasing/being paid off)
+  - **Liability account with negative amount** → `:destination` (debt increasing/borrowing more)
+
+  ## Examples
+
+      # Asset source (checking account losing money)
+      iex> transaction = %Transaction{amount: -10_000, account: %Account{account_type: "checking"}}
+      iex> infer_transfer_direction(transaction)
+      :source
+
+      # Asset destination (savings account gaining money)
+      iex> transaction = %Transaction{amount: 10_000, account: %Account{account_type: "savings"}}
+      iex> infer_transfer_direction(transaction)
+      :destination
+
+      # Liability source (credit card debt being paid down)
+      iex> transaction = %Transaction{amount: 10_000, account: %Account{account_type: "credit_card"}}
+      iex> infer_transfer_direction(transaction)
+      :source
+
+      # Liability destination (credit card debt increasing)
+      iex> transaction = %Transaction{amount: -10_000, account: %Account{account_type: "credit_card"}}
+      iex> infer_transfer_direction(transaction)
+      :destination
+
+  """
+  @spec infer_transfer_direction(Transaction.t()) :: :source | :destination
+  def infer_transfer_direction(%Transaction{account: account, amount: amount}) do
+    is_asset = asset_account?(account)
+
+    cond do
+      is_asset and amount < 0 -> :source
+      is_asset and amount >= 0 -> :destination
+      not is_asset and amount > 0 -> :source
+      not is_asset and amount <= 0 -> :destination
     end
   end
 end

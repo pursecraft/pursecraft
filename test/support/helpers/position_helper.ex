@@ -7,10 +7,33 @@ defmodule PurseCraft.TestHelpers.PositionHelper do
   """
 
   @doc """
-  Generates lowercase letter positions for fractional indexing.
+  Generates a unique lowercase letter position for async tests.
+
+  Uses `System.unique_integer/1` to generate a globally unique integer,
+  then converts it to a fractional position. This is useful for async tests
+  where factory sequences may collide within workspace-scoped uniqueness
+  constraints.
+
+  ## Examples
+
+      iex> pos = PositionHelper.generate_lowercase_position()
+      iex> is_binary(pos)
+      true
+
+  """
+  @spec generate_lowercase_position() :: String.t()
+  def generate_lowercase_position do
+    [:positive, :monotonic]
+    |> System.unique_integer()
+    |> generate_lowercase_position()
+  end
+
+  @doc """
+  Generates lowercase letter positions for fractional indexing based on a sequence number.
 
   Starts with "m" as the middle position, then alternates between positions
-  before and after "m" to create a balanced distribution.
+  before and after "m" to create a balanced distribution. This is primarily
+  used by factory sequences for deterministic positioning.
 
   ## Examples
 
