@@ -1,7 +1,6 @@
 defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
-  use PurseCraft.DataCase, async: false
-
-  import Mimic
+  use PurseCraft.DataCase, async: true
+  use Mimic
 
   alias PurseCraft.Accounting.Commands.Transactions.CreateTransfer
   alias PurseCraft.Accounting.Repositories.TransactionRepository

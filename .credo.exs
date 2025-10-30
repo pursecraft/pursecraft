@@ -56,7 +56,8 @@
         ".credo/checks/pursecraft/no_repo_crud_in_command.ex",
         ".credo/checks/pursecraft/no_cross_context_dependency.ex",
         ".credo/checks/pursecraft/no_policy_outside_command.ex",
-        ".credo/checks/pursecraft/no_direct_repository_get_in_command.ex"
+        ".credo/checks/pursecraft/no_direct_repository_get_in_command.ex",
+        ".credo/checks/pursecraft/require_async_tests.ex"
       ],
       #
       # If you want to enforce a style guide and need a more traditional linting
@@ -163,6 +164,7 @@
           {Credo.Check.PurseCraft.NoCrossContextDependency, []},
           {Credo.Check.PurseCraft.NoPolicyOutsideCommand, []},
           {Credo.Check.PurseCraft.NoDirectRepositoryGetInCommand, []},
+          {Credo.Check.PurseCraft.RequireAsyncTests, []},
 
           #
           ## Refactoring Opportunities
