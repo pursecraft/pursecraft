@@ -69,8 +69,6 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
     end
   end
 
-  # Private functions
-
   defp validate_is_transfer(%Transaction{linked_transaction_id: nil}), do: {:error, :not_a_transfer}
 
   defp validate_is_transfer(%Transaction{}), do: :ok
@@ -81,21 +79,17 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
 
   defp update_both_transactions(scope, workspace, transaction, linked_transaction, attrs) do
     Repo.transaction(fn ->
-      # Prepare attrs with correct signs for each transaction
       transaction_attrs = prepare_attrs_for_transaction(attrs, transaction)
       linked_attrs = prepare_attrs_for_transaction(attrs, linked_transaction)
 
-      # Update both transactions (with lines if amount changed)
       with {:ok, _updated_transaction} <- update_transaction_and_lines(transaction, transaction_attrs),
            {:ok, _updated_linked} <- update_transaction_and_lines(linked_transaction, linked_attrs),
-           # Authorization is cached from the initial call, so this is efficient
            {:ok, reloaded_transaction} <-
              FetchTransaction.call(scope, workspace, transaction.id, preload: [:transaction_lines]),
            {:ok, reloaded_linked} <-
              FetchTransaction.call(scope, workspace, linked_transaction.id, preload: [:transaction_lines]) do
         {reloaded_transaction, reloaded_linked}
       else
-        # coveralls-ignore-next-line
         {:error, reason} -> Repo.rollback(reason)
       end
     end)
@@ -104,12 +98,9 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   defp prepare_attrs_for_transaction(attrs, transaction) do
     case Map.get(attrs, :amount) do
       nil ->
-        # No amount change requested
         attrs
 
       amount when amount > 0 ->
-        # Use AccountingRules to calculate the correct sign based on account type and direction.
-        # The direction is inferred from the current transaction's sign and account type.
         direction = AccountingRules.infer_transfer_direction(transaction)
         signed_amount = AccountingRules.transfer_amount(transaction.account, amount, direction)
         Map.put(attrs, :amount, signed_amount)
@@ -119,15 +110,10 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   defp update_transaction_and_lines(transaction, attrs) do
     case Map.get(attrs, :amount) do
       nil ->
-        # No amount change, simple update
         TransactionRepository.update(transaction, attrs)
 
       amount when is_integer(amount) ->
-        # Amount is changing - need to update both transaction and its line
-        # Amount already has correct sign from prepare_attrs_for_transaction
-        # Transfer transactions have exactly one line that matches the transaction amount
         line_attrs = [%{amount: amount}]
-
         TransactionRepository.update_with_lines(transaction, attrs, line_attrs)
     end
   end
