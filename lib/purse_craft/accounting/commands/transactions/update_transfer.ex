@@ -30,6 +30,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   """
 
   alias PurseCraft.Accounting.Commands.Transactions.FetchTransaction
+  alias PurseCraft.Accounting.Domain.AccountingRules
   alias PurseCraft.Accounting.Policy
   alias PurseCraft.Accounting.Repositories.TransactionRepository
   alias PurseCraft.Accounting.Schemas.Transaction
@@ -59,7 +60,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   def call(scope, workspace, transaction_ref, attrs) do
     with :ok <- Policy.authorize(:transaction_update, scope, %{workspace: workspace}),
          normalized_attrs = Utilities.atomize_keys(attrs),
-         {:ok, transaction} <- FetchTransaction.call(scope, workspace, transaction_ref),
+         {:ok, transaction} <- FetchTransaction.call(scope, workspace, transaction_ref, preload: [:account]),
          :ok <- validate_is_transfer(transaction),
          {:ok, linked_transaction} <-
            fetch_linked_transaction(scope, workspace, transaction),
@@ -78,7 +79,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   defp validate_is_transfer(%Transaction{}), do: :ok
 
   defp fetch_linked_transaction(scope, workspace, %Transaction{linked_transaction_id: id}) do
-    FetchTransaction.call(scope, workspace, id, preload: [:transaction_lines])
+    FetchTransaction.call(scope, workspace, id, preload: [:transaction_lines, :account])
   end
 
   defp update_both_transactions(scope, workspace, transaction, linked_transaction, attrs) do
@@ -110,8 +111,10 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
         attrs
 
       amount ->
-        # Apply correct sign based on current transaction's sign
-        signed_amount = if transaction.amount < 0, do: -abs(amount), else: abs(amount)
+        # Use AccountingRules to calculate the correct sign based on account type and direction.
+        # The direction is inferred from the current transaction's sign and account type.
+        direction = AccountingRules.infer_transfer_direction(transaction)
+        signed_amount = AccountingRules.transfer_amount(transaction.account, amount, direction)
         Map.put(attrs, :amount, signed_amount)
     end
   end
@@ -147,7 +150,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
     if map_size(searchable_fields) > 0 do
       %{
         "workspace_id" => workspace.id,
-        "entity_type" => "Transaction",
+        "entity_type" => "transaction",
         "entity_id" => transaction.id,
         "searchable_fields" => searchable_fields
       }
