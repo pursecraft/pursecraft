@@ -211,14 +211,28 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransferTest do
 
   describe "call/4 - immutable field protection" do
     test "allows amount changes with correct signs", %{scope: scope, workspace: workspace} do
-      {from_transaction, _to_transaction} = create_transfer(scope, workspace)
+      from_account =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "checking",
+          position: PositionHelper.generate_lowercase_position()
+        )
+
+      to_account =
+        AccountingFactory.insert(:account,
+          workspace: workspace,
+          account_type: "savings",
+          position: PositionHelper.generate_lowercase_position()
+        )
+
+      {from_transaction, _to_transaction} =
+        create_transfer(scope, workspace, %{from_account: from_account, to_account: to_account})
 
       assert {:ok, {updated_from, updated_to}} =
                UpdateTransfer.call(scope, workspace, from_transaction.external_id, %{
                  amount: 50_000
                })
 
-      # Amount should be applied with correct signs (negative for outflow, positive for inflow)
       assert abs(updated_from.amount) == 50_000
       assert abs(updated_to.amount) == 50_000
       assert updated_from.amount + updated_to.amount == 0
