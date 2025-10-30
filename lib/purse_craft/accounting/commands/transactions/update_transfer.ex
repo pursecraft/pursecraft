@@ -41,6 +41,8 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   alias PurseCraft.Search.Workers.GenerateTokensWorker
   alias PurseCraft.Utilities
 
+  @type transaction_ref :: Transaction.t() | integer() | Ecto.UUID.t()
+
   @type update_attrs :: %{
           optional(:memo) => String.t() | nil,
           optional(:cleared) => boolean(),
@@ -48,12 +50,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
           optional(:date) => Date.t()
         }
 
-  @spec call(
-          Scope.t(),
-          Workspace.t(),
-          Transaction.t() | integer() | String.t(),
-          update_attrs()
-        ) ::
+  @spec call(Scope.t(), Workspace.t(), transaction_ref(), update_attrs()) ::
           {:ok, {Transaction.t(), Transaction.t()}}
           | {:error, :not_found | :unauthorized | :not_a_transfer}
 
