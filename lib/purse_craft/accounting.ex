@@ -287,8 +287,9 @@ defmodule PurseCraft.Accounting do
   @doc """
   Updates a transfer between two accounts.
 
-  Only allows updating memo and cleared status. Amount, date, and account
-  changes are blocked to maintain transfer integrity and audit trail.
+  Allows updating memo, cleared status, amount, and date. Changes to amount are
+  applied to both sides with correct signs based on account types. Account and
+  workspace changes are silently ignored to maintain transfer integrity.
 
   Both sides of the transfer are updated synchronously - either both succeed
   or both rollback. Search tokens are regenerated if memo changes, and
@@ -303,14 +304,16 @@ defmodule PurseCraft.Accounting do
       {:ok, {%Transaction{cleared: true}, %Transaction{cleared: true}}}
 
       iex> update_transfer(scope, workspace, "txn-uuid", %{amount: 50000})
-      {:error, {:immutable_field, :amount}}
+      {:ok, {%Transaction{amount: -50000}, %Transaction{amount: 50000}}}
+
+      iex> update_transfer(scope, workspace, "txn-uuid", %{date: ~D[2025-01-15]})
+      {:ok, {%Transaction{date: ~D[2025-01-15]}, %Transaction{date: ~D[2025-01-15]}}}
 
   ## Errors
 
   - `{:error, :not_found}` - Transaction doesn't exist or linked transaction missing
   - `{:error, :unauthorized}` - User lacks editor/owner permission
   - `{:error, :not_a_transfer}` - Transaction is not part of a transfer
-  - `{:error, {:immutable_field, field}}` - Attempted to change blocked field
 
   """
   # coveralls-ignore-next-line

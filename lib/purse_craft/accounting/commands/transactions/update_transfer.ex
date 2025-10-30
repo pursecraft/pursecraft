@@ -2,25 +2,27 @@ defmodule PurseCraft.Accounting.Commands.Transactions.UpdateTransfer do
   @moduledoc """
   Updates both sides of a transfer synchronously.
 
-  Allows updating memo, cleared status, amount, and date. Changes to amount
-  are applied to both sides of the transfer with correct signs (negative for
-  outflow, positive for inflow). Account and workspace changes are silently
-  ignored by the repository to maintain transfer integrity.
+  Allows updating memo, cleared status, amount, and date. Changes to amount are
+  applied to both sides with correct signs based on account types. Account and
+  workspace changes are silently ignored to maintain transfer integrity.
 
-  Both sides of the transfer are updated atomically - either both succeed or
-  both rollback. Search tokens are regenerated if memo changes, and PubSub
-  events are broadcast for both transactions.
+  Both sides of the transfer are updated synchronously - either both succeed
+  or both rollback. Search tokens are regenerated if memo changes, and
+  PubSub events are broadcast for both transactions.
 
   ## Examples
 
-      iex> call(scope, workspace, "txn-uuid", %{memo: "Rent payment"})
-      {:ok, {%Transaction{memo: "Rent payment"}, %Transaction{memo: "Rent payment"}}}
+      iex> call(scope, workspace, "txn-uuid", %{memo: "Updated memo"})
+      {:ok, {%Transaction{memo: "Updated memo"}, %Transaction{memo: "Updated memo"}}}
 
       iex> call(scope, workspace, "txn-uuid", %{cleared: true})
       {:ok, {%Transaction{cleared: true}, %Transaction{cleared: true}}}
 
       iex> call(scope, workspace, "txn-uuid", %{amount: 50000})
       {:ok, {%Transaction{amount: -50000}, %Transaction{amount: 50000}}}
+
+      iex> call(scope, workspace, "txn-uuid", %{date: ~D[2025-01-15]})
+      {:ok, {%Transaction{date: ~D[2025-01-15]}, %Transaction{date: ~D[2025-01-15]}}}
 
   ## Errors
 
