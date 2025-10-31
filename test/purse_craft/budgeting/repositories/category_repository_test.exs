@@ -246,11 +246,11 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
   describe "list_by_external_ids/2" do
     test "returns categories matching the given external IDs" do
       workspace = CoreFactory.insert(:workspace)
-      cat1 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "g")
-      cat2 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "m")
-      cat3 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "t")
+      cat1 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
+      cat2 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
+      cat3 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
-      BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "z")
+      BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
       external_ids = [cat1.external_id, cat2.external_id, cat3.external_id]
       result = CategoryRepository.list_by_external_ids(external_ids)
@@ -268,7 +268,7 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
 
     test "returns subset when only some external IDs match" do
       workspace = CoreFactory.insert(:workspace)
-      cat1 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "g")
+      cat1 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
       external_ids = [cat1.external_id, Ecto.UUID.generate(), Ecto.UUID.generate()]
       result = CategoryRepository.list_by_external_ids(external_ids)
@@ -279,8 +279,8 @@ defmodule PurseCraft.Budgeting.Repositories.CategoryRepositoryTest do
 
     test "with preload option returns categories with preloaded associations" do
       workspace = CoreFactory.insert(:workspace)
-      cat1 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "g")
-      cat2 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "m")
+      cat1 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
+      cat2 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
       envelope1 = BudgetingFactory.insert(:envelope, category_id: cat1.id)
       envelope2 = BudgetingFactory.insert(:envelope, category_id: cat2.id)

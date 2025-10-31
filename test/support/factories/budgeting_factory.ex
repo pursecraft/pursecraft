@@ -9,12 +9,13 @@ defmodule PurseCraft.BudgetingFactory do
 
   def category_factory(attrs) do
     name = Map.get(attrs, :name, Faker.Industry.industry())
+    position = Map.get(attrs, :position, PositionHelper.generate_lowercase_position())
 
     category =
       %Category{}
       |> Category.changeset(%{
         name: name,
-        position: sequence(:category_position, &PositionHelper.generate_lowercase_position/1)
+        position: position
       })
       |> Ecto.Changeset.apply_changes()
 
@@ -25,7 +26,7 @@ defmodule PurseCraft.BudgetingFactory do
 
   def envelope_factory(attrs) do
     name = Map.get(attrs, :name, Faker.Commerce.product_name())
-    position = Map.get(attrs, :position, sequence(:envelope_position, &PositionHelper.generate_lowercase_position/1))
+    position = Map.get(attrs, :position, PositionHelper.generate_lowercase_position())
 
     envelope =
       %Envelope{}

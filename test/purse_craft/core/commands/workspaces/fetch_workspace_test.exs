@@ -18,8 +18,8 @@ defmodule PurseCraft.Core.Commands.Workspaces.FetchWorkspaceTest do
 
     test "supports preloading associations" do
       workspace = CoreFactory.insert(:workspace)
-      category1 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "g")
-      category2 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "m")
+      category1 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
+      category2 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
       assert {:ok, workspace_with_preloads} = FetchWorkspace.call(workspace.id, preload: [:categories])
 
@@ -50,8 +50,8 @@ defmodule PurseCraft.Core.Commands.Workspaces.FetchWorkspaceTest do
       workspace = CoreFactory.insert(:workspace)
       CoreFactory.insert(:workspace_user, workspace_id: workspace.id, user_id: user.id, role: :owner)
 
-      category1 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "g")
-      category2 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "m")
+      category1 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
+      category2 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
       assert {:ok, workspace_with_preloads} =
                FetchWorkspace.call(workspace.id, [preload: [:categories]], scope)

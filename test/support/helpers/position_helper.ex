@@ -72,8 +72,23 @@ defmodule PurseCraft.TestHelpers.PositionHelper do
     end
   end
 
-  def generate_lowercase_position(n) do
-    second_offset = rem(n - 27, 26)
-    "m" <> <<?a + second_offset>>
+  def generate_lowercase_position(n) when n > 26 do
+    # For large numbers, generate a unique multi-character position
+    # Convert to base-26 representation using lowercase letters
+    integer_to_position_string(n)
+  end
+
+  defp integer_to_position_string(n) when n > 0 do
+    integer_to_position_string(div(n, 26), rem(n, 26), "")
+  end
+
+  defp integer_to_position_string(0, 0, acc), do: acc
+
+  defp integer_to_position_string(0, remainder, acc) do
+    <<?a + remainder>> <> acc
+  end
+
+  defp integer_to_position_string(quotient, remainder, acc) do
+    integer_to_position_string(div(quotient, 26), rem(quotient, 26), <<?a + remainder>> <> acc)
   end
 end
