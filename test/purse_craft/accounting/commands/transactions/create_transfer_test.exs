@@ -8,7 +8,6 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
   alias PurseCraft.AccountingFactory
   alias PurseCraft.CoreFactory
   alias PurseCraft.IdentityFactory
-  alias PurseCraft.TestHelpers.PositionHelper
 
   setup do
     workspace = CoreFactory.insert(:workspace)
@@ -17,8 +16,8 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
     scope = IdentityFactory.build(:scope, user: user)
 
     # Default to asset accounts (checking) for basic tests
-    from_account = AccountingFactory.insert(:account, workspace: workspace, position: "a", account_type: "checking")
-    to_account = AccountingFactory.insert(:account, workspace: workspace, position: "b", account_type: "savings")
+    from_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "checking")
+    to_account = AccountingFactory.insert(:account, workspace: workspace, account_type: "savings")
 
     {:ok, workspace: workspace, scope: scope, from_account: from_account, to_account: to_account}
   end
@@ -277,11 +276,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
     } do
       other_workspace = CoreFactory.insert(:workspace)
 
-      other_account =
-        AccountingFactory.insert(:account,
-          workspace: other_workspace,
-          position: PositionHelper.generate_lowercase_position()
-        )
+      other_account = AccountingFactory.insert(:account, workspace: other_workspace)
 
       attrs = %{
         from_account: other_account.id,
@@ -300,11 +295,7 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
     } do
       other_workspace = CoreFactory.insert(:workspace)
 
-      other_account =
-        AccountingFactory.insert(:account,
-          workspace: other_workspace,
-          position: PositionHelper.generate_lowercase_position()
-        )
+      other_account = AccountingFactory.insert(:account, workspace: other_workspace)
 
       attrs = %{
         from_account: from_account,
@@ -540,15 +531,13 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
       checking =
         AccountingFactory.insert(:account,
           workspace: workspace,
-          account_type: "checking",
-          position: PositionHelper.generate_lowercase_position()
+          account_type: "checking"
         )
 
       savings =
         AccountingFactory.insert(:account,
           workspace: workspace,
-          account_type: "savings",
-          position: PositionHelper.generate_lowercase_position()
+          account_type: "savings"
         )
 
       attrs = %{
@@ -574,15 +563,13 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
       checking =
         AccountingFactory.insert(:account,
           workspace: workspace,
-          account_type: "checking",
-          position: PositionHelper.generate_lowercase_position()
+          account_type: "checking"
         )
 
       credit_card =
         AccountingFactory.insert(:account,
           workspace: workspace,
-          account_type: "credit_card",
-          position: PositionHelper.generate_lowercase_position()
+          account_type: "credit_card"
         )
 
       attrs = %{
@@ -608,15 +595,13 @@ defmodule PurseCraft.Accounting.Commands.Transactions.CreateTransferTest do
       credit_card =
         AccountingFactory.insert(:account,
           workspace: workspace,
-          account_type: "credit_card",
-          position: PositionHelper.generate_lowercase_position()
+          account_type: "credit_card"
         )
 
       checking =
         AccountingFactory.insert(:account,
           workspace: workspace,
-          account_type: "checking",
-          position: PositionHelper.generate_lowercase_position()
+          account_type: "checking"
         )
 
       attrs = %{

@@ -93,8 +93,8 @@ defmodule PurseCraft.Core.Repositories.WorkspaceRepositoryTest do
 
     test "with preload option loads the association" do
       workspace = CoreFactory.insert(:workspace)
-      category1 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "g")
-      category2 = BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "h")
+      category1 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
+      category2 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
       workspace_with_categories = WorkspaceRepository.get_by_external_id(workspace.external_id, preload: [:categories])
 
@@ -105,7 +105,7 @@ defmodule PurseCraft.Core.Repositories.WorkspaceRepositoryTest do
 
     test "with empty preload list returns the workspace without preloading" do
       workspace = CoreFactory.insert(:workspace)
-      BudgetingFactory.insert(:category, workspace_id: workspace.id, position: "g")
+      BudgetingFactory.insert(:category, workspace_id: workspace.id)
 
       workspace_without_preload = WorkspaceRepository.get_by_external_id(workspace.external_id, preload: [])
 

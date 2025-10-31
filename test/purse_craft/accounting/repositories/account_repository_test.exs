@@ -208,7 +208,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns accounts with preloaded associations", %{workspace: workspace} do
-      AccountingFactory.insert(:account, workspace: workspace, position: "aaaa")
+      AccountingFactory.insert(:account, workspace: workspace)
 
       result = AccountRepository.list_by_workspace(workspace.id, preload: [:workspace])
 
@@ -218,8 +218,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "filters closed accounts when active_only is true (default)", %{workspace: workspace} do
-      AccountingFactory.insert(:account, workspace: workspace, position: "aaaa")
-      AccountingFactory.insert(:account, workspace: workspace, position: "bbbb", closed_at: DateTime.utc_now())
+      AccountingFactory.insert(:account, workspace: workspace)
+      AccountingFactory.insert(:account, workspace: workspace, closed_at: DateTime.utc_now())
 
       result = AccountRepository.list_by_workspace(workspace.id)
 
@@ -227,10 +227,10 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "includes closed accounts when active_only is false", %{workspace: workspace} do
-      active_account = AccountingFactory.insert(:account, workspace: workspace, position: "aaaa")
+      active_account = AccountingFactory.insert(:account, workspace: workspace)
 
       closed_account =
-        AccountingFactory.insert(:account, workspace: workspace, position: "bbbb", closed_at: DateTime.utc_now())
+        AccountingFactory.insert(:account, workspace: workspace, closed_at: DateTime.utc_now())
 
       result = AccountRepository.list_by_workspace(workspace.id, active_only: false)
 
@@ -242,8 +242,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
 
     test "only returns accounts for specified workspace", %{workspace: workspace} do
       other_workspace = CoreFactory.insert(:workspace)
-      AccountingFactory.insert(:account, workspace: workspace, position: "aaaa")
-      AccountingFactory.insert(:account, workspace: other_workspace, position: "aaaa")
+      AccountingFactory.insert(:account, workspace: workspace)
+      AccountingFactory.insert(:account, workspace: other_workspace)
 
       result = AccountRepository.list_by_workspace(workspace.id)
 
@@ -253,8 +253,8 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "handles multiple options together", %{workspace: workspace} do
-      active_account = AccountingFactory.insert(:account, workspace: workspace, position: "aaaa")
-      AccountingFactory.insert(:account, workspace: workspace, position: "bbbb", closed_at: DateTime.utc_now())
+      active_account = AccountingFactory.insert(:account, workspace: workspace)
+      AccountingFactory.insert(:account, workspace: workspace, closed_at: DateTime.utc_now())
 
       result = AccountRepository.list_by_workspace(workspace.id, preload: [:workspace], active_only: true)
 
@@ -432,7 +432,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns empty list when no external IDs match", %{workspace: workspace} do
-      AccountingFactory.insert(:account, workspace: workspace, position: "g")
+      AccountingFactory.insert(:account, workspace: workspace)
 
       external_ids = [Ecto.UUID.generate(), Ecto.UUID.generate()]
       result = AccountRepository.list_by_external_ids(external_ids)
@@ -441,7 +441,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "returns accounts with preloaded associations", %{workspace: workspace} do
-      account = AccountingFactory.insert(:account, workspace: workspace, position: "m")
+      account = AccountingFactory.insert(:account, workspace: workspace)
 
       result = AccountRepository.list_by_external_ids([account.external_id], preload: [:workspace])
 
@@ -451,7 +451,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "handles empty external IDs list", %{workspace: workspace} do
-      AccountingFactory.insert(:account, workspace: workspace, position: "g")
+      AccountingFactory.insert(:account, workspace: workspace)
 
       result = AccountRepository.list_by_external_ids([])
 
@@ -459,7 +459,7 @@ defmodule PurseCraft.Accounting.Repositories.AccountRepositoryTest do
     end
 
     test "handles duplicate external IDs", %{workspace: workspace} do
-      account = AccountingFactory.insert(:account, workspace: workspace, position: "m")
+      account = AccountingFactory.insert(:account, workspace: workspace)
 
       external_ids = [account.external_id, account.external_id]
       result = AccountRepository.list_by_external_ids(external_ids)

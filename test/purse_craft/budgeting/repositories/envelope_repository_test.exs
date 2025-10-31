@@ -181,11 +181,11 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     test "returns envelopes matching the given external IDs" do
       workspace = CoreFactory.insert(:workspace)
       category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
-      env1 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
-      env2 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "m")
-      env3 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "t")
+      env1 = BudgetingFactory.insert(:envelope, category_id: category.id)
+      env2 = BudgetingFactory.insert(:envelope, category_id: category.id)
+      env3 = BudgetingFactory.insert(:envelope, category_id: category.id)
 
-      BudgetingFactory.insert(:envelope, category_id: category.id, position: "z")
+      BudgetingFactory.insert(:envelope, category_id: category.id)
 
       external_ids = [env1.external_id, env2.external_id, env3.external_id]
       result = EnvelopeRepository.list_by_external_ids(external_ids)
@@ -204,7 +204,7 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
     test "returns subset when only some external IDs match" do
       workspace = CoreFactory.insert(:workspace)
       category = BudgetingFactory.insert(:category, workspace_id: workspace.id)
-      env1 = BudgetingFactory.insert(:envelope, category_id: category.id, position: "g")
+      env1 = BudgetingFactory.insert(:envelope, category_id: category.id)
 
       external_ids = [env1.external_id, Ecto.UUID.generate(), Ecto.UUID.generate()]
       result = EnvelopeRepository.list_by_external_ids(external_ids)
@@ -217,8 +217,8 @@ defmodule PurseCraft.Budgeting.Repositories.EnvelopeRepositoryTest do
       workspace = CoreFactory.insert(:workspace)
       category1 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
       category2 = BudgetingFactory.insert(:category, workspace_id: workspace.id)
-      env1 = BudgetingFactory.insert(:envelope, category_id: category1.id, position: "g")
-      env2 = BudgetingFactory.insert(:envelope, category_id: category2.id, position: "m")
+      env1 = BudgetingFactory.insert(:envelope, category_id: category1.id)
+      env2 = BudgetingFactory.insert(:envelope, category_id: category2.id)
 
       external_ids = [env1.external_id, env2.external_id]
       result = EnvelopeRepository.list_by_external_ids(external_ids, preload: [:category])

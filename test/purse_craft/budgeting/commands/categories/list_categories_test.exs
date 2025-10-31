@@ -22,10 +22,10 @@ defmodule PurseCraft.Budgeting.Commands.Categories.ListCategoriesTest do
   describe "call/3" do
     setup %{workspace: workspace} do
       categories =
-        Enum.map(["a", "b", "c"], &BudgetingFactory.insert(:category, workspace_id: workspace.id, position: &1))
+        Enum.map(1..3, fn _index -> BudgetingFactory.insert(:category, workspace_id: workspace.id) end)
 
       other_workspace = CoreFactory.insert(:workspace)
-      other_category = BudgetingFactory.insert(:category, workspace_id: other_workspace.id, position: "d")
+      other_category = BudgetingFactory.insert(:category, workspace_id: other_workspace.id)
 
       %{categories: categories, other_workspace: other_workspace, other_category: other_category}
     end

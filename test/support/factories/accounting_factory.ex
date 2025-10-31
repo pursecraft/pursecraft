@@ -13,6 +13,7 @@ defmodule PurseCraft.AccountingFactory do
     name = Map.get(attrs, :name, Faker.Company.name() <> " Account")
     account_type = Map.get(attrs, :account_type, Enum.random(Account.account_types()))
     description = Map.get(attrs, :description, Faker.Lorem.sentence())
+    position = Map.get(attrs, :position, PositionHelper.generate_lowercase_position())
 
     account =
       %Account{}
@@ -20,7 +21,7 @@ defmodule PurseCraft.AccountingFactory do
         name: name,
         account_type: account_type,
         description: description,
-        position: sequence(:account_position, &PositionHelper.generate_lowercase_position/1)
+        position: position
       })
       |> Ecto.Changeset.apply_changes()
 
