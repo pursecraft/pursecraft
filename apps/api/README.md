@@ -1,5 +1,7 @@
 # PurseCraft
 
+[![CI](https://github.com/pursecraft/pursecraft/actions/workflows/api_ci.yml/badge.svg?branch=main)](https://github.com/pursecraft/pursecraft/actions/workflows/api_ci.yml)
+
 To start your Phoenix server:
 
 * Run `mix setup` to install and setup dependencies
