@@ -1,5 +1,5 @@
 defmodule PurseCraftWeb.PageControllerTest do
-  use PurseCraftWeb.ConnCase
+  use PurseCraftWeb.ConnCase, async: true
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
