@@ -20,13 +20,14 @@ defmodule PurseCraftWeb.ConnCase do
   using do
     quote do
       use PurseCraftWeb, :verified_routes
+
+      # Import conveniences for testing with connections
       import Phoenix.ConnTest
       import Plug.Conn
       import PurseCraftWeb.ConnCase
+
       # The default endpoint for testing
       @endpoint PurseCraftWeb.Endpoint
-
-      # Import conveniences for testing with connections
     end
   end
 
