@@ -134,6 +134,7 @@
             [
               files: %{
                 excluded: [
+                  ~r"/lib/purse_craft/event_store.ex",
                   ~r"/lib/purse_craft_web/components/layouts.ex",
                   ~r"/lib/purse_craft_web/controllers/",
                   ~r"/lib/purse_craft_web/live/"

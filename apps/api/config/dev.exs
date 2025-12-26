@@ -18,6 +18,15 @@ config :phoenix_live_view,
   # Enable helpful, but potentially expensive runtime checks
   enable_expensive_runtime_checks: true
 
+config :purse_craft, PurseCraft.EventStore,
+  serializer: Commanded.Serialization.JsonSerializer,
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  database: "purse_craft_event_store_dev",
+  queue_interval: 1_000,
+  queue_target: 50
+
 # Configure your database
 config :purse_craft, PurseCraft.Repo,
   username: "postgres",
