@@ -4,11 +4,13 @@ defmodule PurseCraft.Application do
   @moduledoc false
 
   use Application
+  use Commanded.Application, otp_app: :purse_craft
 
   @impl Application
   def start(_type, _args) do
     children = [
       PurseCraftWeb.Telemetry,
+      PurseCraft.EventStore,
       PurseCraft.Repo,
       {DNSCluster, query: Application.get_env(:purse_craft, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: PurseCraft.PubSub},
@@ -30,5 +32,10 @@ defmodule PurseCraft.Application do
   def config_change(changed, _new, removed) do
     PurseCraftWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  @impl Commanded.Application
+  def init(config) do
+    {:ok, config}
   end
 end

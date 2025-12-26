@@ -14,6 +14,15 @@ config :phoenix,
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true
 
+config :purse_craft, PurseCraft.EventStore,
+  serializer: Commanded.Serialization.JsonSerializer,
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  database: "purse_craft_event_store_test#{System.get_env("MIX_TEST_PARTITION")}",
+  queue_interval: 1_000,
+  queue_target: 50
+
 # In test we don't send emails
 config :purse_craft, PurseCraft.Mailer, adapter: Swoosh.Adapters.Test
 

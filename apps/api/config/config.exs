@@ -25,6 +25,14 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+config :purse_craft, PurseCraft.Application,
+  event_store: [
+    adapter: Commanded.EventStore.Adapters.EventStore,
+    event_store: PurseCraft.EventStore
+  ],
+  pubsub: :local,
+  registry: :local
+
 # Configure the mailer
 #
 # By default it uses the "Local" adapter which stores the emails
@@ -47,6 +55,7 @@ config :purse_craft, PurseCraftWeb.Endpoint,
 
 config :purse_craft,
   ecto_repos: [PurseCraft.Repo],
+  event_stores: [PurseCraft.EventStore],
   generators: [timestamp_type: :utc_datetime]
 
 # Configure tailwind (the version is required)

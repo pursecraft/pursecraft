@@ -57,10 +57,13 @@ defmodule PurseCraft.MixProject do
     [
       {:bandit, "1.9.0"},
       {:credo, "1.7.14", only: [:dev, :test], runtime: false},
+      {:commanded, "1.4.9"},
+      {:commanded_eventstore_adapter, "1.4.2"},
       {:dialyxir, "1.4.7", only: [:dev, :test], runtime: false},
       {:dns_cluster, "0.2.0"},
       {:ecto_sql, "3.13.3"},
       {:esbuild, "0.10.0", runtime: Mix.env() == :dev},
+      {:eventstore, "1.4.8"},
       {:excoveralls, "0.18.5", only: :test},
       {:gettext, "1.0.2"},
       {:heroicons,

@@ -30,6 +30,13 @@ if config_env() == :prod do
       For example: ecto://USER:PASS@HOST/DATABASE
       """
 
+  event_store_url =
+    System.get_env("EVENT_STORE_URL") ||
+      raise """
+      environment variable EVENT_STORE_URL is missing.
+      For example: ecto://USER:PASS@HOST/DATABASE
+      """
+
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
@@ -45,6 +52,13 @@ if config_env() == :prod do
       """
 
   host = System.get_env("PHX_HOST") || "example.com"
+
+  config :purse_craft, PurseCraft.EventStore,
+    serializer: Commanded.Serialization.JsonSerializer,
+    url: event_store_url,
+    pool_size: String.to_integer(System.get_env("EVENT_STORE_POOL_SIZE") || "10"),
+    queue_interval: String.to_integer(System.get_env("EVENT_STORE_QUEUE_INTERVAL") || "1000"),
+    queue_target: String.to_integer(System.get_env("EVENT_STORE_QUEUE_TARGET") || "50")
 
   config :purse_craft, PurseCraft.Repo,
     # ssl: true,
