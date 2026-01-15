@@ -7,19 +7,6 @@
 # General application configuration
 import Config
 
-config :purse_craft, :scopes,
-  user: [
-    default: true,
-    module: PurseCraft.Identity.Scope,
-    assign_key: :current_scope,
-    access_path: [:user, :id],
-    schema_key: :user_id,
-    schema_type: :id,
-    schema_table: :users,
-    test_data_fixture: PurseCraft.IdentityFixtures,
-    test_setup_helper: :register_and_log_in_user
-  ]
-
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.25.4",
@@ -65,6 +52,19 @@ config :purse_craft, PurseCraftWeb.Endpoint,
   ],
   pubsub_server: PurseCraft.PubSub,
   live_view: [signing_salt: "TCr6J17d"]
+
+config :purse_craft, :scopes,
+  user: [
+    default: true,
+    module: PurseCraft.Identity.Scope,
+    assign_key: :current_scope,
+    access_path: [:user, :id],
+    schema_key: :user_id,
+    schema_type: :id,
+    schema_table: :users,
+    test_data_fixture: PurseCraft.IdentityFixtures,
+    test_setup_helper: :register_and_log_in_user
+  ]
 
 config :purse_craft,
   ecto_repos: [PurseCraft.Repo],

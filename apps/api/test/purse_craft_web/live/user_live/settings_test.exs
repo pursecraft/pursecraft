@@ -1,9 +1,10 @@
 defmodule PurseCraftWeb.UserLive.SettingsTest do
   use PurseCraftWeb.ConnCase, async: true
 
-  alias PurseCraft.Identity
   import Phoenix.LiveViewTest
   import PurseCraft.IdentityFixtures
+
+  alias PurseCraft.Identity
 
   describe "Settings page" do
     test "renders settings page", %{conn: conn} do
@@ -25,15 +26,18 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
     end
 
     test "redirects if user is not in sudo mode", %{conn: conn} do
-      {:ok, conn} =
+      eleven_minutes_ago =
+        :second
+        |> DateTime.utc_now()
+        |> DateTime.add(-11, :minute)
+
+      {:ok, redirected_conn} =
         conn
-        |> log_in_user(user_fixture(),
-          token_authenticated_at: DateTime.add(DateTime.utc_now(:second), -11, :minute)
-        )
+        |> log_in_user(user_fixture(), token_authenticated_at: eleven_minutes_ago)
         |> live(~p"/users/settings")
         |> follow_redirect(conn, ~p"/users/log-in")
 
-      assert conn.resp_body =~ "You must re-authenticate to access this page."
+      assert redirected_conn.resp_body =~ "You must re-authenticate to access this page."
     end
   end
 
@@ -184,8 +188,8 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
       assert Identity.get_user_by_email(email)
 
       # use confirm token again
-      {:error, redirect} = live(conn, ~p"/users/settings/confirm-email/#{token}")
-      assert {:live_redirect, %{to: path, flash: flash}} = redirect
+      {:error, second_redirect} = live(conn, ~p"/users/settings/confirm-email/#{token}")
+      assert {:live_redirect, %{to: path, flash: flash}} = second_redirect
       assert path == ~p"/users/settings"
       assert %{"error" => message} = flash
       assert message == "Email change link is invalid or it has expired."

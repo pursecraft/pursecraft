@@ -2,6 +2,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import PurseCraft.IdentityFixtures
+
   alias PurseCraft.Identity
 
   setup do
@@ -21,8 +22,8 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
       assert redirected_to(conn) == ~p"/"
 
       # Now do a logged in request and assert on the menu
-      conn = get(conn, ~p"/")
-      response = html_response(conn, 200)
+      logged_in_conn = get(conn, ~p"/")
+      response = html_response(logged_in_conn, 200)
       assert response =~ user.email
       assert response =~ ~p"/users/settings"
       assert response =~ ~p"/users/log-out"
@@ -85,8 +86,8 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
       assert redirected_to(conn) == ~p"/"
 
       # Now do a logged in request and assert on the menu
-      conn = get(conn, ~p"/")
-      response = html_response(conn, 200)
+      logged_in_conn = get(conn, ~p"/")
+      response = html_response(logged_in_conn, 200)
       assert response =~ user.email
       assert response =~ ~p"/users/settings"
       assert response =~ ~p"/users/log-out"
@@ -109,8 +110,8 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
       assert Identity.get_user!(user.id).confirmed_at
 
       # Now do a logged in request and assert on the menu
-      conn = get(conn, ~p"/")
-      response = html_response(conn, 200)
+      logged_in_conn = get(conn, ~p"/")
+      response = html_response(logged_in_conn, 200)
       assert response =~ user.email
       assert response =~ ~p"/users/settings"
       assert response =~ ~p"/users/log-out"
@@ -131,10 +132,14 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
 
   describe "DELETE /users/log-out" do
     test "logs the user out", %{conn: conn, user: user} do
-      conn = conn |> log_in_user(user) |> delete(~p"/users/log-out")
-      assert redirected_to(conn) == ~p"/"
-      refute get_session(conn, :user_token)
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Logged out successfully"
+      logged_out_conn =
+        conn
+        |> log_in_user(user)
+        |> delete(~p"/users/log-out")
+
+      assert redirected_to(logged_out_conn) == ~p"/"
+      refute get_session(logged_out_conn, :user_token)
+      assert Phoenix.Flash.get(logged_out_conn.assigns.flash, :info) =~ "Logged out successfully"
     end
 
     test "succeeds even if the user is not logged in", %{conn: conn} do

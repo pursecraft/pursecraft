@@ -1,6 +1,10 @@
 defmodule PurseCraft.Identity.UserToken do
+  @moduledoc false
   use Ecto.Schema
+
   import Ecto.Query
+
+  alias PurseCraft.Identity.User
   alias PurseCraft.Identity.UserToken
 
   @hash_algorithm :sha256
@@ -12,12 +16,23 @@ defmodule PurseCraft.Identity.UserToken do
   @change_email_validity_in_days 7
   @session_validity_in_days 14
 
+  @type t :: %__MODULE__{
+          id: integer() | nil,
+          token: binary(),
+          context: String.t(),
+          sent_to: String.t() | nil,
+          authenticated_at: DateTime.t() | nil,
+          user_id: integer() | nil,
+          user: User.t() | Ecto.Association.NotLoaded.t(),
+          inserted_at: DateTime.t() | nil
+        }
+
   schema "users_tokens" do
     field :token, :binary
     field :context, :string
     field :sent_to, :string
     field :authenticated_at, :utc_datetime
-    belongs_to :user, PurseCraft.Identity.User
+    belongs_to :user, User
 
     timestamps(type: :utc_datetime, updated_at: false)
   end
@@ -41,6 +56,7 @@ defmodule PurseCraft.Identity.UserToken do
   and devices in the UI and allow users to explicitly expire any
   session they deem invalid.
   """
+  @spec build_session_token(User.t()) :: {binary(), t()}
   def build_session_token(user) do
     token = :crypto.strong_rand_bytes(@rand_size)
     dt = user.authenticated_at || DateTime.utc_now(:second)
@@ -55,6 +71,7 @@ defmodule PurseCraft.Identity.UserToken do
   The token is valid if it matches the value in the database and it has
   not expired (after @session_validity_in_days).
   """
+  @spec verify_session_token_query(binary()) :: {:ok, Ecto.Query.t()}
   def verify_session_token_query(token) do
     query =
       from token in by_token_and_context_query(token, "session"),
@@ -78,6 +95,7 @@ defmodule PurseCraft.Identity.UserToken do
   Users can easily adapt the existing code to provide other types of delivery methods,
   for example, by phone numbers.
   """
+  @spec build_email_token(User.t(), binary()) :: {binary(), t()}
   def build_email_token(user, context) do
     build_hashed_token(user, context, user.email)
   end
@@ -104,6 +122,7 @@ defmodule PurseCraft.Identity.UserToken do
   database. This function also checks if the token is being used within
   15 minutes. The context of a magic link token is always "login".
   """
+  @spec verify_magic_link_token_query(binary()) :: {:ok, Ecto.Query.t()} | :error
   def verify_magic_link_token_query(token) do
     case Base.url_decode64(token, padding: false) do
       {:ok, decoded_token} ->
@@ -134,7 +153,8 @@ defmodule PurseCraft.Identity.UserToken do
   database and if it has not expired (after @change_email_validity_in_days).
   The context must always start with "change:".
   """
-  def verify_change_email_token_query(token, "change:" <> _ = context) do
+  @spec verify_change_email_token_query(binary(), binary()) :: {:ok, Ecto.Query.t()} | :error
+  def verify_change_email_token_query(token, "change:" <> _email = context) do
     case Base.url_decode64(token, padding: false) do
       {:ok, decoded_token} ->
         hashed_token = :crypto.hash(@hash_algorithm, decoded_token)

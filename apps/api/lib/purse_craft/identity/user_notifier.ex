@@ -1,8 +1,9 @@
 defmodule PurseCraft.Identity.UserNotifier do
+  @moduledoc false
   import Swoosh.Email
 
-  alias PurseCraft.Mailer
   alias PurseCraft.Identity.User
+  alias PurseCraft.Mailer
 
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do
@@ -21,6 +22,7 @@ defmodule PurseCraft.Identity.UserNotifier do
   @doc """
   Deliver instructions to update a user email.
   """
+  @spec deliver_update_email_instructions(User.t(), String.t()) :: {:ok, map()}
   def deliver_update_email_instructions(user, url) do
     deliver(user.email, "Update email instructions", """
 
@@ -41,10 +43,11 @@ defmodule PurseCraft.Identity.UserNotifier do
   @doc """
   Deliver instructions to log in with a magic link.
   """
+  @spec deliver_login_instructions(User.t(), String.t()) :: {:ok, map()}
   def deliver_login_instructions(user, url) do
     case user do
       %User{confirmed_at: nil} -> deliver_confirmation_instructions(user, url)
-      _ -> deliver_magic_link_instructions(user, url)
+      %User{} -> deliver_magic_link_instructions(user, url)
     end
   end
 

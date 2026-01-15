@@ -1,9 +1,10 @@
 defmodule PurseCraftWeb.UserLive.Confirmation do
+  @moduledoc false
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Identity
 
-  @impl true
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -72,13 +73,12 @@ defmodule PurseCraftWeb.UserLive.Confirmation do
     """
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def mount(%{"token" => token}, _session, socket) do
     if user = Identity.get_user_by_magic_link_token(token) do
       form = to_form(%{"token" => token}, as: "user")
 
-      {:ok, assign(socket, user: user, form: form, trigger_submit: false),
-       temporary_assigns: [form: nil]}
+      {:ok, assign(socket, user: user, form: form, trigger_submit: false), temporary_assigns: [form: nil]}
     else
       {:ok,
        socket
@@ -87,7 +87,7 @@ defmodule PurseCraftWeb.UserLive.Confirmation do
     end
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def handle_event("submit", %{"user" => params}, socket) do
     {:noreply, assign(socket, form: to_form(params, as: "user"), trigger_submit: true)}
   end

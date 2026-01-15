@@ -1,6 +1,34 @@
 defmodule PurseCraft.Identity.User do
+  @moduledoc false
   use Ecto.Schema
+
   import Ecto.Changeset
+
+  @type t :: %__MODULE__{
+          id: integer() | nil,
+          email: String.t() | nil,
+          password: String.t() | nil,
+          hashed_password: String.t() | nil,
+          confirmed_at: DateTime.t() | nil,
+          authenticated_at: DateTime.t() | nil,
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
+  @type email_changeset_attrs :: %{
+          optional(:email) => String.t()
+        }
+
+  @type email_changeset_option :: {:validate_unique, boolean()}
+  @type email_changeset_options :: [email_changeset_option()]
+
+  @type password_changeset_attrs :: %{
+          optional(:password) => String.t(),
+          optional(:password_confirmation) => String.t()
+        }
+
+  @type password_changeset_option :: {:hash_password, boolean()}
+  @type password_changeset_options :: [password_changeset_option()]
 
   schema "users" do
     field :email, :string
@@ -23,6 +51,8 @@ defmodule PurseCraft.Identity.User do
       uniqueness of the email, useful when displaying live validations.
       Defaults to `true`.
   """
+  @spec email_changeset(t(), email_changeset_attrs(), email_changeset_options()) ::
+          Ecto.Changeset.t()
   def email_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:email])
@@ -33,9 +63,7 @@ defmodule PurseCraft.Identity.User do
     changeset =
       changeset
       |> validate_required([:email])
-      |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/,
-        message: "must have the @ sign and no spaces"
-      )
+      |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/, message: "must have the @ sign and no spaces")
       |> validate_length(:email, max: 160)
 
     if Keyword.get(opts, :validate_unique, true) do
@@ -71,6 +99,11 @@ defmodule PurseCraft.Identity.User do
       validations on a LiveView form), this option can be set to `false`.
       Defaults to `true`.
   """
+  @spec password_changeset(
+          t(),
+          password_changeset_attrs(),
+          password_changeset_options()
+        ) :: Ecto.Changeset.t()
   def password_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:password])
@@ -109,6 +142,7 @@ defmodule PurseCraft.Identity.User do
   @doc """
   Confirms the account by setting `confirmed_at`.
   """
+  @spec confirm_changeset(t()) :: Ecto.Changeset.t()
   def confirm_changeset(user) do
     now = DateTime.utc_now(:second)
     change(user, confirmed_at: now)
@@ -120,12 +154,14 @@ defmodule PurseCraft.Identity.User do
   If there is no user or the user doesn't have a password, we call
   `Bcrypt.no_user_verify/0` to avoid timing attacks.
   """
+  @spec valid_password?(t() | nil, String.t()) :: boolean()
   def valid_password?(%PurseCraft.Identity.User{hashed_password: hashed_password}, password)
       when is_binary(hashed_password) and byte_size(password) > 0 do
     Bcrypt.verify_pass(password, hashed_password)
   end
 
-  def valid_password?(_, _) do
+  @spec valid_password?(term(), term()) :: boolean()
+  def valid_password?(_user, _password) do
     Bcrypt.no_user_verify()
     false
   end

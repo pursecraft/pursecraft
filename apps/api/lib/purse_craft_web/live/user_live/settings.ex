@@ -1,11 +1,12 @@
 defmodule PurseCraftWeb.UserLive.Settings do
+  @moduledoc false
   use PurseCraftWeb, :live_view
-
-  on_mount {PurseCraftWeb.UserAuth, :require_sudo_mode}
 
   alias PurseCraft.Identity
 
-  @impl true
+  on_mount {PurseCraftWeb.UserAuth, :require_sudo_mode}
+
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -66,14 +67,14 @@ defmodule PurseCraftWeb.UserLive.Settings do
     """
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def mount(%{"token" => token}, _session, socket) do
     socket =
       case Identity.update_user_email(socket.assigns.current_scope.user, token) do
-        {:ok, _user} ->
+        {:ok, _updated_user} ->
           put_flash(socket, :info, "Email changed successfully.")
 
-        {:error, _} ->
+        {:error, _reason} ->
           put_flash(socket, :error, "Email change link is invalid or it has expired.")
       end
 
@@ -95,7 +96,7 @@ defmodule PurseCraftWeb.UserLive.Settings do
     {:ok, socket}
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def handle_event("validate_email", params, socket) do
     %{"user" => user_params} = params
 
@@ -115,14 +116,16 @@ defmodule PurseCraftWeb.UserLive.Settings do
 
     case Identity.change_user_email(user, user_params) do
       %{valid?: true} = changeset ->
+        updated_user = Ecto.Changeset.apply_action!(changeset, :insert)
+
         Identity.deliver_user_update_email_instructions(
-          Ecto.Changeset.apply_action!(changeset, :insert),
+          updated_user,
           user.email,
           &url(~p"/users/settings/confirm-email/#{&1}")
         )
 
         info = "A link to confirm your email change has been sent to the new address."
-        {:noreply, socket |> put_flash(:info, info)}
+        {:noreply, put_flash(socket, :info, info)}
 
       changeset ->
         {:noreply, assign(socket, :email_form, to_form(changeset, action: :insert))}

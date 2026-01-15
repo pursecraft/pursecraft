@@ -1,10 +1,11 @@
 defmodule PurseCraft.IdentityTest do
-  use PurseCraft.DataCase
-
-  alias PurseCraft.Identity
+  use PurseCraft.DataCase, async: true
 
   import PurseCraft.IdentityFixtures
-  alias PurseCraft.Identity.{User, UserToken}
+
+  alias PurseCraft.Identity
+  alias PurseCraft.Identity.User
+  alias PurseCraft.Identity.UserToken
 
   describe "get_user_by_email/1" do
     test "does not return the user if the email does not exist" do
@@ -23,12 +24,12 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "does not return the user if the password is not valid" do
-      user = user_fixture() |> set_password()
+      user = set_password(user_fixture())
       refute Identity.get_user_by_email_and_password(user.email, "invalid")
     end
 
     test "returns the user if the email and password are valid" do
-      %{id: id} = user = user_fixture() |> set_password()
+      %{id: id} = user = set_password(user_fixture())
 
       assert %User{id: ^id} =
                Identity.get_user_by_email_and_password(user.email, valid_user_password())
@@ -73,13 +74,14 @@ defmodule PurseCraft.IdentityTest do
       assert "has already been taken" in errors_on(changeset).email
 
       # Now try with the uppercased email too, to check that email case is ignored.
-      {:error, changeset} = Identity.register_user(%{email: String.upcase(email)})
-      assert "has already been taken" in errors_on(changeset).email
+      {:error, uppercased_changeset} = Identity.register_user(%{email: String.upcase(email)})
+      assert "has already been taken" in errors_on(uppercased_changeset).email
     end
 
     test "registers users without password" do
       email = unique_user_email()
-      {:ok, user} = Identity.register_user(valid_user_attributes(email: email))
+      attributes = valid_user_attributes(email: email)
+      {:ok, user} = Identity.register_user(attributes)
       assert user.email == email
       assert is_nil(user.hashed_password)
       assert is_nil(user.confirmed_at)
@@ -119,13 +121,13 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "sends token through notification", %{user: user} do
-      token =
+      encoded_token =
         extract_user_token(fn url ->
           Identity.deliver_user_update_email_instructions(user, "current@example.com", url)
         end)
 
-      {:ok, token} = Base.url_decode64(token, padding: false)
-      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
+      {:ok, decoded_token} = Base.url_decode64(encoded_token, padding: false)
+      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, decoded_token))
       assert user_token.user_id == user.id
       assert user_token.sent_to == user.email
       assert user_token.context == "change:current@example.com"
@@ -241,9 +243,9 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "deletes all tokens for the given user", %{user: user} do
-      _ = Identity.generate_user_session_token(user)
+      _token = Identity.generate_user_session_token(user)
 
-      {:ok, {_, _}} =
+      {:ok, {_updated_user, _expired_tokens}} =
         Identity.update_user_password(user, %{
           password: "new valid password"
         })
@@ -261,7 +263,7 @@ defmodule PurseCraft.IdentityTest do
       token = Identity.generate_user_session_token(user)
       assert user_token = Repo.get_by(UserToken, token: token)
       assert user_token.context == "session"
-      assert user_token.authenticated_at != nil
+      assert user_token.authenticated_at
 
       # Creating the same token for another user should fail
       assert_raise Ecto.ConstraintError, fn ->
@@ -274,11 +276,16 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "duplicates the authenticated_at of given user in new token", %{user: user} do
-      user = %{user | authenticated_at: DateTime.add(DateTime.utc_now(:second), -3600)}
-      token = Identity.generate_user_session_token(user)
+      one_hour_ago =
+        :second
+        |> DateTime.utc_now()
+        |> DateTime.add(-3600)
+
+      old_user = %{user | authenticated_at: one_hour_ago}
+      token = Identity.generate_user_session_token(old_user)
       assert user_token = Repo.get_by(UserToken, token: token)
-      assert user_token.authenticated_at == user.authenticated_at
-      assert DateTime.compare(user_token.inserted_at, user.authenticated_at) == :gt
+      assert user_token.authenticated_at == old_user.authenticated_at
+      assert DateTime.after?(user_token.inserted_at, old_user.authenticated_at)
     end
   end
 
@@ -292,8 +299,8 @@ defmodule PurseCraft.IdentityTest do
     test "returns user by token", %{user: user, token: token} do
       assert {session_user, token_inserted_at} = Identity.get_user_by_session_token(token)
       assert session_user.id == user.id
-      assert session_user.authenticated_at != nil
-      assert token_inserted_at != nil
+      assert session_user.authenticated_at
+      assert token_inserted_at
     end
 
     test "does not return user for invalid token" do
@@ -376,13 +383,13 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "sends token through notification", %{user: user} do
-      token =
+      encoded_token =
         extract_user_token(fn url ->
           Identity.deliver_login_instructions(user, url)
         end)
 
-      {:ok, token} = Base.url_decode64(token, padding: false)
-      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
+      {:ok, decoded_token} = Base.url_decode64(encoded_token, padding: false)
+      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, decoded_token))
       assert user_token.user_id == user.id
       assert user_token.sent_to == user.email
       assert user_token.context == "login"

@@ -1,9 +1,11 @@
 defmodule PurseCraftWeb.UserAuth do
+  @moduledoc false
   use PurseCraftWeb, :verified_routes
 
-  import Plug.Conn
   import Phoenix.Controller
+  import Plug.Conn
 
+  alias Phoenix.LiveView.Socket
   alias PurseCraft.Identity
   alias PurseCraft.Identity.Scope
 
@@ -32,6 +34,7 @@ defmodule PurseCraftWeb.UserAuth do
   Redirects to the session's `:user_return_to` path
   or falls back to the `signed_in_path/1`.
   """
+  @spec log_in_user(Plug.Conn.t(), Identity.User.t(), map()) :: Plug.Conn.t()
   def log_in_user(conn, user, params \\ %{}) do
     user_return_to = get_session(conn, :user_return_to)
 
@@ -45,6 +48,7 @@ defmodule PurseCraftWeb.UserAuth do
 
   It clears all session data for safety. See renew_session.
   """
+  @spec log_out_user(Plug.Conn.t()) :: Plug.Conn.t()
   def log_out_user(conn) do
     user_token = get_session(conn, :user_token)
     user_token && Identity.delete_user_session_token(user_token)
@@ -64,6 +68,7 @@ defmodule PurseCraftWeb.UserAuth do
 
   Will reissue the session token if it is older than the configured age.
   """
+  @spec fetch_current_scope_for_user(Plug.Conn.t(), keyword()) :: Plug.Conn.t()
   def fetch_current_scope_for_user(conn, _opts) do
     with {token, conn} <- ensure_user_token(conn),
          {user, token_inserted_at} <- Identity.get_user_by_session_token(token) do
@@ -80,18 +85,25 @@ defmodule PurseCraftWeb.UserAuth do
       {token, conn}
     else
       conn = fetch_cookies(conn, signed: [@remember_me_cookie])
+      token = conn.cookies[@remember_me_cookie]
 
-      if token = conn.cookies[@remember_me_cookie] do
-        {token, conn |> put_token_in_session(token) |> put_session(:user_remember_me, true)}
-      else
-        nil
+      if token do
+        conn =
+          conn
+          |> put_token_in_session(token)
+          |> put_session(:user_remember_me, true)
+
+        {token, conn}
       end
     end
   end
 
   # Reissue the session token if it is older than the configured reissue age.
   defp maybe_reissue_user_session_token(conn, user, token_inserted_at) do
-    token_age = DateTime.diff(DateTime.utc_now(:second), token_inserted_at, :day)
+    token_age =
+      :second
+      |> DateTime.utc_now()
+      |> DateTime.diff(token_inserted_at, :day)
 
     if token_age >= @session_reissue_age_in_days do
       create_or_extend_session(conn, user, %{})
@@ -140,7 +152,7 @@ defmodule PurseCraftWeb.UserAuth do
   #       |> put_session(:preferred_locale, preferred_locale)
   #     end
   #
-  defp renew_session(conn, _user) do
+  defp renew_session(conn, _new_user) do
     delete_csrf_token()
 
     conn
@@ -148,13 +160,12 @@ defmodule PurseCraftWeb.UserAuth do
     |> clear_session()
   end
 
-  defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}, _),
+  defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}, _remember_me),
     do: write_remember_me_cookie(conn, token)
 
-  defp maybe_write_remember_me_cookie(conn, token, _params, true),
-    do: write_remember_me_cookie(conn, token)
+  defp maybe_write_remember_me_cookie(conn, token, _params, true), do: write_remember_me_cookie(conn, token)
 
-  defp maybe_write_remember_me_cookie(conn, _token, _params, _), do: conn
+  defp maybe_write_remember_me_cookie(conn, _token, _params, _remember_me), do: conn
 
   defp write_remember_me_cookie(conn, token) do
     conn
@@ -171,6 +182,7 @@ defmodule PurseCraftWeb.UserAuth do
   @doc """
   Disconnects existing sockets for the given tokens.
   """
+  @spec disconnect_sessions(list()) :: :ok
   def disconnect_sessions(tokens) do
     Enum.each(tokens, fn %{token: token} ->
       PurseCraftWeb.Endpoint.broadcast(user_session_topic(token), "disconnect", %{})
@@ -211,10 +223,14 @@ defmodule PurseCraftWeb.UserAuth do
         live "/profile", ProfileLive, :index
       end
   """
+  @spec on_mount(atom(), map(), map(), Socket.t()) ::
+          {:cont, Socket.t()} | {:halt, Socket.t()}
   def on_mount(:mount_current_scope, _params, session, socket) do
     {:cont, mount_current_scope(socket, session)}
   end
 
+  @spec on_mount(atom(), map(), map(), Socket.t()) ::
+          {:cont, Socket.t()} | {:halt, Socket.t()}
   def on_mount(:require_authenticated, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 
@@ -230,6 +246,8 @@ defmodule PurseCraftWeb.UserAuth do
     end
   end
 
+  @spec on_mount(atom(), map(), map(), Socket.t()) ::
+          {:cont, Socket.t()} | {:halt, Socket.t()}
   def on_mount(:require_sudo_mode, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 
@@ -247,7 +265,7 @@ defmodule PurseCraftWeb.UserAuth do
 
   defp mount_current_scope(socket, session) do
     Phoenix.Component.assign_new(socket, :current_scope, fn ->
-      {user, _} =
+      {user, _token_inserted_at} =
         if user_token = session["user_token"] do
           Identity.get_user_by_session_token(user_token)
         end || {nil, nil}
@@ -257,16 +275,19 @@ defmodule PurseCraftWeb.UserAuth do
   end
 
   @doc "Returns the path to redirect to after log in."
+  @spec signed_in_path(Plug.Conn.t()) :: String.t()
   # the user was already logged in, redirect to settings
   def signed_in_path(%Plug.Conn{assigns: %{current_scope: %Scope{user: %Identity.User{}}}}) do
     ~p"/users/settings"
   end
 
-  def signed_in_path(_), do: ~p"/"
+  @spec signed_in_path(Plug.Conn.t()) :: String.t()
+  def signed_in_path(_conn), do: ~p"/"
 
   @doc """
   Plug for routes that require the user to be authenticated.
   """
+  @spec require_authenticated_user(Plug.Conn.t(), keyword()) :: Plug.Conn.t()
   def require_authenticated_user(conn, _opts) do
     if conn.assigns.current_scope && conn.assigns.current_scope.user do
       conn

@@ -1,10 +1,11 @@
 defmodule PurseCraftWeb.UserLive.Registration do
+  @moduledoc false
   use PurseCraftWeb, :live_view
 
   alias PurseCraft.Identity
   alias PurseCraft.Identity.User
 
-  @impl true
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -41,9 +42,8 @@ defmodule PurseCraftWeb.UserLive.Registration do
     """
   end
 
-  @impl true
-  def mount(_params, _session, %{assigns: %{current_scope: %{user: user}}} = socket)
-      when not is_nil(user) do
+  @impl Phoenix.LiveView
+  def mount(_params, _session, %{assigns: %{current_scope: %{user: user}}} = socket) when not is_nil(user) do
     {:ok, redirect(socket, to: PurseCraftWeb.UserAuth.signed_in_path(socket))}
   end
 
@@ -53,11 +53,11 @@ defmodule PurseCraftWeb.UserLive.Registration do
     {:ok, assign_form(socket, changeset), temporary_assigns: [form: nil]}
   end
 
-  @impl true
+  @impl Phoenix.LiveView
   def handle_event("save", %{"user" => user_params}, socket) do
     case Identity.register_user(user_params) do
       {:ok, user} ->
-        {:ok, _} =
+        {:ok, _email_result} =
           Identity.deliver_login_instructions(
             user,
             &url(~p"/users/log-in/#{&1}")

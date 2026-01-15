@@ -67,11 +67,12 @@ defmodule PurseCraftWeb.UserLive.ConfirmationTest do
       assert redirected_to(conn) == ~p"/"
 
       # log out, new conn
-      conn = build_conn()
+      new_conn = build_conn()
 
       {:ok, _lv, html} =
-        live(conn, ~p"/users/log-in/#{token}")
-        |> follow_redirect(conn, ~p"/users/log-in")
+        new_conn
+        |> live(~p"/users/log-in/#{token}")
+        |> follow_redirect(new_conn, ~p"/users/log-in")
 
       assert html =~ "Magic link is invalid or it has expired"
     end
@@ -98,18 +99,20 @@ defmodule PurseCraftWeb.UserLive.ConfirmationTest do
       assert Identity.get_user!(user.id).confirmed_at == user.confirmed_at
 
       # log out, new conn
-      conn = build_conn()
+      new_conn = build_conn()
 
       {:ok, _lv, html} =
-        live(conn, ~p"/users/log-in/#{token}")
-        |> follow_redirect(conn, ~p"/users/log-in")
+        new_conn
+        |> live(~p"/users/log-in/#{token}")
+        |> follow_redirect(new_conn, ~p"/users/log-in")
 
       assert html =~ "Magic link is invalid or it has expired"
     end
 
     test "raises error for invalid token", %{conn: conn} do
       {:ok, _lv, html} =
-        live(conn, ~p"/users/log-in/invalid-token")
+        conn
+        |> live(~p"/users/log-in/invalid-token")
         |> follow_redirect(conn, ~p"/users/log-in")
 
       assert html =~ "Magic link is invalid or it has expired"

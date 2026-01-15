@@ -22,7 +22,7 @@ defmodule PurseCraftWeb.UserSessionController do
         |> put_flash(:info, info)
         |> UserAuth.log_in_user(user, user_params)
 
-      _ ->
+      _error ->
         conn
         |> put_flash(:error, "The link is invalid or it has expired.")
         |> redirect(to: ~p"/users/log-in")
@@ -49,7 +49,7 @@ defmodule PurseCraftWeb.UserSessionController do
   def update_password(conn, %{"user" => user_params} = params) do
     user = conn.assigns.current_scope.user
     true = Identity.sudo_mode?(user)
-    {:ok, {_user, expired_tokens}} = Identity.update_user_password(user, user_params)
+    {:ok, {_updated_user, expired_tokens}} = Identity.update_user_password(user, user_params)
 
     # disconnect all existing LiveViews with old sessions
     UserAuth.disconnect_sessions(expired_tokens)
