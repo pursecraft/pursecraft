@@ -12,6 +12,21 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
       assert html =~ "Register"
       assert html =~ "Log in with email"
     end
+
+    test "shows local mail adapter notification when configured", %{conn: conn} do
+      original_config = Application.get_env(:purse_craft, PurseCraft.Mailer)
+
+      try do
+        Application.put_env(:purse_craft, PurseCraft.Mailer, adapter: Swoosh.Adapters.Local)
+
+        {:ok, _lv, html} = live(conn, ~p"/users/log-in")
+
+        assert html =~ "You are running the local mail adapter"
+        assert html =~ "/dev/mailbox"
+      after
+        Application.put_env(:purse_craft, PurseCraft.Mailer, original_config)
+      end
+    end
   end
 
   describe "user login - magic link" do
