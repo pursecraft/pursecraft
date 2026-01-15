@@ -156,7 +156,7 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "does not update email with invalid token", %{user: user} do
-      assert Identity.update_user_email(user, "oops") ==
+      assert Identity.update_user_email(user, "invalid-base64!!!") ==
                {:error, :transaction_aborted}
 
       assert Repo.get!(User, user.id).email == user.email
@@ -327,7 +327,7 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "does not return user for invalid token" do
-      refute Identity.get_user_by_magic_link_token("oops")
+      refute Identity.get_user_by_magic_link_token("invalid-base64!!!")
     end
 
     test "does not return user for expired token", %{token: token} do
@@ -364,6 +364,14 @@ defmodule PurseCraft.IdentityTest do
 
       assert_raise RuntimeError, ~r/magic link log in is not allowed/, fn ->
         Identity.login_user_by_magic_link(encoded_token)
+      end
+    end
+
+    test "raises MatchError for invalid base64 token" do
+      invalid_token = "not-valid-base64!!!"
+
+      assert_raise MatchError, fn ->
+        Identity.login_user_by_magic_link(invalid_token)
       end
     end
   end
