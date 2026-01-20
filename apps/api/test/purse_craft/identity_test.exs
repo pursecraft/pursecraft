@@ -77,7 +77,7 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "registers users without password" do
-      email = "user#{System.unique_integer()}@example.com"
+      email = Faker.Internet.email()
       {:ok, user} = Identity.register_user(%{email: email})
       assert user.email == email
       assert is_nil(user.hashed_password)
@@ -134,7 +134,7 @@ defmodule PurseCraft.IdentityTest do
   describe "update_user_email/2" do
     setup do
       user = insert(:identity_confirmed_user)
-      email = "user" <> Integer.to_string(System.unique_integer()) <> "@example.com"
+      email = Faker.Internet.email()
 
       token =
         identity_extract_user_token(fn url ->

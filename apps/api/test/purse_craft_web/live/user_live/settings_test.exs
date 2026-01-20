@@ -49,7 +49,7 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
     end
 
     test "updates the user email", %{conn: conn, user: user} do
-      new_email = "user" <> Integer.to_string(System.unique_integer()) <> "@example.com"
+      new_email = Faker.Internet.email()
 
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
@@ -168,7 +168,7 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
   describe "confirm email" do
     setup %{conn: conn} do
       user = insert(:identity_confirmed_user)
-      email = "user" <> Integer.to_string(System.unique_integer()) <> "@example.com"
+      email = Faker.Internet.email()
 
       token =
         identity_extract_user_token(fn url ->

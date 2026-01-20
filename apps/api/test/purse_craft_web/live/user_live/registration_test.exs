@@ -38,7 +38,7 @@ defmodule PurseCraftWeb.UserLive.RegistrationTest do
     test "creates account but does not log in", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/users/register")
 
-      email = "user#{System.unique_integer()}@example.com"
+      email = Faker.Internet.email()
       form = form(lv, "#registration_form", user: %{email: email})
 
       {:ok, _lv, html} =
