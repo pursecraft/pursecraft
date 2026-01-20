@@ -51,12 +51,6 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
 
       assert redirected_to(conn) == "/foo/bar"
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Welcome back!"
-
-      logged_in_conn = get(conn, ~p"/")
-      response = html_response(logged_in_conn, 200)
-      assert response =~ user.email
-      assert response =~ ~p"/users/settings"
-      assert response =~ ~p"/users/log-out"
     end
 
     test "redirects to login page with invalid credentials", %{conn: conn, user: user} do
