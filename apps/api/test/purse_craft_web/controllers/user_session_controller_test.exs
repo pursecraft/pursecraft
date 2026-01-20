@@ -41,7 +41,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
     test "logs the user in with return to", %{conn: conn, user: user} do
       conn =
         conn
-        |> init_test_session(user_return_to: ~p"/users/settings")
+        |> init_test_session(user_return_to: "/foo/bar")
         |> post(~p"/users/log-in", %{
           "user" => %{
             "email" => user.email,
@@ -49,8 +49,38 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
           }
         })
 
-      assert redirected_to(conn) == ~p"/users/settings"
+      assert redirected_to(conn) == "/foo/bar"
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Welcome back!"
+
+      logged_in_conn = get(conn, ~p"/")
+      response = html_response(logged_in_conn, 200)
+      assert response =~ user.email
+      assert response =~ ~p"/users/settings"
+      assert response =~ ~p"/users/log-out"
+    end
+
+    test "redirects to login page with invalid credentials", %{conn: conn, user: user} do
+      conn =
+        post(conn, ~p"/users/log-in", %{
+          "user" => %{"email" => user.email, "password" => "invalid"}
+        })
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Invalid email or password"
+      assert redirected_to(conn) == ~p"/users/log-in"
+    end
+  end
+
+  describe "POST /users/log-in - magic link" do
+    test "logs the user in", %{conn: conn, user: user} do
+      {token, _hashed_token} = identity_user_magic_link_token(user)
+
+      conn =
+        post(conn, ~p"/users/log-in", %{
+          "user" => %{"token" => token}
+        })
+
+      assert get_session(conn, :user_token)
+      assert redirected_to(conn) == ~p"/"
 
       logged_in_conn = get(conn, ~p"/")
       response = html_response(logged_in_conn, 200)
@@ -75,7 +105,6 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
 
       assert Identity.get_user!(user.id).confirmed_at
 
-      # Now do a logged in request and assert on the menu
       logged_in_conn = get(conn, ~p"/")
       response = html_response(logged_in_conn, 200)
       assert response =~ user.email
