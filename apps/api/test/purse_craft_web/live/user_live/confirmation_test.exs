@@ -2,18 +2,18 @@ defmodule PurseCraftWeb.UserLive.ConfirmationTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import PurseCraft.IdentityFixtures
+  import PurseCraft.Factory
 
   alias PurseCraft.Identity
 
   setup do
-    %{unconfirmed_user: unconfirmed_user_fixture(), confirmed_user: user_fixture()}
+    %{unconfirmed_user: insert(:identity_user), confirmed_user: insert(:identity_confirmed_user)}
   end
 
   describe "Confirm user" do
     test "renders confirmation page for unconfirmed user", %{conn: conn, unconfirmed_user: user} do
       token =
-        extract_user_token(fn url ->
+        identity_extract_user_token(fn url ->
           Identity.deliver_login_instructions(user, url)
         end)
 
@@ -23,7 +23,7 @@ defmodule PurseCraftWeb.UserLive.ConfirmationTest do
 
     test "renders login page for confirmed user", %{conn: conn, confirmed_user: user} do
       token =
-        extract_user_token(fn url ->
+        identity_extract_user_token(fn url ->
           Identity.deliver_login_instructions(user, url)
         end)
 
@@ -36,7 +36,7 @@ defmodule PurseCraftWeb.UserLive.ConfirmationTest do
       conn = log_in_user(conn, user)
 
       token =
-        extract_user_token(fn url ->
+        identity_extract_user_token(fn url ->
           Identity.deliver_login_instructions(user, url)
         end)
 
@@ -47,7 +47,7 @@ defmodule PurseCraftWeb.UserLive.ConfirmationTest do
 
     test "confirms the given token once", %{conn: conn, unconfirmed_user: user} do
       token =
-        extract_user_token(fn url ->
+        identity_extract_user_token(fn url ->
           Identity.deliver_login_instructions(user, url)
         end)
 
@@ -82,7 +82,7 @@ defmodule PurseCraftWeb.UserLive.ConfirmationTest do
       confirmed_user: user
     } do
       token =
-        extract_user_token(fn url ->
+        identity_extract_user_token(fn url ->
           Identity.deliver_login_instructions(user, url)
         end)
 

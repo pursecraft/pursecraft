@@ -2,7 +2,7 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import PurseCraft.IdentityFixtures
+  import PurseCraft.Factory
 
   describe "login page" do
     test "renders login page", %{conn: conn} do
@@ -31,7 +31,7 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
 
   describe "user login - magic link" do
     test "sends magic link email when user exists", %{conn: conn} do
-      user = user_fixture()
+      user = insert(:identity_confirmed_user)
 
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
@@ -62,12 +62,12 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
 
   describe "user login - password" do
     test "redirects if user logs in with valid credentials", %{conn: conn} do
-      user = set_password(user_fixture())
+      user = insert(:identity_user_with_password)
 
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form_password", user: %{email: user.email, password: valid_user_password(), remember_me: true})
+        form(lv, "#login_form_password", user: %{email: user.email, password: "hello world!", remember_me: true})
 
       conn = submit_form(form, conn)
 
@@ -106,7 +106,7 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
 
   describe "re-authentication (sudo mode)" do
     setup %{conn: conn} do
-      user = user_fixture()
+      user = insert(:identity_confirmed_user)
       %{user: user, conn: log_in_user(conn, user)}
     end
 

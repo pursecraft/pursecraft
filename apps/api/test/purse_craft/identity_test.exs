@@ -1,7 +1,7 @@
 defmodule PurseCraft.IdentityTest do
   use PurseCraft.DataCase, async: true
 
-  import PurseCraft.IdentityFixtures
+  import PurseCraft.Factory
 
   alias PurseCraft.Identity
   alias PurseCraft.Identity.User
@@ -13,7 +13,7 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "returns the user if the email exists" do
-      %{id: id} = user = user_fixture()
+      %{id: id} = user = insert(:identity_confirmed_user)
       assert %User{id: ^id} = Identity.get_user_by_email(user.email)
     end
   end
@@ -24,15 +24,15 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "does not return the user if the password is not valid" do
-      user = set_password(user_fixture())
+      user = insert(:identity_user_with_password)
       refute Identity.get_user_by_email_and_password(user.email, "invalid")
     end
 
     test "returns the user if the email and password are valid" do
-      %{id: id} = user = set_password(user_fixture())
+      %{id: id} = user = insert(:identity_user_with_password)
 
       assert %User{id: ^id} =
-               Identity.get_user_by_email_and_password(user.email, valid_user_password())
+               Identity.get_user_by_email_and_password(user.email, "hello world!")
     end
   end
 
@@ -44,7 +44,7 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "returns the user with the given id" do
-      %{id: id} = user = user_fixture()
+      %{id: id} = user = insert(:identity_confirmed_user)
       assert %User{id: ^id} = Identity.get_user!(user.id)
     end
   end
@@ -69,7 +69,7 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "validates email uniqueness" do
-      %{email: email} = user_fixture()
+      %{email: email} = insert(:identity_confirmed_user)
       {:error, changeset} = Identity.register_user(%{email: email})
       assert "has already been taken" in errors_on(changeset).email
 
@@ -79,9 +79,8 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "registers users without password" do
-      email = unique_user_email()
-      attributes = valid_user_attributes(email: email)
-      {:ok, user} = Identity.register_user(attributes)
+      email = "user#{System.unique_integer()}@example.com"
+      {:ok, user} = Identity.register_user(%{email: email})
       assert user.email == email
       assert is_nil(user.hashed_password)
       assert is_nil(user.confirmed_at)
@@ -117,12 +116,12 @@ defmodule PurseCraft.IdentityTest do
 
   describe "deliver_user_update_email_instructions/3" do
     setup do
-      %{user: user_fixture()}
+      %{user: insert(:identity_confirmed_user)}
     end
 
     test "sends token through notification", %{user: user} do
       encoded_token =
-        extract_user_token(fn url ->
+        identity_extract_user_token(fn url ->
           Identity.deliver_user_update_email_instructions(user, "current@example.com", url)
         end)
 
@@ -136,11 +135,11 @@ defmodule PurseCraft.IdentityTest do
 
   describe "update_user_email/2" do
     setup do
-      user = unconfirmed_user_fixture()
-      email = unique_user_email()
+      user = insert(:identity_confirmed_user)
+      email = "user" <> Integer.to_string(System.unique_integer()) <> "@example.com"
 
       token =
-        extract_user_token(fn url ->
+        identity_extract_user_token(fn url ->
           Identity.deliver_user_update_email_instructions(%{user | email: email}, user.email, url)
         end)
 
@@ -206,7 +205,7 @@ defmodule PurseCraft.IdentityTest do
 
   describe "update_user_password/2" do
     setup do
-      %{user: user_fixture()}
+      %{user: insert(:identity_confirmed_user)}
     end
 
     test "validates password", %{user: user} do
@@ -256,7 +255,7 @@ defmodule PurseCraft.IdentityTest do
 
   describe "generate_user_session_token/1" do
     setup do
-      %{user: user_fixture()}
+      %{user: insert(:identity_confirmed_user)}
     end
 
     test "generates a token", %{user: user} do
@@ -269,7 +268,7 @@ defmodule PurseCraft.IdentityTest do
       assert_raise Ecto.ConstraintError, fn ->
         Repo.insert!(%UserToken{
           token: user_token.token,
-          user_id: user_fixture().id,
+          user_id: insert(:identity_confirmed_user).id,
           context: "session"
         })
       end
@@ -291,7 +290,7 @@ defmodule PurseCraft.IdentityTest do
 
   describe "get_user_by_session_token/1" do
     setup do
-      user = user_fixture()
+      user = insert(:identity_confirmed_user)
       token = Identity.generate_user_session_token(user)
       %{user: user, token: token}
     end
@@ -316,8 +315,8 @@ defmodule PurseCraft.IdentityTest do
 
   describe "get_user_by_magic_link_token/1" do
     setup do
-      user = user_fixture()
-      {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
+      user = insert(:identity_confirmed_user)
+      {encoded_token, _hashed_token} = identity_user_magic_link_token(user)
       %{user: user, token: encoded_token}
     end
 
@@ -338,9 +337,9 @@ defmodule PurseCraft.IdentityTest do
 
   describe "login_user_by_magic_link/1" do
     test "confirms user and expires tokens" do
-      user = unconfirmed_user_fixture()
+      user = insert(:identity_user)
       refute user.confirmed_at
-      {encoded_token, hashed_token} = generate_user_magic_link_token(user)
+      {encoded_token, hashed_token} = identity_user_magic_link_token(user)
 
       assert {:ok, {user, [%{token: ^hashed_token}]}} =
                Identity.login_user_by_magic_link(encoded_token)
@@ -349,18 +348,18 @@ defmodule PurseCraft.IdentityTest do
     end
 
     test "returns user and (deleted) token for confirmed user" do
-      user = user_fixture()
+      user = insert(:identity_confirmed_user)
       assert user.confirmed_at
-      {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
+      {encoded_token, _hashed_token} = identity_user_magic_link_token(user)
       assert {:ok, {^user, []}} = Identity.login_user_by_magic_link(encoded_token)
       # one time use only
       assert {:error, :not_found} = Identity.login_user_by_magic_link(encoded_token)
     end
 
     test "raises when unconfirmed user has password set" do
-      user = unconfirmed_user_fixture()
+      user = insert(:identity_user)
       {1, nil} = Repo.update_all(User, set: [hashed_password: "hashed"])
-      {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
+      {encoded_token, _hashed_token} = identity_user_magic_link_token(user)
 
       assert_raise RuntimeError, ~r/magic link log in is not allowed/, fn ->
         Identity.login_user_by_magic_link(encoded_token)
@@ -378,7 +377,7 @@ defmodule PurseCraft.IdentityTest do
 
   describe "delete_user_session_token/1" do
     test "deletes the token" do
-      user = user_fixture()
+      user = insert(:identity_confirmed_user)
       token = Identity.generate_user_session_token(user)
       assert Identity.delete_user_session_token(token) == :ok
       refute Identity.get_user_by_session_token(token)
@@ -387,12 +386,12 @@ defmodule PurseCraft.IdentityTest do
 
   describe "deliver_login_instructions/2" do
     setup do
-      %{user: unconfirmed_user_fixture()}
+      %{user: insert(:identity_confirmed_user)}
     end
 
     test "sends token through notification", %{user: user} do
       encoded_token =
-        extract_user_token(fn url ->
+        identity_extract_user_token(fn url ->
           Identity.deliver_login_instructions(user, url)
         end)
 
