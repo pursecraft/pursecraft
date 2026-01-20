@@ -2,7 +2,6 @@ defmodule PurseCraftWeb.UserLive.LoginTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import PurseCraft.Factory
 
   describe "login page" do
     test "renders login page", %{conn: conn} do

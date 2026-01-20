@@ -2,7 +2,6 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import PurseCraft.Factory
 
   alias PurseCraft.Identity
 
@@ -33,7 +32,9 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
 
       {:ok, redirected_conn} =
         conn
-        |> log_in_user(insert(:identity_confirmed_user), token_authenticated_at: eleven_minutes_ago)
+        |> log_in_user(insert(:identity_confirmed_user),
+          token_authenticated_at: eleven_minutes_ago
+        )
         |> live(~p"/users/settings")
         |> follow_redirect(conn, ~p"/users/log-in")
 

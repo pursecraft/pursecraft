@@ -1,8 +1,6 @@
 defmodule PurseCraft.IdentityTest do
   use PurseCraft.DataCase, async: true
 
-  import PurseCraft.Factory
-
   alias PurseCraft.Identity
   alias PurseCraft.Identity.User
   alias PurseCraft.Identity.UserToken

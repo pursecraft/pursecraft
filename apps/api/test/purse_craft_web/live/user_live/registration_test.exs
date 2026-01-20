@@ -2,7 +2,6 @@ defmodule PurseCraftWeb.UserLive.RegistrationTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import PurseCraft.Factory
 
   describe "Registration page" do
     test "renders registration page", %{conn: conn} do

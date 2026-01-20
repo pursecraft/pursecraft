@@ -1,7 +1,6 @@
 defmodule PurseCraftWeb.UserAuthTest do
   use PurseCraftWeb.ConnCase, async: true
 
-  import PurseCraft.Factory
   import PurseCraft.IdentityTestHelpers
 
   alias Phoenix.LiveView
