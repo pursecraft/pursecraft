@@ -1,7 +1,7 @@
 defmodule PurseCraftWeb.UserAuthTest do
   use PurseCraftWeb.ConnCase, async: true
 
-  import PurseCraft.IdentityFixtures
+  import PurseCraft.IdentityTestHelpers
 
   alias Phoenix.LiveView
   alias Phoenix.Socket.Broadcast
@@ -18,7 +18,10 @@ defmodule PurseCraftWeb.UserAuthTest do
       |> Map.replace!(:secret_key_base, PurseCraftWeb.Endpoint.config(:secret_key_base))
       |> init_test_session(%{})
 
-    %{user: %{user_fixture() | authenticated_at: DateTime.utc_now(:second)}, conn: conn}
+    %{
+      user: %{insert(:identity_confirmed_user) | authenticated_at: DateTime.utc_now(:second)},
+      conn: conn
+    }
   end
 
   describe "log_in_user/3" do
@@ -53,7 +56,7 @@ defmodule PurseCraftWeb.UserAuthTest do
       conn: conn,
       user: user
     } do
-      other_user = user_fixture()
+      other_user = insert(:identity_confirmed_user)
 
       conn =
         conn
@@ -79,10 +82,14 @@ defmodule PurseCraftWeb.UserAuthTest do
         |> fetch_cookies()
         |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
 
-      assert get_session(logged_in_conn, :user_token) == logged_in_conn.cookies[@remember_me_cookie]
+      assert get_session(logged_in_conn, :user_token) ==
+               logged_in_conn.cookies[@remember_me_cookie]
+
       assert get_session(logged_in_conn, :user_remember_me) == true
 
-      assert %{value: signed_token, max_age: max_age} = logged_in_conn.resp_cookies[@remember_me_cookie]
+      assert %{value: signed_token, max_age: max_age} =
+               logged_in_conn.resp_cookies[@remember_me_cookie]
+
       assert signed_token != get_session(logged_in_conn, :user_token)
       assert max_age == @remember_me_cookie_max_age
     end
@@ -102,7 +109,9 @@ defmodule PurseCraftWeb.UserAuthTest do
         |> fetch_cookies()
         |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
 
-      assert get_session(logged_in_conn, :user_token) == logged_in_conn.cookies[@remember_me_cookie]
+      assert get_session(logged_in_conn, :user_token) ==
+               logged_in_conn.cookies[@remember_me_cookie]
+
       assert get_session(logged_in_conn, :user_remember_me) == true
 
       recycled_conn =
@@ -116,7 +125,10 @@ defmodule PurseCraftWeb.UserAuthTest do
       # now we log in again and even without explicitly setting remember_me,
       # the cookie should be set again
       re_logged_in_conn = UserAuth.log_in_user(recycled_conn, user, %{})
-      assert %{value: signed_token, max_age: max_age} = re_logged_in_conn.resp_cookies[@remember_me_cookie]
+
+      assert %{value: signed_token, max_age: max_age} =
+               re_logged_in_conn.resp_cookies[@remember_me_cookie]
+
       assert signed_token != get_session(re_logged_in_conn, :user_token)
       assert max_age == @remember_me_cookie_max_age
       assert get_session(re_logged_in_conn, :user_remember_me) == true
@@ -174,7 +186,10 @@ defmodule PurseCraftWeb.UserAuthTest do
         |> UserAuth.fetch_current_scope_for_user([])
 
       assert authenticated_conn.assigns.current_scope.user.id == user.id
-      assert authenticated_conn.assigns.current_scope.user.authenticated_at == user.authenticated_at
+
+      assert authenticated_conn.assigns.current_scope.user.authenticated_at ==
+               user.authenticated_at
+
       assert get_session(authenticated_conn, :user_token) == user_token
     end
 
@@ -217,7 +232,7 @@ defmodule PurseCraftWeb.UserAuthTest do
       token = logged_in_conn.cookies[@remember_me_cookie]
       %{value: signed_token} = logged_in_conn.resp_cookies[@remember_me_cookie]
 
-      offset_user_token(token, -10, :day)
+      identity_user_token_offset_time(token, -10, :day)
       {user, _token_inserted_at} = Identity.get_user_by_session_token(token)
 
       authenticated_conn =
@@ -228,10 +243,16 @@ defmodule PurseCraftWeb.UserAuthTest do
         |> UserAuth.fetch_current_scope_for_user([])
 
       assert authenticated_conn.assigns.current_scope.user.id == user.id
-      assert authenticated_conn.assigns.current_scope.user.authenticated_at == user.authenticated_at
+
+      assert authenticated_conn.assigns.current_scope.user.authenticated_at ==
+               user.authenticated_at
+
       assert new_token = get_session(authenticated_conn, :user_token)
       assert new_token != token
-      assert %{value: new_signed_token, max_age: max_age} = authenticated_conn.resp_cookies[@remember_me_cookie]
+
+      assert %{value: new_signed_token, max_age: max_age} =
+               authenticated_conn.resp_cookies[@remember_me_cookie]
+
       assert new_signed_token != signed_token
       assert max_age == @remember_me_cookie_max_age
     end

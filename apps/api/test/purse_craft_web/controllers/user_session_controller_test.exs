@@ -1,27 +1,22 @@
 defmodule PurseCraftWeb.UserSessionControllerTest do
   use PurseCraftWeb.ConnCase, async: true
 
-  import PurseCraft.IdentityFixtures
-
   alias PurseCraft.Identity
 
   setup do
-    %{unconfirmed_user: unconfirmed_user_fixture(), user: user_fixture()}
+    %{unconfirmed_user: insert(:identity_user), user: insert(:identity_user_with_password)}
   end
 
   describe "POST /users/log-in - email and password" do
-    test "logs the user in", %{conn: conn, user: user} do
-      user = set_password(user)
-
+    test "logs user in", %{conn: conn, user: user} do
       conn =
         post(conn, ~p"/users/log-in", %{
-          "user" => %{"email" => user.email, "password" => valid_user_password()}
+          "user" => %{"email" => user.email, "password" => "hello world!"}
         })
 
       assert get_session(conn, :user_token)
       assert redirected_to(conn) == ~p"/"
 
-      # Now do a logged in request and assert on the menu
       logged_in_conn = get(conn, ~p"/")
       response = html_response(logged_in_conn, 200)
       assert response =~ user.email
@@ -30,13 +25,11 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
     end
 
     test "logs the user in with remember me", %{conn: conn, user: user} do
-      user = set_password(user)
-
       conn =
         post(conn, ~p"/users/log-in", %{
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password(),
+            "password" => "hello world!",
             "remember_me" => "true"
           }
         })
@@ -46,15 +39,13 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
     end
 
     test "logs the user in with return to", %{conn: conn, user: user} do
-      user = set_password(user)
-
       conn =
         conn
         |> init_test_session(user_return_to: "/foo/bar")
         |> post(~p"/users/log-in", %{
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password()
+            "password" => "hello world!"
           }
         })
 
@@ -64,8 +55,8 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
 
     test "redirects to login page with invalid credentials", %{conn: conn, user: user} do
       conn =
-        post(conn, ~p"/users/log-in?mode=password", %{
-          "user" => %{"email" => user.email, "password" => "invalid_password"}
+        post(conn, ~p"/users/log-in", %{
+          "user" => %{"email" => user.email, "password" => "invalid"}
         })
 
       assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Invalid email or password"
@@ -75,7 +66,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
 
   describe "POST /users/log-in - magic link" do
     test "logs the user in", %{conn: conn, user: user} do
-      {token, _hashed_token} = generate_user_magic_link_token(user)
+      {token, _hashed_token} = identity_user_magic_link_token(user)
 
       conn =
         post(conn, ~p"/users/log-in", %{
@@ -85,7 +76,6 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
       assert get_session(conn, :user_token)
       assert redirected_to(conn) == ~p"/"
 
-      # Now do a logged in request and assert on the menu
       logged_in_conn = get(conn, ~p"/")
       response = html_response(logged_in_conn, 200)
       assert response =~ user.email
@@ -94,7 +84,7 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
     end
 
     test "confirms unconfirmed user", %{conn: conn, unconfirmed_user: user} do
-      {token, _hashed_token} = generate_user_magic_link_token(user)
+      {token, _hashed_token} = identity_user_magic_link_token(user)
       refute user.confirmed_at
 
       conn =
@@ -109,7 +99,6 @@ defmodule PurseCraftWeb.UserSessionControllerTest do
 
       assert Identity.get_user!(user.id).confirmed_at
 
-      # Now do a logged in request and assert on the menu
       logged_in_conn = get(conn, ~p"/")
       response = html_response(logged_in_conn, 200)
       assert response =~ user.email

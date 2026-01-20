@@ -24,6 +24,8 @@ defmodule PurseCraftWeb.ConnCase do
       # Import conveniences for testing with connections
       import Phoenix.ConnTest
       import Plug.Conn
+      import PurseCraft.Factory
+      import PurseCraft.IdentityTestHelpers
       import PurseCraftWeb.ConnCase
 
       # The default endpoint for testing
@@ -45,7 +47,7 @@ defmodule PurseCraftWeb.ConnCase do
   test context.
   """
   def register_and_log_in_user(%{conn: conn} = context) do
-    user = PurseCraft.IdentityFixtures.user_fixture()
+    user = PurseCraft.Factory.insert(:identity_confirmed_user)
     scope = PurseCraft.Identity.Scope.for_user(user)
 
     opts =
@@ -74,6 +76,9 @@ defmodule PurseCraftWeb.ConnCase do
   defp maybe_set_token_authenticated_at(_token, nil), do: nil
 
   defp maybe_set_token_authenticated_at(token, authenticated_at) do
-    PurseCraft.IdentityFixtures.override_token_authenticated_at(token, authenticated_at)
+    PurseCraft.IdentityTestHelpers.identity_user_token_set_authenticated_at(
+      token,
+      authenticated_at
+    )
   end
 end

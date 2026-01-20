@@ -24,6 +24,7 @@ defmodule PurseCraft.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import PurseCraft.DataCase
+      import PurseCraft.Factory
 
       alias PurseCraft.Repo
     end

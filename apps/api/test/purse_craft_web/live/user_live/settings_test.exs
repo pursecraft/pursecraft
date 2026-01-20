@@ -2,7 +2,6 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
   use PurseCraftWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import PurseCraft.IdentityFixtures
 
   alias PurseCraft.Identity
 
@@ -10,7 +9,7 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
     test "renders settings page", %{conn: conn} do
       {:ok, _lv, html} =
         conn
-        |> log_in_user(user_fixture())
+        |> log_in_user(insert(:identity_confirmed_user))
         |> live(~p"/users/settings")
 
       assert html =~ "Change Email"
@@ -33,7 +32,9 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
 
       {:ok, redirected_conn} =
         conn
-        |> log_in_user(user_fixture(), token_authenticated_at: eleven_minutes_ago)
+        |> log_in_user(insert(:identity_confirmed_user),
+          token_authenticated_at: eleven_minutes_ago
+        )
         |> live(~p"/users/settings")
         |> follow_redirect(conn, ~p"/users/log-in")
 
@@ -43,12 +44,12 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
 
   describe "update email form" do
     setup %{conn: conn} do
-      user = user_fixture()
+      user = insert(:identity_confirmed_user)
       %{conn: log_in_user(conn, user), user: user}
     end
 
     test "updates the user email", %{conn: conn, user: user} do
-      new_email = unique_user_email()
+      new_email = Faker.Internet.email()
 
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
@@ -95,12 +96,12 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
 
   describe "update password form" do
     setup %{conn: conn} do
-      user = user_fixture()
+      user = insert(:identity_confirmed_user)
       %{conn: log_in_user(conn, user), user: user}
     end
 
     test "updates the user password", %{conn: conn, user: user} do
-      new_password = valid_user_password()
+      new_password = "hello world!"
 
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
@@ -166,11 +167,11 @@ defmodule PurseCraftWeb.UserLive.SettingsTest do
 
   describe "confirm email" do
     setup %{conn: conn} do
-      user = user_fixture()
-      email = unique_user_email()
+      user = insert(:identity_confirmed_user)
+      email = Faker.Internet.email()
 
       token =
-        extract_user_token(fn url ->
+        identity_extract_user_token(fn url ->
           Identity.deliver_user_update_email_instructions(%{user | email: email}, user.email, url)
         end)
 
