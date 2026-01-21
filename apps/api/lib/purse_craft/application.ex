@@ -4,7 +4,6 @@ defmodule PurseCraft.Application do
   @moduledoc false
 
   use Application
-  use Commanded.Application, otp_app: :purse_craft
 
   @impl Application
   def start(_type, _args) do
@@ -32,10 +31,5 @@ defmodule PurseCraft.Application do
   def config_change(changed, _new, removed) do
     PurseCraftWeb.Endpoint.config_change(changed, removed)
     :ok
-  end
-
-  @impl Commanded.Application
-  def init(config) do
-    {:ok, config}
   end
 end
