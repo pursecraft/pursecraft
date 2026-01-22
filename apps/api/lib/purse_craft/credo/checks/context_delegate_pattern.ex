@@ -1,27 +1,35 @@
 defmodule PurseCraft.Credo.Checks.ContextDelegatePattern do
   @moduledoc """
-  Ensures Context modules use defdelegate for service operations.
+  Ensures Context modules only contain defdelegate declarations.
   """
   use Credo.Check,
     id: "CR007",
-    base_priority: :normal,
+    base_priority: :high,
     explanations: [
       check: """
-      Context modules should use defdelegate to delegate to Service modules.
-      Direct function implementation in Context is for simple reads only.
+      Context modules must only contain defdelegate declarations.
+      All functions must be delegated to Service or Repository modules.
 
       BAD:
         defmodule PurseCraft.Identity do
           def authenticate_user(email, password) do
-            # Business logic implementation here!
+            # No function implementations allowed!
+          end
+
+          def get_user(id) do
+            # Even reads must be delegated!
           end
         end
 
       GOOD:
         defmodule PurseCraft.Identity do
           defdelegate authenticate_by_email_and_password(email, password),
-            to: AuthenticateByEmailAndPassword,
+            to: Services.AuthenticateByEmailAndPassword,
             as: :call
+
+          defdelegate get_user_by_id(id),
+            to: Repositories.UserRepository,
+            as: :get_by_id
         end
       """
     ]
@@ -34,7 +42,7 @@ defmodule PurseCraft.Credo.Checks.ContextDelegatePattern do
     source_file
     |> Credo.Code.ast()
     |> Macro.postwalk([], fn
-      {:defmodule, _, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
+      {:defmodule, metadata, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
         module_name = Module.concat(module_names)
 
         if context_module?(module_name) do
@@ -58,8 +66,8 @@ defmodule PurseCraft.Credo.Checks.ContextDelegatePattern do
   defp check_context_functions({:__block__, _, defs}, issue_meta) do
     defs
     |> Enum.filter(fn
-      {:def, _, [{name, _, _args}, _body]} ->
-        not read_function_name?(name)
+      {:def, _, _args} ->
+        true
 
       _def ->
         false
@@ -68,21 +76,13 @@ defmodule PurseCraft.Credo.Checks.ContextDelegatePattern do
       name = function_name(def)
 
       format_issue(issue_meta,
-        message: "Context function `#{name}` should use defdelegate to a Service module.",
+        message: "Context must use defdelegate for `#{name}` instead of def.",
         trigger: to_string(name)
       )
     end)
   end
 
   defp check_context_functions(_ast, _issue_meta), do: []
-
-  defp read_function_name?(name) do
-    name_str = to_string(name)
-
-    String.starts_with?(name_str, "get_") or
-      String.starts_with?(name_str, "list_") or
-      name_str in ~w(get list)
-  end
 
   defp function_name({:def, _, [{name, _, _args}, _body]}), do: name
   defp function_name(_ast), do: :unknown
