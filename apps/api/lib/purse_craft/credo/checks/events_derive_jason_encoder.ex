@@ -30,7 +30,7 @@ defmodule PurseCraft.Credo.Checks.EventsDeriveJasonEncoder do
     source_file
     |> Credo.Code.ast()
     |> Macro.postwalk([], fn
-      {:defmodule, metadata, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
+      {:defmodule, _metadata, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
         module_name = Module.concat(module_names)
 
         if event_module?(module_name) do

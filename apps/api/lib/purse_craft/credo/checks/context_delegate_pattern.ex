@@ -42,7 +42,7 @@ defmodule PurseCraft.Credo.Checks.ContextDelegatePattern do
     source_file
     |> Credo.Code.ast()
     |> Macro.postwalk([], fn
-      {:defmodule, metadata, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
+      {:defmodule, _metadata, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
         module_name = Module.concat(module_names)
 
         if context_module?(module_name) do

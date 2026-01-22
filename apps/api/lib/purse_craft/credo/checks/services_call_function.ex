@@ -32,7 +32,7 @@ defmodule PurseCraft.Credo.Checks.ServicesCallFunction do
     source_file
     |> Credo.Code.ast()
     |> Macro.postwalk([], fn
-      {:defmodule, metadata, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
+      {:defmodule, _metadata, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
         module_name = Module.concat(module_names)
 
         if service_module?(module_name) do
