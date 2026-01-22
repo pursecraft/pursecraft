@@ -1,6 +1,6 @@
-defmodule PurseCraft.Credo.Checks.ServicesUseBehaviour do
+defmodule PurseCraft.Credo.Checks.ServicesCallFunction do
   @moduledoc """
-  Ensures Service modules use the PurseCraft.Service behaviour
+  Ensures Service modules have a `call` function as their public API
   and are located in a services/ directory.
   """
   use Credo.Check,
@@ -8,22 +8,18 @@ defmodule PurseCraft.Credo.Checks.ServicesUseBehaviour do
     base_priority: :high,
     explanations: [
       check: """
-      Service modules must use the PurseCraft.Service behaviour
-      and be in a services/ directory.
+      Service modules must have a `call` function and be in a services/ directory.
 
       BAD:
         # lib/purse_craft/contexts/identity/authenticate_user.ex
         defmodule PurseCraft.Identity.Services.AuthenticateUser do
-          def call(email, password)
+          def execute(email, password)  # Wrong function name!
         end
 
       GOOD:
         # lib/purse_craft/contexts/identity/services/authenticate_user.ex
         defmodule PurseCraft.Identity.Services.AuthenticateUser do
-          @behaviour PurseCraft.Service
-
-          @impl true
-          def call(email, password)
+          def call(email, password)  # Correct!
         end
       """
     ]
@@ -36,7 +32,7 @@ defmodule PurseCraft.Credo.Checks.ServicesUseBehaviour do
     source_file
     |> Credo.Code.ast()
     |> Macro.postwalk([], fn
-      {:defmodule, _meta, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
+      {:defmodule, metadata, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
         module_name = Module.concat(module_names)
 
         if service_module?(module_name) do
@@ -57,41 +53,38 @@ defmodule PurseCraft.Credo.Checks.ServicesUseBehaviour do
   end
 
   defp check_service_rules(source_file, body, issue_meta) do
-    behaviour_issue = check_service_behaviour(body, issue_meta)
+    call_issue = check_call_function(body, issue_meta)
     path_issue = check_service_path(source_file, issue_meta)
-    behaviour_issue ++ path_issue
+    call_issue ++ path_issue
   end
 
-  defp check_service_behaviour({:__block__, _, contents}, issue_meta) do
-    has_service_behaviour =
-      Enum.any?(contents, fn
-        {:attribute, _, {:behaviour, {:__aliases__, _, [:PurseCraft, :Service]}}} ->
+  defp check_call_function({:__block__, _, defs}, issue_meta) do
+    has_call =
+      Enum.any?(defs, fn
+        {:def, _, [{:call, _meta, _args}, _body]} ->
           true
 
-        {:attribute, _, {:behaviour, {:__aliases__, _, _}}} ->
-          false
-
-        _ast ->
+        _def ->
           false
       end)
 
-    if has_service_behaviour do
+    if has_call do
       []
     else
       [
         format_issue(issue_meta,
-          message: "Service modules must use `@behaviour PurseCraft.Service`.",
-          trigger: "defmodule"
+          message: "Service modules must have a `call` function.",
+          trigger: "def"
         )
       ]
     end
   end
 
-  defp check_service_behaviour(_ast, issue_meta) do
+  defp check_call_function(_ast, issue_meta) do
     [
       format_issue(issue_meta,
-        message: "Service modules must use `@behaviour PurseCraft.Service`.",
-        trigger: "defmodule"
+        message: "Service modules must have a `call` function.",
+        trigger: "def"
       )
     ]
   end

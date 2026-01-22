@@ -53,7 +53,7 @@
       requires: [
         "lib/purse_craft/credo/checks/repositories_no_ecto_query.ex",
         "lib/purse_craft/credo/checks/repositories_read_only.ex",
-        "lib/purse_craft/credo/checks/services_use_behaviour.ex",
+        "lib/purse_craft/credo/checks/services_call_function.ex",
         "lib/purse_craft/credo/checks/repositories_use_behaviour.ex",
         "lib/purse_craft/credo/checks/queries_use_behaviour.ex",
         "lib/purse_craft/credo/checks/events_versioned.ex",
@@ -230,7 +230,7 @@
                included: ["lib/purse_craft/contexts/"]
              }
            ]},
-          {PurseCraft.Credo.Checks.ServicesUseBehaviour,
+          {PurseCraft.Credo.Checks.ServicesCallFunction,
            [
              files: %{
                included: ["lib/purse_craft/contexts/"]
