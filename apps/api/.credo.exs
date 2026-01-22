@@ -56,7 +56,7 @@
         "lib/purse_craft/credo/checks/services_call_function.ex",
         "lib/purse_craft/credo/checks/repositories_use_behaviour.ex",
         "lib/purse_craft/credo/checks/queries_use_behaviour.ex",
-        "lib/purse_craft/credo/checks/events_versioned.ex",
+        "lib/purse_craft/credo/checks/events_derive_jason_encoder.ex",
         "lib/purse_craft/credo/checks/context_delegate_pattern.ex"
       ],
       #
@@ -248,7 +248,7 @@
                included: ["lib/purse_craft/contexts/"]
              }
            ]},
-          {PurseCraft.Credo.Checks.EventsVersioned,
+          {PurseCraft.Credo.Checks.EventsDeriveJasonEncoder,
            [
              files: %{
                included: ["lib/purse_craft/contexts/"]
