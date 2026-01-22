@@ -3,6 +3,7 @@
     "lib/purse_craft.ex",
     "lib/purse_craft/application.ex",
     "lib/purse_craft/command_bus.ex",
+    "lib/purse_craft/credo/",
     "lib/purse_craft/repo.ex",
     "lib/purse_craft_web.ex",
     "lib/purse_craft_web/components/core_components.ex",

@@ -34,6 +34,7 @@
         excluded: [
           ~r"/_build/",
           ~r"/deps/",
+          ~r"/lib/purse_craft/credo/",
           ~r"/lib/purse_craft_web.ex",
           ~r"/lib/purse_craft_web/components/core_components.ex",
           ~r"/lib/purse_craft_web/telemetry.ex",
@@ -49,7 +50,15 @@
       # If you create your own checks, you must specify the source files for
       # them here, so they can be loaded by Credo before running the analysis.
       #
-      requires: [],
+      requires: [
+        "lib/purse_craft/credo/checks/repositories_no_ecto_query.ex",
+        "lib/purse_craft/credo/checks/repositories_read_only.ex",
+        "lib/purse_craft/credo/checks/services_call_function.ex",
+        "lib/purse_craft/credo/checks/repositories_use_behaviour.ex",
+        "lib/purse_craft/credo/checks/queries_use_behaviour.ex",
+        "lib/purse_craft/credo/checks/events_derive_jason_encoder.ex",
+        "lib/purse_craft/credo/checks/context_delegate_pattern.ex"
+      ],
       #
       # If you want to enforce a style guide and need a more traditional linting
       # experience, you can change `strict` to `true` below:
@@ -205,6 +214,52 @@
           {Credo.Check.Warning.UnusedRegexOperation, []},
           {Credo.Check.Warning.UnusedStringOperation, []},
           {Credo.Check.Warning.UnusedTupleOperation, []},
+
+          #
+          # Custom CQRS/ES checks (only scan new code in contexts/)
+          #
+          {PurseCraft.Credo.Checks.RepositoriesNoEctoQuery,
+           [
+             files: %{
+               included: ["lib/purse_craft/contexts/"]
+             }
+           ]},
+          {PurseCraft.Credo.Checks.RepositoriesReadOnly,
+           [
+             files: %{
+               included: ["lib/purse_craft/contexts/"]
+             }
+           ]},
+          {PurseCraft.Credo.Checks.ServicesCallFunction,
+           [
+             files: %{
+               included: ["lib/purse_craft/contexts/"]
+             }
+           ]},
+          {PurseCraft.Credo.Checks.RepositoriesUseBehaviour,
+           [
+             files: %{
+               included: ["lib/purse_craft/contexts/"]
+             }
+           ]},
+          {PurseCraft.Credo.Checks.QueriesUseBehaviour,
+           [
+             files: %{
+               included: ["lib/purse_craft/contexts/"]
+             }
+           ]},
+          {PurseCraft.Credo.Checks.EventsDeriveJasonEncoder,
+           [
+             files: %{
+               included: ["lib/purse_craft/contexts/"]
+             }
+           ]},
+          {PurseCraft.Credo.Checks.ContextDelegatePattern,
+           [
+             files: %{
+               included: ["lib/purse_craft/contexts/"]
+             }
+           ]},
           {Credo.Check.Warning.WrongTestFileExtension, []}
         ],
         disabled: [
