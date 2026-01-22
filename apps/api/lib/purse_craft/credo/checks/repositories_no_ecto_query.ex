@@ -21,7 +21,7 @@ defmodule PurseCraft.Credo.Checks.RepositoriesNoEctoQuery do
 
       GOOD:
         defmodule PurseCraft.Identity.Repositories.UserRepository do
-          import PurseCraft.Identity.Queries.UserQuery
+          alias PurseCraft.Identity.Queries.UserQuery
           def get_by_email(email) do
             UserQuery.by_email(email)
           end
