@@ -5,5 +5,6 @@ defmodule PurseCraft.Identity.ReadModels.Session do
   # coveralls-ignore-start
   schema "sessions" do
   end
+
   # coveralls-ignore-stop
 end

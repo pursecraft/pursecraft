@@ -5,5 +5,6 @@ defmodule PurseCraft.Identity.ReadModels.User do
   # coveralls-ignore-start
   schema "users" do
   end
+
   # coveralls-ignore-stop
 end

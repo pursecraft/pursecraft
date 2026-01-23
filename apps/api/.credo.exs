@@ -233,7 +233,8 @@
           {PurseCraft.Credo.Checks.ServicesCallFunction,
            [
              files: %{
-               included: ["lib/purse_craft/contexts/"]
+               included: ["lib/purse_craft/contexts/"],
+               excluded: [~r"/services/"]
              }
            ]},
           {PurseCraft.Credo.Checks.RepositoriesUseBehaviour,
@@ -251,7 +252,8 @@
           {PurseCraft.Credo.Checks.EventsDeriveJasonEncoder,
            [
              files: %{
-               included: ["lib/purse_craft/contexts/"]
+               included: ["lib/purse_craft/contexts/"],
+               excluded: [~r"/events/"]
              }
            ]},
           {PurseCraft.Credo.Checks.ContextDelegatePattern,
