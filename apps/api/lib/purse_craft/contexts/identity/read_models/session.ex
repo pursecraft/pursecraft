@@ -1,9 +1,7 @@
 defmodule PurseCraft.Identity.ReadModels.Session do
-  @moduledoc """
-  Read model for Session data (Ecto schema).
-  """
+  @moduledoc false
   use Ecto.Schema
 
-  schema "sessions_read" do
+  schema "sessions" do
   end
 end

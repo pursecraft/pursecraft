@@ -1,9 +1,7 @@
 defmodule PurseCraft.Identity.ReadModels.User do
-  @moduledoc """
-  Read model for User data (Ecto schema).
-  """
+  @moduledoc false
   use Ecto.Schema
 
-  schema "users_read" do
+  schema "users" do
   end
 end

@@ -1,6 +1,4 @@
 defmodule PurseCraft.Identity.Commands.RequestEmailChange do
-  @moduledoc """
-  Command to request an email change.
-  """
+  @moduledoc false
   defstruct [:user_uuid, :new_email]
 end

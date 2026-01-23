@@ -1,6 +1,4 @@
 defmodule PurseCraft.Identity.Commands.RequestMagicLink do
-  @moduledoc """
-  Command to request a magic link for passwordless authentication.
-  """
+  @moduledoc false
   defstruct [:email, :metadata]
 end

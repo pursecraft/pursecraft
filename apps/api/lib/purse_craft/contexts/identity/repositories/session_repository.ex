@@ -1,6 +1,4 @@
 defmodule PurseCraft.Identity.Repositories.SessionRepository do
-  @moduledoc """
-  Read-only repository for Session read model.
-  """
+  @moduledoc false
   use PurseCraft.Repository
 end

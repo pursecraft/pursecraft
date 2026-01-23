@@ -1,7 +1,4 @@
 defmodule PurseCraft.Identity.Events.TokenDeleted do
-  @moduledoc """
-  Event emitted when a token is deleted.
-  """
-  @derive Jason.Encoder
+  @moduledoc false
   defstruct [:token, :timestamp]
 end

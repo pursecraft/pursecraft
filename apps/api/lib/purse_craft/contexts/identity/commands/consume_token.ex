@@ -1,6 +1,4 @@
 defmodule PurseCraft.Identity.Commands.ConsumeToken do
-  @moduledoc """
-  Command to consume a one-time token.
-  """
+  @moduledoc false
   defstruct [:token]
 end

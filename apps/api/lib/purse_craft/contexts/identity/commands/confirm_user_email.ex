@@ -1,6 +1,4 @@
 defmodule PurseCraft.Identity.Commands.ConfirmUserEmail do
-  @moduledoc """
-  Command to confirm a user's email address.
-  """
+  @moduledoc false
   defstruct [:user_uuid]
 end

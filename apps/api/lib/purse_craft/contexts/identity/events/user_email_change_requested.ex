@@ -1,7 +1,4 @@
 defmodule PurseCraft.Identity.Events.UserEmailChangeRequested do
-  @moduledoc """
-  Event emitted when an email change is requested.
-  """
-  @derive Jason.Encoder
+  @moduledoc false
   defstruct [:user_uuid, :current_email, :new_email, :timestamp]
 end

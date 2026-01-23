@@ -1,6 +1,4 @@
 defmodule PurseCraft.Identity.Repositories.UserRepository do
-  @moduledoc """
-  Read-only repository for User read model.
-  """
+  @moduledoc false
   use PurseCraft.Repository
 end

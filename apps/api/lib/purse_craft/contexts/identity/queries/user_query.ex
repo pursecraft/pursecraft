@@ -1,6 +1,4 @@
 defmodule PurseCraft.Identity.Queries.UserQuery do
-  @moduledoc """
-  Ecto.Query logic for User read model.
-  """
+  @moduledoc false
   use PurseCraft.Query
 end

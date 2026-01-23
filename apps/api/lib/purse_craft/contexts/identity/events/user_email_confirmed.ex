@@ -1,7 +1,4 @@
 defmodule PurseCraft.Identity.Events.UserEmailConfirmed do
-  @moduledoc """
-  Event emitted when a user's email is confirmed.
-  """
-  @derive Jason.Encoder
+  @moduledoc false
   defstruct [:user_uuid, :email, :timestamp]
 end

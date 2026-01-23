@@ -1,6 +1,4 @@
 defmodule PurseCraft.Identity.Commands.RegisterUser do
-  @moduledoc """
-  Command to register a new user.
-  """
+  @moduledoc false
   defstruct [:user_uuid, :email, :password]
 end
