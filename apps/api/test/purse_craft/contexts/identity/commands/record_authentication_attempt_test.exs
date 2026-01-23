@@ -1,5 +1,6 @@
 defmodule PurseCraft.Identity.Commands.RecordAuthenticationAttemptTest do
-  use PurseCraft.DataCase
+  use PurseCraft.DataCase, async: true
+
   alias PurseCraft.Identity.Commands.RecordAuthenticationAttempt
 
   test "creates struct with required fields" do

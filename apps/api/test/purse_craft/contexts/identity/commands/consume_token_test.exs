@@ -1,5 +1,6 @@
 defmodule PurseCraft.Identity.Commands.ConsumeTokenTest do
-  use PurseCraft.DataCase
+  use PurseCraft.DataCase, async: true
+
   alias PurseCraft.Identity.Commands.ConsumeToken
 
   test "creates struct with token" do

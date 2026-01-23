@@ -1,5 +1,6 @@
 defmodule PurseCraft.Identity.Commands.DeleteTokenTest do
-  use PurseCraft.DataCase
+  use PurseCraft.DataCase, async: true
+
   alias PurseCraft.Identity.Commands.DeleteToken
 
   test "creates struct with token" do

@@ -1,5 +1,6 @@
 defmodule PurseCraft.Identity.Commands.RequestMagicLinkTest do
-  use PurseCraft.DataCase
+  use PurseCraft.DataCase, async: true
+
   alias PurseCraft.Identity.Commands.RequestMagicLink
 
   test "creates struct with required fields" do

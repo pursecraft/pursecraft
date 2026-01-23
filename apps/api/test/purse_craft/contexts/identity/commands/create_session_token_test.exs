@@ -1,5 +1,6 @@
 defmodule PurseCraft.Identity.Commands.CreateSessionTokenTest do
-  use PurseCraft.DataCase
+  use PurseCraft.DataCase, async: true
+
   alias PurseCraft.Identity.Commands.CreateSessionToken
 
   test "creates struct with required fields" do

@@ -1,5 +1,6 @@
 defmodule PurseCraft.Identity.Commands.UpdateUserPasswordTest do
-  use PurseCraft.DataCase
+  use PurseCraft.DataCase, async: true
+
   alias PurseCraft.Identity.Commands.UpdateUserPassword
 
   test "creates struct with required fields" do

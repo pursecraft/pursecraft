@@ -1,5 +1,6 @@
 defmodule PurseCraft.Identity.Commands.ConfirmUserEmailTest do
-  use PurseCraft.DataCase
+  use PurseCraft.DataCase, async: true
+
   alias PurseCraft.Identity.Commands.ConfirmUserEmail
 
   test "creates struct with user_uuid" do
