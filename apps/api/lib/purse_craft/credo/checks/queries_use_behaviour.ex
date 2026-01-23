@@ -43,22 +43,24 @@ defmodule PurseCraft.Credo.Checks.QueriesUseBehaviour do
   def run(source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)
 
-    source_file
-    |> Credo.Code.ast()
-    |> Macro.postwalk([], fn
-      {:defmodule, _, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
-        module_name = Module.concat(module_names)
+    {_, issues} =
+      source_file
+      |> Credo.Code.ast()
+      |> Macro.postwalk([], fn
+        {:defmodule, _, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
+          module_name = Module.concat(module_names)
 
-        if query_module?(module_name) do
-          {ast, check_query_rules(source_file, body, issue_meta) ++ acc}
-        else
+          if query_module?(module_name) do
+            {ast, check_query_rules(source_file, body, issue_meta) ++ acc}
+          else
+            {ast, acc}
+          end
+
+        ast, acc ->
           {ast, acc}
-        end
+      end)
 
-      ast, acc ->
-        {ast, acc}
-    end)
-    |> Enum.reverse()
+    Enum.reverse(issues)
   end
 
   defp query_module?(module) do
@@ -77,11 +79,8 @@ defmodule PurseCraft.Credo.Checks.QueriesUseBehaviour do
   defp check_query_behaviour({:__block__, _, contents}, issue_meta) do
     has_query_behaviour =
       Enum.any?(contents, fn
-        {:attribute, _, {:behaviour, {:__aliases__, _, [:PurseCraft, :Query]}}} ->
+        {:use, _, [{:__aliases__, _, [:PurseCraft, :Query]}]} ->
           true
-
-        {:attribute, _, {:behaviour, {:__aliases__, _, _}}} ->
-          false
 
         _ast ->
           false
