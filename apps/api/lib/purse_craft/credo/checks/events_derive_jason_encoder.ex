@@ -27,22 +27,24 @@ defmodule PurseCraft.Credo.Checks.EventsDeriveJasonEncoder do
   def run(source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)
 
-    source_file
-    |> Credo.Code.ast()
-    |> Macro.postwalk([], fn
-      {:defmodule, _metadata, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
-        module_name = Module.concat(module_names)
+    {_, issues} =
+      source_file
+      |> Credo.Code.ast()
+      |> Macro.postwalk([], fn
+        {:defmodule, _metadata, [{:__aliases__, _, module_names}, [do: body]]} = ast, acc ->
+          module_name = Module.concat(module_names)
 
-        if event_module?(module_name) do
-          {ast, check_event_derives(body, issue_meta) ++ acc}
-        else
+          if event_module?(module_name) do
+            {ast, check_event_derives(body, issue_meta) ++ acc}
+          else
+            {ast, acc}
+          end
+
+        ast, acc ->
           {ast, acc}
-        end
+      end)
 
-      ast, acc ->
-        {ast, acc}
-    end)
-    |> Enum.reverse()
+    Enum.reverse(issues)
   end
 
   defp event_module?(module) do
