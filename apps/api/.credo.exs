@@ -252,8 +252,7 @@
           {PurseCraft.Credo.Checks.EventsDeriveJasonEncoder,
            [
              files: %{
-               included: ["lib/purse_craft/contexts/"],
-               excluded: [~r"/events/"]
+               included: ["lib/purse_craft/contexts/"]
              }
            ]},
           {PurseCraft.Credo.Checks.ContextDelegatePattern,
