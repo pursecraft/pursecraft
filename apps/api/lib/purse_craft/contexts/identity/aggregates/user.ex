@@ -1,5 +1,6 @@
 defmodule PurseCraft.Identity.Aggregates.User do
   @moduledoc false
+
   alias PurseCraft.Identity.Commands.ConfirmUserEmail
   alias PurseCraft.Identity.Commands.CreateUserPassword
   alias PurseCraft.Identity.Commands.RegisterUser

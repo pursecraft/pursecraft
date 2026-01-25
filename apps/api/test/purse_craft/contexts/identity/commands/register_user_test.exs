@@ -4,15 +4,19 @@ defmodule PurseCraft.Identity.Commands.RegisterUserTest do
   alias PurseCraft.Identity.Commands.RegisterUser
 
   test "creates struct with required fields" do
-    command = %RegisterUser{user_uuid: "uuid", email: "test@example.com"}
+    user_uuid = Commanded.UUID.uuid4()
 
-    assert command.user_uuid == "uuid"
+    command = %RegisterUser{user_uuid: user_uuid, email: "test@example.com"}
+
+    assert command.user_uuid == user_uuid
     assert command.email == "test@example.com"
     assert command.password == nil
   end
 
   test "creates struct with optional password" do
-    command = %RegisterUser{user_uuid: "uuid", email: "test@example.com", password: "pass"}
+    user_uuid = Commanded.UUID.uuid4()
+
+    command = %RegisterUser{user_uuid: user_uuid, email: "test@example.com", password: "pass"}
 
     assert command.password == "pass"
   end
