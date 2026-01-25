@@ -7,13 +7,11 @@ defmodule PurseCraft.Identity.Events.UserEmailChangeRequestedTest do
     event = %UserEmailChangeRequested{
       user_uuid: "uuid",
       current_email: "old@example.com",
-      new_email: "new@example.com",
-      timestamp: DateTime.utc_now()
+      new_email: "new@example.com"
     }
 
     assert event.user_uuid == "uuid"
     assert event.current_email == "old@example.com"
     assert event.new_email == "new@example.com"
-    assert %DateTime{} = event.timestamp
   end
 end

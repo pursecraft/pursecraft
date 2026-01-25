@@ -5,11 +5,9 @@ defmodule PurseCraft.Identity.Events.UserPasswordUpdatedTest do
 
   test "creates struct with required fields" do
     event = %UserPasswordUpdated{
-      user_uuid: "uuid",
-      timestamp: DateTime.utc_now()
+      user_uuid: "uuid"
     }
 
     assert event.user_uuid == "uuid"
-    assert %DateTime{} = event.timestamp
   end
 end

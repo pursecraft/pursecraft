@@ -8,14 +8,12 @@ defmodule PurseCraft.Identity.Events.UserRegisteredTest do
       user_uuid: "uuid",
       email: "test@example.com",
       hashed_password: "hash",
-      confirmed_at: nil,
-      timestamp: DateTime.utc_now()
+      confirmed_at: nil
     }
 
     assert event.user_uuid == "uuid"
     assert event.email == "test@example.com"
     assert event.hashed_password == "hash"
     assert event.confirmed_at == nil
-    assert %DateTime{} = event.timestamp
   end
 end
