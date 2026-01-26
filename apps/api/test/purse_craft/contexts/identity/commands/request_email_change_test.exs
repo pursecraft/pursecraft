@@ -4,9 +4,11 @@ defmodule PurseCraft.Identity.Commands.RequestEmailChangeTest do
   alias PurseCraft.Identity.Commands.RequestEmailChange
 
   test "creates struct with required fields" do
-    command = %RequestEmailChange{user_uuid: "uuid", new_email: "new@example.com"}
+    user_uuid = Commanded.UUID.uuid4()
 
-    assert command.user_uuid == "uuid"
+    command = %RequestEmailChange{user_uuid: user_uuid, new_email: "new@example.com"}
+
+    assert command.user_uuid == user_uuid
     assert command.new_email == "new@example.com"
   end
 end

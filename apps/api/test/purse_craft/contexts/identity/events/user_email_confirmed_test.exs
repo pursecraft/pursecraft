@@ -4,14 +4,17 @@ defmodule PurseCraft.Identity.Events.UserEmailConfirmedTest do
   alias PurseCraft.Identity.Events.UserEmailConfirmed
 
   test "creates struct with required fields" do
+    now = DateTime.utc_now()
+    user_uuid = Commanded.UUID.uuid4()
+
     event = %UserEmailConfirmed{
-      user_uuid: "uuid",
+      user_uuid: user_uuid,
       email: "test@example.com",
-      timestamp: DateTime.utc_now()
+      confirmed_at: now
     }
 
-    assert event.user_uuid == "uuid"
+    assert event.user_uuid == user_uuid
     assert event.email == "test@example.com"
-    assert %DateTime{} = event.timestamp
+    assert %DateTime{} = event.confirmed_at
   end
 end

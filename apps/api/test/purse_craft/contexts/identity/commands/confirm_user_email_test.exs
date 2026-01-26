@@ -4,8 +4,10 @@ defmodule PurseCraft.Identity.Commands.ConfirmUserEmailTest do
   alias PurseCraft.Identity.Commands.ConfirmUserEmail
 
   test "creates struct with user_uuid" do
-    command = %ConfirmUserEmail{user_uuid: "uuid"}
+    user_uuid = Commanded.UUID.uuid4()
 
-    assert command.user_uuid == "uuid"
+    command = %ConfirmUserEmail{user_uuid: user_uuid}
+
+    assert command.user_uuid == user_uuid
   end
 end
