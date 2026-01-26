@@ -1,4 +1,4 @@
 defmodule PurseCraft.Identity.Commands.RequestMagicLink do
   @moduledoc false
-  defstruct [:email, :metadata]
+  defstruct [:email, :user_uuid, :metadata]
 end

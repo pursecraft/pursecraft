@@ -5,11 +5,9 @@ defmodule PurseCraft.Identity.Events.TokenDeletedTest do
 
   test "creates struct with required fields" do
     event = %TokenDeleted{
-      token: "token123",
-      timestamp: DateTime.utc_now()
+      token: "token123"
     }
 
     assert event.token == "token123"
-    assert %DateTime{} = event.timestamp
   end
 end
