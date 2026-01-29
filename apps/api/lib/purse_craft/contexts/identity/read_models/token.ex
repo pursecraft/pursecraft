@@ -8,7 +8,7 @@ defmodule PurseCraft.Identity.ReadModels.Token do
   @primary_key {:id, Ecto.UUID, autogenerate: false}
   @foreign_key_type Ecto.UUID
 
-  schema "users_tokens" do
+  schema "new_users_tokens" do
     belongs_to :user, PurseCraft.Identity.ReadModels.User
     field :token, :binary
     field :context, :string

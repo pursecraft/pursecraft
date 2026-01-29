@@ -8,7 +8,7 @@ defmodule PurseCraft.Identity.ReadModels.User do
   @primary_key {:id, Ecto.UUID, autogenerate: false}
   @foreign_key_type Ecto.UUID
 
-  schema "users" do
+  schema "new_users" do
     field :email, :string
     field :hashed_password, :string
     field :confirmed_at, :utc_datetime
