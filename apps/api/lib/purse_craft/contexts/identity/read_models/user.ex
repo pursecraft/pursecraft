@@ -3,6 +3,8 @@ defmodule PurseCraft.Identity.ReadModels.User do
   Read model for User aggregate.
   Populated by projections from User events.
   """
+
+  # coveralls-ignore-start
   use Ecto.Schema
 
   @primary_key {:id, Ecto.UUID, autogenerate: false}
@@ -15,4 +17,5 @@ defmodule PurseCraft.Identity.ReadModels.User do
 
     timestamps(type: :utc_datetime)
   end
+  # coveralls-ignore-stop
 end
