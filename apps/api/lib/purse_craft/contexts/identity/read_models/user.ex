@@ -17,5 +17,6 @@ defmodule PurseCraft.Identity.ReadModels.User do
 
     timestamps(type: :utc_datetime)
   end
+
   # coveralls-ignore-stop
 end
