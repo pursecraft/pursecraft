@@ -63,6 +63,8 @@ defmodule PurseCraft.Identity.Queries.TokenQuery do
 
   @spec active(Ecto.Queryable.t()) :: Ecto.Query.t()
   def active(queryable) do
-    queryable |> not_expired() |> not_consumed()
+    queryable
+    |> not_expired()
+    |> not_consumed()
   end
 end

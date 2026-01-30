@@ -41,9 +41,7 @@ defmodule PurseCraft.Identity.Queries.UserQueryTest do
     test "can be composed with other queries" do
       base_query = from(u in User, select: u.id)
 
-      query =
-        base_query
-        |> UserQuery.by_email("test@example.com")
+      query = UserQuery.by_email(base_query, "test@example.com")
 
       assert %Ecto.Query{} = query
     end
